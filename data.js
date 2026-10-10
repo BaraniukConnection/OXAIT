@@ -4,10 +4,11 @@
  * participants  — шість учасників (порядок тут не важливий).
  * stages        — шість етапів; у кожного свої раунди (Q/N — кваліфікація, sec-N — секція).
  * results       — по ключу "<stage>/<round>":
- *     order     — порядок у таблиці лідерів (перший = топ-1).
+ *     order     — порядок при рівних балах (таблиця сортується за сумою, вибулі — внизу).
  *     entries   — для кожного учасника:
- *         pills  — три групи по три таблетки; null = порожня. Число додається до суми балів,
- *                  будь-який інший текст просто показується в таблетці.
+ *         pills  — три групи по три таблетки; null = порожня, true = заповнена (1 бал),
+ *                  число — заповнена з цифрою (додається до суми), інший текст просто показується.
+ *         status — "out", якщо учасник вибув (рядок червоний і йде вниз таблиці).
  *         output — що показувати в прев'ю (null = ще не подано):
  *                  { type: "iframe", src: "entries/gamedev/q1/claude/index.html" }   гра / застосунок
  *                  { type: "image",  src: [..] }                                        одне або кілька зображень
@@ -85,7 +86,14 @@ window.OXAIT = {
 
   results: {
     "gamedev/q1": {
-      order: ["claude", "chatgpt", "gemini", "grok", "glm", "qwen"]
+      order: ["claude", "chatgpt", "gemini", "grok", "glm", "qwen"],
+      entries: {
+        claude:  { pills: [[true, true, null], [null, null, null], [null, null, null]] },
+        chatgpt: { pills: [[true, true, true], [null, null, null], [null, null, null]] },
+        gemini:  { pills: [[true, true, null], [null, null, null], [null, null, null]] },
+        grok:    { status: "out" },
+        qwen:    { pills: [[true, true, true], [null, null, null], [null, null, null]] }
+      }
     }
   }
 };

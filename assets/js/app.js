@@ -26,6 +26,9 @@
       play: { gamedev: "Грати", software: "Запустити", other: "Відкрити" },
       playHint: "Запуститься прямо тут. Повноекранний режим — кнопка вгорі.",
       rank: n => `Місце ${n}`,
+      out: "Вибув",
+      outText: n => `${n} вибуває з цього раунду.`,
+      live: "Наживо",
       total: "Разом",
       fullscreen: "На весь екран", newTab: "Відкрити в новій вкладці", reload: "Перезапустити", close: "Закрити",
       stage: "Етап"
@@ -51,6 +54,9 @@
       play: { gamedev: "Play", software: "Launch", other: "Open" },
       playHint: "Runs right here. Use the button above for full screen.",
       rank: n => `Rank ${n}`,
+      out: "Eliminated",
+      outText: n => `${n} is out of this round.`,
+      live: "Live",
       total: "Total",
       fullscreen: "Full Screen", newTab: "Open in New Tab", reload: "Restart", close: "Close",
       stage: "Stage"
@@ -75,10 +81,16 @@
     const entries = order.map(id => {
       const e = (r.entries || {})[id] || {};
       const pills = [0, 1, 2].map(g => [0, 1, 2].map(i => e.pills?.[g]?.[i] ?? null));
-      const nums = pills.flat().filter(v => typeof v === "number");
-      return { p: byId[id], pills, total: nums.length ? nums.reduce((a, b) => a + b, 0) : null, output: e.output || null, note: e.note || null };
+      const nums = pills.flat().map(v => v === true ? 1 : v).filter(v => typeof v === "number");
+      return { p: byId[id], pills, total: nums.length ? nums.reduce((a, b) => a + b, 0) : null, out: e.status === "out", output: e.output || null, note: e.note || null };
     });
-    return { entries, groups: r.groups || D.groups };
+    // Більше балів — вище, вибулі — внизу; при рівності лишається порядок з order
+    entries.sort((a, b) => (a.out - b.out) || ((b.total ?? -1) - (a.total ?? -1)));
+    entries.forEach((e, i) => {
+      const prev = entries[i - 1];
+      e.rank = e.out ? null : (prev && !prev.out && e.total !== null && prev.total === e.total ? prev.rank : i + 1);
+    });
+    return { entries, groups: r.groups || D.groups, live: entries.some(e => e.total !== null || e.out) };
   }
 
   /* ───── Маршрут ───── */
@@ -174,7 +186,7 @@
       <button class="chip ox-focus" role="tab" data-round="${x.id}" aria-selected="${x.id === state.round}" style="animation-delay:${i * 50}ms">
         <span class="chip-code">${esc(x.code)}</span>${esc(L(x.title))}
       </button>`).join("");
-    $("#round-meta").innerHTML = `<span>${esc(L(s.title))} · ${esc(r.code)}</span><span class="sep"></span><span>${t.participants(D.participants.length)}</span>`;
+    $("#round-meta").innerHTML = `<span>${esc(L(s.title))} · ${esc(r.code)}</span><span class="sep"></span><span>${t.participants(D.participants.length)}</span>${roundData().live ? `<span class="sep"></span><span class="live">${t.live}</span>` : ""}`;
     renderBoard();
     renderPreview();
     writeHash();
@@ -183,8 +195,8 @@
   function pillsHTML(pills, delayIndex) {
     let p = 0;
     return `<div class="pills">${pills.map(g => `<span class="pill-group">${g.map(v => {
-      const filled = v !== null && v !== "";
-      return `<span class="pill${filled ? " is-filled" : ""}" style="--p:${p++};--i:${delayIndex}">${filled ? esc(v) : ""}</span>`;
+      const filled = v !== null && v !== "" && v !== false;
+      return `<span class="pill${filled ? " is-filled" : ""}" style="--p:${p++};--i:${delayIndex}">${filled && v !== true ? `<i>${esc(v)}</i>` : ""}</span>`;
     }).join("")}</span>`).join("")}</div>`;
   }
 
@@ -193,15 +205,35 @@
     $("#board-cols").innerHTML = `<span>${t.colRank}</span><span>${t.colModel}</span><span>${t.colScore}</span>`;
     $("#board").innerHTML = entries.map((e, i) => `
       <li>
-        <button class="row ox-focus${i === 0 ? " top-1" : ""}" data-pick="${e.p.id}" aria-selected="${e.p.id === state.pick}" style="--c:${e.p.color};--i:${i}"
+        <button class="row ox-focus${e.rank === 1 ? " top-1" : ""}${e.out ? " is-out" : ""}" data-pick="${e.p.id}" aria-selected="${e.p.id === state.pick}" style="--c:${tint(e)};--i:${i}"
           title="${esc(groups.map(L).join(" · "))}">
-          <span class="row-rank">${i + 1}</span>
+          <span class="row-rank">${e.out ? "✕" : String(e.rank).padStart(2, "0")}</span>
           ${avatar(e.p)}
           <span class="row-name"><b>${esc(e.p.name)}</b><small>${esc(e.p.vendor)}</small></span>
-          <span class="row-score${e.total === null ? " is-empty" : ""}">${e.total ?? "—"}</span>
+          ${e.out ? `<span class="row-score"><span class="badge-out">${t.out}</span></span>`
+            : `<span class="row-score${e.total === null ? " is-empty" : ""}"${e.total !== null ? ` data-v="${e.total}"` : ""}>${e.total ?? "—"}</span>`}
           ${pillsHTML(e.pills, i)}
         </button>
       </li>`).join("");
+    countUp(document.querySelectorAll("#board [data-v]"));
+  }
+
+  const tint = e => e.out ? "var(--danger)" : e.p.color;
+
+  // Бали «набігають» від нуля
+  function countUp(els) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    els.forEach((el, i) => {
+      const to = +el.dataset.v, start = performance.now() + 300 + i * 60, dur = 700;
+      if (!Number.isInteger(to)) return;
+      el.textContent = "0";
+      const tick = now => {
+        const k = Math.min(1, Math.max(0, (now - start) / dur));
+        el.textContent = Math.round(to * (1 - (1 - k) ** 3));
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
   }
 
   function markSelection() {
@@ -215,6 +247,7 @@
     const { entries, groups } = roundData();
     const idx = entries.findIndex(e => e.p.id === state.pick);
 
+    pv.style.setProperty("--hud", idx < 0 ? "var(--cyan)" : tint(entries[idx]));
     if (idx < 0) {
       const cover = r.cover
         ? `<div class="cover-img" style="background-image:url('${esc(r.cover)}')"></div>`
@@ -229,7 +262,7 @@
             <div class="cover-body"><p class="overline">OXAIT · ${esc(r.code)}</p><h3>${esc(L(s.title))}</h3><p>${t.roundLead}</p></div>
           </div></div>
           <p class="pv-hint"><span class="ox-icon">touch_app</span>${t.pickHint}</p>
-          <div class="pv-mini">${entries.map((e, i) => `<button class="ox-focus" data-pick="${e.p.id}" style="--c:${e.p.color};--i:${i}">${avatar(e.p)}${esc(e.p.name)}</button>`).join("")}</div>
+          <div class="pv-mini">${entries.map((e, i) => `<button class="ox-focus${e.out ? " is-out" : ""}" data-pick="${e.p.id}" style="--c:${tint(e)};--i:${i}">${avatar(e.p)}${esc(e.p.name)}</button>`).join("")}</div>
         </div>`;
       return;
     }
@@ -237,11 +270,11 @@
     const e = entries[idx], o = e.output;
     const href = o && (o.type === "iframe" || o.type === "video" || o.type === "model") ? o.src : null;
     pv.innerHTML = `
-      <div class="pv" style="--c:${e.p.color}">
+      <div class="pv" style="--c:${tint(e)}">
         <div class="pv-head">
           ${avatar(e.p)}
           <div class="pv-title"><h2>${esc(e.p.name)}</h2>
-            <p><span class="tag">${t.rank(idx + 1)}</span><span class="tag tag-accent">${esc(r.code)}</span>${esc(e.p.vendor)}</p></div>
+            <p>${e.out ? `<span class="tag tag-out">${t.out}</span>` : `<span class="tag">${t.rank(e.rank)}</span>`}<span class="tag tag-accent">${esc(r.code)}</span>${esc(e.p.vendor)}</p></div>
           ${o ? `<button class="icon-btn ox-focus" data-act="fs" title="${t.fullscreen}" aria-label="${t.fullscreen}"><span class="ox-icon">fullscreen</span></button>` : ""}
           ${href ? `<a class="icon-btn ox-focus" href="${esc(href)}" target="_blank" rel="noopener" title="${t.newTab}" aria-label="${t.newTab}"><span class="ox-icon">open_in_new</span></a>` : ""}
           <button class="icon-btn ox-focus" data-act="close" title="${t.close}" aria-label="${t.close}"><span class="ox-icon">close</span></button>
@@ -260,15 +293,15 @@
   function outputHTML(e, s) {
     const o = e.output;
     if (!o) return `
-      <div class="empty" style="--c:${e.p.color}"><div class="empty-inner">
+      <div class="empty${e.out ? " is-out" : ""}" style="--c:${tint(e)}"><div class="empty-inner">
         ${avatar(e.p)}
-        <h3><span class="ox-icon">hourglass_empty</span>${t.awaiting}</h3>
-        <p>${(t.outputWill[s.id] || t.outputWill.gamedev)(esc(e.p.name))}</p>
+        <h3><span class="ox-icon">${e.out ? "close" : "hourglass_empty"}</span>${e.out ? t.out : t.awaiting}</h3>
+        <p>${e.out ? t.outText(esc(e.p.name)) : (t.outputWill[s.id] || t.outputWill.gamedev)(esc(e.p.name))}</p>
       </div></div>`;
     switch (o.type) {
       case "iframe": return `
         <div class="launch" style="--c:${e.p.color}"><div>
-          <button class="btn btn-primary ox-focus" data-act="play"><span class="ox-icon">play_arrow</span>${t.play[s.id] || t.play.other}</button>
+          <span class="btn-wrap"><button class="btn btn-primary ox-focus" data-act="play"><span class="ox-icon">play_arrow</span>${t.play[s.id] || t.play.other}</button></span>
           <p>${t.playHint}</p>
         </div></div>`;
       case "video": return `<video src="${esc(o.src)}" ${o.poster ? `poster="${esc(o.poster)}"` : ""} controls playsinline preload="metadata"></video>`;
