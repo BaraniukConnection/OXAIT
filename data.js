@@ -101,6 +101,12 @@ window.OXAIT = {
         qwen:    { pills: [[true, true, true], [true, true, true], [false, false, false]],
                    note: { uk: "Етап III: проєкт не запускається — 0 балів.", en: "Stage III: the project is not playable — 0 points." } }
       }
+    },
+    "gamedev/sec1": {
+      entries: {
+        grok: { status: "out" },
+        glm:  { status: "out" }
+      }
     }
   }
 };
