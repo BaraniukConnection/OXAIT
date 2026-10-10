@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OXAIT entry template</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #10221c; color: #e6f2ec; font: 600 14px Manrope, system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+  #hud { position: fixed; left: 16px; top: 12px; pointer-events: none; }
+</style>
+</head>
+<body>
+<!-- Шаблон роботи учасника. Скопіюй у entries/<stage>/<round>/<participant>/ і заміни вміст. -->
+<div id="hud">Score: 0</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById("c"), x = c.getContext("2d"), hud = document.getElementById("hud");
+  let w, h, score = 0, t = { x: 0, y: 0, r: 22 };
+  const fit = () => { w = c.width = innerWidth * devicePixelRatio; h = c.height = innerHeight * devicePixelRatio; };
+  const move = () => { t.x = t.r * 2 + Math.random() * (w - t.r * 4); t.y = t.r * 2 + Math.random() * (h - t.r * 4); };
+  addEventListener("resize", () => { fit(); move(); });
+  c.addEventListener("pointerdown", e => {
+    const px = e.clientX * devicePixelRatio, py = e.clientY * devicePixelRatio;
+    if (Math.hypot(px - t.x, py - t.y) < t.r * devicePixelRatio * 1.4) { hud.textContent = `Score: ${++score}`; move(); }
+  });
+  fit(); move();
+  (function draw(ms) {
+    x.clearRect(0, 0, w, h);
+    const r = t.r * devicePixelRatio * (1 + Math.sin(ms / 240) * 0.08);
+    x.fillStyle = "#13eca4"; x.beginPath(); x.arc(t.x, t.y, r, 0, Math.PI * 2); x.fill();
+    requestAnimationFrame(draw);
+  })(0);
+</script>
+</body>
+</html>

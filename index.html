@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="uk" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OXAIT</title>
+  <meta name="description" content="OXAIT — народний бенчмарк: шість ШІ-моделей, шість секцій, одна арена.">
+  <meta name="theme-color" content="#10221c">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0&icon_names=chevron_right,close,deployed_code,edit_note,emoji_events,fullscreen,hourglass_empty,language,leaderboard,open_in_new,palette,play_arrow,query_stats,refresh,sports_esports,terminal,touch_app&display=block">
+  <link rel="stylesheet" href="assets/css/oxygen-tokens.css">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+  <!-- Вхід: вибір мови -->
+  <section class="gate" id="gate" aria-labelledby="gate-title">
+    <div class="gate-bg" aria-hidden="true"></div>
+    <div class="gate-inner">
+      <h1 class="wordmark" id="gate-title" aria-label="OXAIT">
+        <span>O</span><span>X</span><span>A</span><span>I</span><span>T</span>
+      </h1>
+      <p class="gate-tag">
+        <span lang="uk">Народний бенчмарк</span>
+        <span class="dot" aria-hidden="true"></span>
+        <span lang="en">The people's benchmark</span>
+      </p>
+      <p class="overline gate-ask">Оберіть мову · Choose language</p>
+      <div class="gate-langs">
+        <button class="lang-card ox-focus" data-lang="uk">
+          <span class="flag flag-ua" aria-hidden="true"></span>
+          <span class="lang-name">Українська</span>
+          <span class="lang-code">UA</span>
+          <span class="ox-icon">chevron_right</span>
+        </button>
+        <button class="lang-card ox-focus" data-lang="en">
+          <span class="flag flag-en" aria-hidden="true"><span class="ox-icon">language</span></span>
+          <span class="lang-name">English</span>
+          <span class="lang-code">EN</span>
+          <span class="ox-icon">chevron_right</span>
+        </button>
+      </div>
+      <ul class="gate-roster" id="gate-roster" aria-label="Participants"></ul>
+    </div>
+  </section>
+
+  <!-- Арена -->
+  <div class="app" id="app" hidden>
+    <header class="topbar">
+      <a class="brand ox-focus" href="#" id="brand">
+        <span class="brand-mark" aria-hidden="true">OX</span>
+        <span class="brand-text">
+          <span class="brand-name">OXAIT</span>
+          <span class="brand-tag" data-i18n="tagline"></span>
+        </span>
+      </a>
+      <div class="seg" role="group" aria-label="Language">
+        <button class="seg-btn ox-focus" data-set-lang="uk">UA</button>
+        <button class="seg-btn ox-focus" data-set-lang="en">EN</button>
+      </div>
+    </header>
+
+    <nav class="stages" id="stages" role="tablist"></nav>
+
+    <section class="round-bar">
+      <div class="round-chips" id="rounds" role="tablist"></div>
+      <p class="round-meta caption" id="round-meta"></p>
+    </section>
+
+    <main class="arena">
+      <section class="board" aria-labelledby="board-title">
+        <header class="panel-head">
+          <span class="ox-icon">leaderboard</span>
+          <h2 class="overline" id="board-title" data-i18n="leaderboard"></h2>
+        </header>
+        <div class="board-cols micro" id="board-cols"></div>
+        <ol class="board-list" id="board"></ol>
+      </section>
+
+      <section class="preview" id="preview" aria-live="polite"></section>
+    </main>
+
+    <footer class="foot caption">
+      <span>OXAIT · <span data-i18n="tagline"></span></span>
+      <span id="updated"></span>
+    </footer>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

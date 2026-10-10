@@ -1,0 +1,104 @@
+/* Oxygen Theme tokens — generated from tokens.json. Set data-theme="dark|light" on <html>. */
+:root, [data-theme="dark"] {
+  --bg: #10221c;
+  --surface: #162e26;
+  --surface-variant: #233932;
+  --line: #23483c;
+  --ink: #e6f2ec;
+  --ink-muted: #92c9b7;
+  --accent: #13eca4;
+  --on-accent: #0b1f18;
+  --accent-ink: #13eca4;
+  --accent-soft: #15543f;
+  --attention: #f59e0b;
+  --attention-ink: #f59e0b;
+  --danger: #dc2626;
+  --on-danger: #ffffff;
+  --danger-ink: #fca5a5;
+  --tool: #16332a;
+  --tool-icon: #bfd9ce;
+  --tool-active: #15543f;
+  --tool-divider: #2a4c40;
+  --scrim: #0000008c;
+  --mark-mint: var(--accent);
+  --mark-blue: #3b82f6;
+  --mark-amber: #f59e0b;
+  --mark-red: #ef4444;
+  --mark-purple: #a855f7;
+  --mark-emerald: #10b981;
+  --mark-pink: #ec4899;
+  --mark-slate: #64748b;
+  --elev-1: 0 1px 3px rgba(0,0,0,0.45);
+  --elev-2: 0 6px 14px rgba(0,0,0,0.5);
+  --elev-3: 0 10px 28px rgba(0,0,0,0.55);
+}
+[data-theme="light"] {
+  --bg: #f3faf7;
+  --surface: #ffffff;
+  --surface-variant: #dff2eb;
+  --line: #d3e8df;
+  --ink: #1a2f24;
+  --ink-muted: #4a6b5a;
+  --accent: #13eca4;
+  --on-accent: #0b1f18;
+  --accent-ink: #047857;
+  --accent-soft: #d0fbed;
+  --attention: #f59e0b;
+  --attention-ink: #b45309;
+  --danger: #dc2626;
+  --on-danger: #ffffff;
+  --danger-ink: #dc2626;
+  --tool: #16332a;
+  --tool-icon: #bfd9ce;
+  --tool-active: #15543f;
+  --tool-divider: #2a4c40;
+  --scrim: #00000066;
+  --elev-1: 0 1px 3px rgba(16,34,28,0.12), 0 1px 2px rgba(16,34,28,0.08);
+  --elev-2: 0 6px 14px rgba(16,34,28,0.18);
+  --elev-3: 0 10px 28px rgba(16,34,28,0.16);
+}
+:root {
+  --space-0\.5: 2px;
+  --space-1: 4px;
+  --space-1\.5: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --bottom-inset: 140px;
+  --measure: 680px;
+  --sidebar-width: 280px;
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-full: 9999px;
+  --size-target: 44px;
+  --size-row: 56px;
+  --size-fab: 70px;
+  --size-bar: 90px;
+  --size-radial: 60px;
+  --size-bubble: 52px;
+  --size-tool: 42px;
+  --bp-medium: 600px;
+  --bp-expanded: 1024px;
+  --opacity-disabled: 0.38;
+  --opacity-preview: 0.85;
+  --font-sans: Manrope, Roboto, system-ui, sans-serif;
+}
+.display { font-family: var(--font-sans); font-size: 40px; line-height: 44px; font-weight: 800; letter-spacing: -0.5px; }
+.screen-title { font-family: var(--font-sans); font-size: 22px; line-height: 28px; font-weight: 700; }
+.tree-label { font-family: var(--font-sans); font-size: 20px; line-height: 28px; font-weight: 600; }
+.title { font-family: var(--font-sans); font-size: 16px; line-height: 22px; font-weight: 700; }
+.body-lg { font-family: var(--font-sans); font-size: 16px; line-height: 26px; font-weight: 400; }
+.body { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 400; }
+.label { font-family: var(--font-sans); font-size: 13px; line-height: 18px; font-weight: 600; }
+.button { font-family: var(--font-sans); font-size: 15px; line-height: 20px; font-weight: 700; }
+.overline { font-family: var(--font-sans); font-size: 13px; line-height: 18px; font-weight: 700; letter-spacing: 1.6px; }
+.caption { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 500; }
+.micro { font-family: var(--font-sans); font-size: 11px; line-height: 14px; font-weight: 600; }
