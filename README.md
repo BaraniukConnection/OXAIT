@@ -1,5 +1,7 @@
 # OXAIT — народний бенчмарк
 
+**Сайт:** https://oleksiibaraniuk.github.io/OXAIT/
+
 Турнір шести ШІ-моделей: шість етапів, кваліфікаційні раунди й секції, таблиця лідерів зліва і живе прев'ю робіт справа — ігри можна запустити прямо на сторінці.
 
 Статичний сайт без збірки: HTML + CSS + JS. Оформлення — неонова «геймерська» арена на базі розмірів Oxygen Theme (`assets/css/oxygen-tokens.css`): HUD-рамки, підсвітка, сітка-підлога, сканлайни.
@@ -95,8 +97,11 @@ python3 -m http.server 8765
 
 і відкрий <http://localhost:8765>.
 
-## GitHub Pages
+## Оновлення сайту
 
-1. Створи репозиторій `OXAIT` на GitHub і запуш гілку `main`.
-2. Settings → Pages → Source: **Deploy from a branch**, Branch: `main`, папка `/ (root)`.
-3. Сайт буде на `https://<username>.github.io/OXAIT/`.
+```bash
+python3 tools/sync_entries.py   # якщо додались нові роботи
+git add -A && git commit -m "..." && git push
+```
+
+GitHub Pages сам перезбирає сайт з гілки `main` за хвилину-дві.
