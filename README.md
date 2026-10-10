@@ -12,7 +12,8 @@ data.js                    ← усі дані турніру: учасники,
 assets/css/app.css         стилі арени
 assets/js/app.js           логіка й маршрутизація
 assets/img/                постер, іконка
-entries/                   роботи учасників (ігри, застосунки, моделі, зображення)
+entries/                   роботи учасників (генерується tools/sync_entries.py)
+tools/sync_entries.py      синхронізація робіт з HDD
 entries/_template/         зразок роботи-гри
 ```
 
@@ -29,32 +30,54 @@ entries/_template/         зразок роботи-гри
 
 Учасники: Claude Opus 5.5, ChatGPT 6 Astra, Gemini 3.x Flash, Grok 4.7 Build, Z.AI GLM 5.3, Qwen 3.8 MAX.
 
-## Як додати результат
+## Як додати роботи
 
-1. Поклади роботу в `entries/<етап>/<раунд>/<учасник>/`, наприклад `entries/gamedev/q1/claude/index.html`.
-2. Додай запис у `data.js` → `results`:
+Роботи зберігаються на HDD у `HDDWork/OXAIT/<раунд>/<учасник>/`:
+
+```
+OXAIT/
+  Q1/
+    Claude/   snake3D.html  tetris.html
+    ChatGPT/  Snake3D.html  tetris.html
+    ...
+```
+
+- раунд: `Q1`, `SEC1`, `Q2`, `SEC2`, `Q3`, `SEC3`, `SEC4`, `SEC5`, `SEC6`
+- учасник: `Claude`, `ChatGPT`, `Gemini`, `Grok`, `GLM`, `QWEN`
+- проєкт: `.html`-гра, папка з `index.html`, зображення, відео, `.glb`/`.gltf`, `.md`/`.txt`
+
+Потім:
+
+```bash
+python3 tools/sync_entries.py
+```
+
+Скрипт копіює все в `entries/<етап>/<раунд>/<учасник>/` і складає `entries/manifest.js`. Назва проєкту береться з `<title>` гри (або з імені файлу). Якщо в учасника кілька проєктів, у прев'ю з'являється екран вибору «Варіант A / B / …».
+
+## Як додати бали
+
+`data.js` → `results`:
 
 ```js
 "gamedev/q1": {
   order: ["claude", "chatgpt", "gemini", "grok", "glm", "qwen"],   // порядок при рівних балах
   entries: {
     claude: {
-      pills: [[true, true, null], [null, null, null], [null, null, null]],   // 3 етапи × 3 таблетки
-      // status: "out",                                             // вибув — червоний рядок унизу
-      output: { type: "iframe", src: "entries/gamedev/q1/claude/index.html" },
+      pills: [[true, true, null], [true, true, true], [null, null, null]],   // 3 етапи × 3 таблетки
+      // status: "out",                                                     // вибув — червоний рядок унизу
       note: { uk: "Коментар журі", en: "Jury note" }
     }
   }
 }
 ```
 
-Типи `output`: `iframe` (гра / застосунок, запускається кнопкою «Грати»), `image` (одне або масив зображень — галерея), `video`, `model` (`.glb`/`.gltf`, крутиться мишкою), `text` (`{ uk, en }`).
-
 Таблетка: `null` — порожня, `true` — заповнена (1 бал), число — заповнена з цифрою. Бали сумуються, таблиця сортується за ними (рівні бали ділять місце), вибулі (`status: "out"`) — внизу червоним. Назви трьох груп таблеток — `groups` у `data.js` (можна перевизначити для окремого раунду).
+
+Проєкт можна додати й вручну, без скрипта: `outputs: [{ type: "iframe", title: "...", src: "entries/..." }]` (типи: `iframe`, `image`, `video`, `model`, `text`).
 
 ## Посилання
 
-Кожен стан має свою адресу: `#/uk/gamedev/q1/claude` — мова, етап, раунд, учасник. Посилання з мовою пропускає екран вибору мови.
+Кожен стан має свою адресу: `#/uk/gamedev/q1/claude/tetris` — мова, етап, раунд, учасник, проєкт. Посилання з мовою пропускає екран вибору мови.
 
 ## Локальний запуск
 

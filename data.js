@@ -9,12 +9,8 @@
  *         pills  — три групи по три таблетки; null = порожня, true = заповнена (1 бал),
  *                  число — заповнена з цифрою (додається до суми), інший текст просто показується.
  *         status — "out", якщо учасник вибув (рядок червоний і йде вниз таблиці).
- *         output — що показувати в прев'ю (null = ще не подано):
- *                  { type: "iframe", src: "entries/gamedev/q1/claude/index.html" }   гра / застосунок
- *                  { type: "image",  src: [..] }                                        одне або кілька зображень
- *                  { type: "video",  src: "...mp4" }
- *                  { type: "model",  src: "...glb", poster?: "...webp" }               3D (glTF/GLB)
- *                  { type: "text",   uk: "...", en: "..." }                             текст / аналітика
+ *         outputs — проєкти, додані вручну (зазвичай не потрібно — їх знаходить tools/sync_entries.py):
+ *                  [{ type: "iframe" | "image" | "video" | "model" | "text", title: "...", src: "entries/..." }]
  *         note   — короткий коментар журі (рядок або { uk, en }).
  */
 window.OXAIT = {
@@ -88,11 +84,12 @@ window.OXAIT = {
     "gamedev/q1": {
       order: ["claude", "chatgpt", "gemini", "grok", "glm", "qwen"],
       entries: {
-        claude:  { pills: [[true, true, null], [null, null, null], [null, null, null]] },
-        chatgpt: { pills: [[true, true, true], [null, null, null], [null, null, null]] },
-        gemini:  { pills: [[true, true, null], [null, null, null], [null, null, null]] },
+        claude:  { pills: [[true, true, null], [true, true, true], [null, null, null]] },
+        chatgpt: { pills: [[true, true, true], [true, true, true], [null, null, null]] },
+        gemini:  { pills: [[true, true, null], [true, true, true], [null, null, null]] },
         grok:    { status: "out" },
-        qwen:    { pills: [[true, true, true], [null, null, null], [null, null, null]] }
+        glm:     { pills: [[null, null, null], [true, true, true], [null, null, null]] },
+        qwen:    { pills: [[true, true, true], [true, true, true], [null, null, null]] }
       }
     }
   }

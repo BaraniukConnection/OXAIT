@@ -1,0 +1,65 @@
+<h2 class="sr-only">Playable 3D isometric Nokia-style snake game controlled with WASD.</h2>
+<div style="display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--text-secondary);margin:0 0 8px;">
+<span>Score <b id="sc" style="font-weight:500;color:var(--text-primary);">0</b></span>
+<span>WASD or arrows to move · Space to start or pause</span>
+<span>Best <b id="bs" style="font-weight:500;color:var(--text-primary);">0</b></span>
+</div>
+<div id="wrap" tabindex="0" style="position:relative;height:460px;border-radius:12px;overflow:hidden;background:#c7f0d8;outline:none;cursor:pointer;">
+<div id="msg" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#43523d;font-family:var(--font-mono);font-size:16px;text-align:center;pointer-events:none;z-index:2;">
+<div style="font-size:28px;font-weight:500;letter-spacing:2px;">SNAKE</div><div id="sub">Click here, then press Space</div></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const N=16,wrap=document.getElementById('wrap'),msg=document.getElementById('msg'),sub=document.getElementById('sub'),scEl=document.getElementById('sc'),bsEl=document.getElementById('bs');
+let best=0;try{best=+localStorage.getItem('snake3d')||0}catch(e){}bsEl.textContent=best;
+const DARK=0x43523d,LIGHT=0xc7f0d8,MID=0xa8d4b4;
+const scene=new THREE.Scene();scene.background=new THREE.Color(LIGHT);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.shadowMap.enabled=true;wrap.appendChild(renderer.domElement);
+let cam;const V=13;
+function size(){const w=wrap.clientWidth,h=wrap.clientHeight,a=w/h;renderer.setSize(w,h);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+if(!cam){cam=new THREE.OrthographicCamera();cam.position.set(20,20,20);cam.lookAt(0,0,0);}
+cam.left=-V*a;cam.right=V*a;cam.top=V;cam.bottom=-V;cam.near=-100;cam.far=200;cam.updateProjectionMatrix();}
+size();addEventListener('resize',size);
+scene.add(new THREE.AmbientLight(0xffffff,0.65));
+const sun=new THREE.DirectionalLight(0xffffff,0.6);sun.position.set(10,25,5);sun.castShadow=true;
+Object.assign(sun.shadow.camera,{left:-15,right:15,top:15,bottom:-15});sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const off=(N-1)/2,P=(i)=>i-off;
+const tileG=new THREE.BoxGeometry(0.96,0.3,0.96);
+const tA=new THREE.MeshLambertMaterial({color:0xb8e4c6}),tB=new THREE.MeshLambertMaterial({color:MID});
+for(let x=0;x<N;x++)for(let z=0;z<N;z++){const t=new THREE.Mesh(tileG,(x+z)%2?tA:tB);t.position.set(P(x),-0.15,P(z));t.receiveShadow=true;scene.add(t);}
+const wallM=new THREE.MeshLambertMaterial({color:DARK}),wallG=new THREE.BoxGeometry(1,0.6,1);
+for(let i=-1;i<=N;i++)for(const [x,z] of [[i,-1],[i,N],[-1,i],[N,i]]){if((x==-1||x==N)&&(z==-1||z==N)&&i!=-1&&i!=N)continue;const w=new THREE.Mesh(wallG,wallM);w.position.set(P(x),0.0,P(z));w.castShadow=w.receiveShadow=true;scene.add(w);}
+const segG=new THREE.BoxGeometry(0.86,0.86,0.86),segM=new THREE.MeshLambertMaterial({color:DARK}),headM=new THREE.MeshLambertMaterial({color:0x2b3527});
+const eyeG=new THREE.BoxGeometry(0.16,0.16,0.16),eyeM=new THREE.MeshBasicMaterial({color:LIGHT});
+const foodM=new THREE.MeshLambertMaterial({color:0x2b3527});const food=new THREE.Mesh(new THREE.OctahedronGeometry(0.42),foodM);food.castShadow=true;scene.add(food);
+let meshes=[],snake,dir,queue,foodPos,score,state='idle',acc=0,stepMs,last=performance.now();
+const DIRS={w:[0,-1],s:[0,1],a:[-1,0],d:[1,0],arrowup:[0,-1],arrowdown:[0,1],arrowleft:[-1,0],arrowright:[1,0]};
+function seg(head){const m=new THREE.Mesh(segG,head?headM:segM);m.castShadow=true;if(head){for(const s of[-1,1]){const e=new THREE.Mesh(eyeG,eyeM);e.position.set(0.2*s,0.2,0.44);m.add(e);}}scene.add(m);return m;}
+function reset(){meshes.forEach(m=>scene.remove(m));const c=N>>1;snake=[[c,c],[c,c+1],[c,c+2]];dir=[0,-1];queue=[];score=0;stepMs=150;scEl.textContent=0;
+meshes=snake.map((p,i)=>seg(i==0));placeFood();sync(1);}
+function placeFood(){do{foodPos=[Math.random()*N|0,Math.random()*N|0]}while(snake.some(p=>p[0]==foodPos[0]&&p[1]==foodPos[1]));food.position.set(P(foodPos[0]),0.5,P(foodPos[1]));}
+let prev=[];
+function step(){if(queue.length){const q=queue.shift();if(q[0]!=-dir[0]||q[1]!=-dir[1])dir=q;}
+prev=snake.map(p=>p.slice());const h=[snake[0][0]+dir[0],snake[0][1]+dir[1]];
+const eat=h[0]==foodPos[0]&&h[1]==foodPos[1];
+const body=eat?snake:snake.slice(0,-1);
+if(h[0]<0||h[1]<0||h[0]>=N||h[1]>=N||body.some(p=>p[0]==h[0]&&p[1]==h[1]))return die();
+snake.unshift(h);if(eat){score++;scEl.textContent=score;stepMs=Math.max(70,150-score*3);const m=seg(false);meshes.push(m);prev.push(prev[prev.length-1].slice());placeFood();}else snake.pop();
+meshes[0].rotation.y=Math.atan2(dir[0],dir[1]);}
+function sync(t){for(let i=0;i<snake.length;i++){const a=prev[i]||snake[i],b=snake[i];meshes[i].position.set(P(a[0]+(b[0]-a[0])*t),0.43,P(a[1]+(b[1]-a[1])*t));}}
+function die(){state='over';if(score>best){best=score;bsEl.textContent=best;try{localStorage.setItem('snake3d',best)}catch(e){}}
+meshes.forEach(m=>m.material=m===meshes[0]?headM:segM);msg.style.display='flex';msg.firstElementChild.textContent='GAME OVER';sub.textContent='Score '+score+' · Space to play again';}
+function toggle(){if(state=='idle'||state=='over'){reset();prev=snake.map(p=>p.slice());state='play';msg.style.display='none';}
+else if(state=='play'){state='pause';msg.style.display='flex';msg.firstElementChild.textContent='PAUSED';sub.textContent='Space to resume';}
+else{state='play';msg.style.display='none';}}
+wrap.addEventListener('keydown',e=>{const k=e.key.toLowerCase();
+if(k==' '){e.preventDefault();toggle();return;}
+if(DIRS[k]){e.preventDefault();if(state=='idle'||state=='over'){toggle();}if(queue.length<3)queue.push(DIRS[k]);}});
+wrap.addEventListener('click',()=>wrap.focus());
+reset();prev=snake.map(p=>p.slice());
+function loop(now){const dt=now-last;last=now;
+if(state=='play'){acc+=dt;while(acc>=stepMs&&state=='play'){acc-=stepMs;step();}if(state=='play')sync(Math.min(acc/stepMs,1));}else acc=0;
+food.rotation.y+=dt*0.003;food.position.y=0.55+Math.sin(now*0.005)*0.12;
+renderer.render(scene,cam);requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+</script>

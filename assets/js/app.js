@@ -29,6 +29,11 @@
       out: "Вибув",
       outText: n => `${n} вибуває з цього раунду.`,
       live: "Наживо",
+      choose: "Оберіть проєкт",
+      variant: "Варіант",
+      back: "До вибору проєктів",
+      projects: n => `${n} ${n % 10 === 1 && n % 100 !== 11 ? "проєкт" : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? "проєкти" : "проєктів"}`,
+      kb: "КБ",
       total: "Разом",
       fullscreen: "На весь екран", newTab: "Відкрити в новій вкладці", reload: "Перезапустити", close: "Закрити",
       stage: "Етап"
@@ -57,13 +62,19 @@
       out: "Eliminated",
       outText: n => `${n} is out of this round.`,
       live: "Live",
+      choose: "Choose a project",
+      variant: "Variant",
+      back: "Back to Projects",
+      projects: n => `${n} project${n === 1 ? "" : "s"}`,
+      kb: "KB",
       total: "Total",
       fullscreen: "Full Screen", newTab: "Open in New Tab", reload: "Restart", close: "Close",
       stage: "Stage"
     }
   };
 
-  const state = { lang: null, stage: D.stages[0].id, round: D.stages[0].rounds[0].id, pick: null };
+  const state = { lang: null, stage: D.stages[0].id, round: D.stages[0].rounds[0].id, pick: null, variant: null };
+  const M = window.OXAIT_ENTRIES || {};
   let t = I18N.uk;
   const L = v => (v && typeof v === "object") ? (v[state.lang] ?? v.uk ?? v.en) : v;
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -82,7 +93,10 @@
       const e = (r.entries || {})[id] || {};
       const pills = [0, 1, 2].map(g => [0, 1, 2].map(i => e.pills?.[g]?.[i] ?? null));
       const nums = pills.flat().map(v => v === true ? 1 : v).filter(v => typeof v === "number");
-      return { p: byId[id], pills, total: nums.length ? nums.reduce((a, b) => a + b, 0) : null, out: e.status === "out", output: e.output || null, note: e.note || null };
+      // Проєкти: з entries/manifest.js (tools/sync_entries.py) + вручну з data.js
+      const projects = [...(M[`${state.stage}/${state.round}`]?.[id] || []), ...(e.outputs || []), ...(e.output ? [e.output] : [])]
+        .map((o, i) => ({ ...o, id: o.id || String(i + 1), title: o.title || `${i + 1}` }));
+      return { p: byId[id], pills, total: nums.length ? nums.reduce((a, b) => a + b, 0) : null, out: e.status === "out", projects, note: e.note || null };
     });
     // Більше балів — вище, вибулі — внизу; при рівності лишається порядок з order
     entries.sort((a, b) => (a.out - b.out) || ((b.total ?? -1) - (a.total ?? -1)));
@@ -96,17 +110,18 @@
   /* ───── Маршрут ───── */
 
   function readHash() {
-    const [lang, stage, round, pick] = location.hash.replace(/^#\/?/, "").split("/");
+    const [lang, stage, round, pick, variant] = location.hash.replace(/^#\/?/, "").split("/");
     if (!I18N[lang]) return false;
     state.lang = lang;
     const s = stageOf(stage) || D.stages[0];
     state.stage = s.id;
     state.round = (s.rounds.find(r => r.id === round) || s.rounds[0]).id;
     state.pick = byId[pick] ? pick : null;
+    state.variant = state.pick && variant ? decodeURIComponent(variant) : null;
     return true;
   }
   const writeHash = () => {
-    const h = `#/${[state.lang, state.stage, state.round, state.pick].filter(Boolean).join("/")}`;
+    const h = `#/${[state.lang, state.stage, state.round, state.pick, state.pick && state.variant && encodeURIComponent(state.variant)].filter(Boolean).join("/")}`;
     if (location.hash !== h) history.replaceState(null, "", h);
   };
 
@@ -209,7 +224,7 @@
           title="${esc(groups.map(L).join(" · "))}">
           <span class="row-rank">${e.out ? "✕" : String(e.rank).padStart(2, "0")}</span>
           ${avatar(e.p)}
-          <span class="row-name"><b>${esc(e.p.name)}</b><small>${esc(e.p.vendor)}</small></span>
+          <span class="row-name"><b>${esc(e.p.name)}</b><small>${esc(e.p.vendor)}${e.projects.length ? ` · <span class="proj-count">${t.projects(e.projects.length)}</span>` : ""}</small></span>
           ${e.out ? `<span class="row-score"><span class="badge-out">${t.out}</span></span>`
             : `<span class="row-score${e.total === null ? " is-empty" : ""}"${e.total !== null ? ` data-v="${e.total}"` : ""}>${e.total ?? "—"}</span>`}
           ${pillsHTML(e.pills, i)}
@@ -242,13 +257,25 @@
 
   /* ───── Прев'ю ───── */
 
+  const TYPE_ICON = { image: "image", video: "movie", model: "view_in_ar", text: "description" };
+  const projIcon = (o, s) => TYPE_ICON[o.type] || (s.id === "software" ? "terminal" : "sports_esports");
+  const letter = i => String.fromCharCode(65 + i);
+  const fmtSize = b => b ? `${Math.max(1, Math.round(b / 1024))} ${t.kb}` : "";
+  const extOf = o => (String(o.src || "").split(/[?#]/)[0].match(/\.([a-z0-9]+)$/i)?.[1] || o.type).toUpperCase();
+
+  const current = () => roundData().entries.find(e => e.p.id === state.pick);
+  function currentProject(e) {
+    if (e.projects.length === 1) return e.projects[0];
+    return e.projects.find(o => o.id === state.variant) || null;
+  }
+
   function renderPreview() {
     const pv = $("#preview"), s = stageOf(state.stage), r = roundOf();
     const { entries, groups } = roundData();
-    const idx = entries.findIndex(e => e.p.id === state.pick);
+    const e = entries.find(x => x.p.id === state.pick);
 
-    pv.style.setProperty("--hud", idx < 0 ? "var(--cyan)" : tint(entries[idx]));
-    if (idx < 0) {
+    pv.style.setProperty("--hud", e ? tint(e) : "var(--cyan)");
+    if (!e) {
       const cover = r.cover
         ? `<div class="cover-img" style="background-image:url('${esc(r.cover)}')"></div>`
         : `<div class="cover-gen"></div><div class="cover-code" aria-hidden="true">${esc(r.code)}</div>`;
@@ -262,42 +289,84 @@
             <div class="cover-body"><p class="overline">OXAIT · ${esc(r.code)}</p><h3>${esc(L(s.title))}</h3><p>${t.roundLead}</p></div>
           </div></div>
           <p class="pv-hint"><span class="ox-icon">touch_app</span>${t.pickHint}</p>
-          <div class="pv-mini">${entries.map((e, i) => `<button class="ox-focus${e.out ? " is-out" : ""}" data-pick="${e.p.id}" style="--c:${tint(e)};--i:${i}">${avatar(e.p)}${esc(e.p.name)}</button>`).join("")}</div>
+          <div class="pv-mini">${entries.map((x, i) => `<button class="ox-focus${x.out ? " is-out" : ""}" data-pick="${x.p.id}" style="--c:${tint(x)};--i:${i}">${avatar(x.p)}${esc(x.p.name)}</button>`).join("")}</div>
         </div>`;
       return;
     }
 
-    const e = entries[idx], o = e.output;
-    const href = o && (o.type === "iframe" || o.type === "video" || o.type === "model") ? o.src : null;
     pv.innerHTML = `
       <div class="pv" style="--c:${tint(e)}">
         <div class="pv-head">
           ${avatar(e.p)}
           <div class="pv-title"><h2>${esc(e.p.name)}</h2>
             <p>${e.out ? `<span class="tag tag-out">${t.out}</span>` : `<span class="tag">${t.rank(e.rank)}</span>`}<span class="tag tag-accent">${esc(r.code)}</span>${esc(e.p.vendor)}</p></div>
-          ${o ? `<button class="icon-btn ox-focus" data-act="fs" title="${t.fullscreen}" aria-label="${t.fullscreen}"><span class="ox-icon">fullscreen</span></button>` : ""}
-          ${href ? `<a class="icon-btn ox-focus" href="${esc(href)}" target="_blank" rel="noopener" title="${t.newTab}" aria-label="${t.newTab}"><span class="ox-icon">open_in_new</span></a>` : ""}
+          <div class="pv-actions" id="pv-actions"></div>
           <button class="icon-btn ox-focus" data-act="close" title="${t.close}" aria-label="${t.close}"><span class="ox-icon">close</span></button>
         </div>
-        <div class="pv-stage" id="pv-stage">${outputHTML(e, s)}</div>
+        <div class="variants" id="pv-variants"></div>
+        <div class="pv-stage" id="pv-stage"></div>
         <div class="pv-score">
           ${e.pills.map((g, gi) => `<div class="score-group"><span class="micro">${esc(L(groups[gi]))}</span>${pillsHTML([g], 0)}</div>`).join("")}
           <div class="score-total"><span class="micro">${t.total}</span><b>${e.total ?? "—"}</b></div>
         </div>
         ${e.note ? `<p class="pv-note">${esc(L(e.note))}</p>` : ""}
       </div>`;
-    if (o?.type === "image") wireGallery(o);
-    if (o?.type === "model") loadModelViewer();
+    renderStage();
   }
 
-  function outputHTML(e, s) {
-    const o = e.output;
-    if (!o) return `
+  // Сцена прев'ю: вибір варіанта або сам проєкт
+  function renderStage() {
+    const e = current(); if (!e) return;
+    const s = stageOf(state.stage), o = currentProject(e), many = e.projects.length > 1;
+    const stage = $("#pv-stage");
+
+    $("#pv-actions").innerHTML = o ? `
+      ${many ? `<button class="icon-btn ox-focus" data-act="back" title="${t.back}" aria-label="${t.back}"><span class="ox-icon">arrow_back</span></button>` : ""}
+      <button class="icon-btn ox-focus" data-act="fs" title="${t.fullscreen}" aria-label="${t.fullscreen}"><span class="ox-icon">fullscreen</span></button>
+      ${o.src && o.type !== "text" && o.type !== "image" ? `<a class="icon-btn ox-focus" href="${esc(o.src)}" target="_blank" rel="noopener" title="${t.newTab}" aria-label="${t.newTab}"><span class="ox-icon">open_in_new</span></a>` : ""}` : "";
+
+    $("#pv-variants").innerHTML = many && o ? e.projects.map((x, i) => `
+      <button class="variant ox-focus" data-variant="${esc(x.id)}" aria-pressed="${x === o}">
+        <span class="variant-letter">${letter(i)}</span>${esc(x.title)}
+      </button>`).join("") : "";
+
+    if (!e.projects.length) { stage.innerHTML = emptyHTML(e, s); return; }
+    if (!o) { stage.innerHTML = pickerHTML(e, s); return; }
+    // Обраний з кількох варіантів — запускаємо одразу; єдиний проєкт — через кнопку
+    stage.innerHTML = o.type === "iframe" && many ? frameHTML(o, e) : outputHTML(o, e, s);
+    if (o.type === "image") wireGallery();
+    if (o.type === "model") loadModelViewer();
+  }
+
+  function emptyHTML(e, s) {
+    return `
       <div class="empty${e.out ? " is-out" : ""}" style="--c:${tint(e)}"><div class="empty-inner">
         ${avatar(e.p)}
         <h3><span class="ox-icon">${e.out ? "close" : "hourglass_empty"}</span>${e.out ? t.out : t.awaiting}</h3>
         <p>${e.out ? t.outText(esc(e.p.name)) : (t.outputWill[s.id] || t.outputWill.gamedev)(esc(e.p.name))}</p>
       </div></div>`;
+  }
+
+  function pickerHTML(e, s) {
+    return `
+      <div class="picker" style="--c:${tint(e)}">
+        <p class="overline picker-ask">${t.choose}</p>
+        <div class="picker-grid" style="--n:${Math.min(e.projects.length, 3)}">
+          ${e.projects.map((o, i) => `
+          <button class="pcard ox-focus" data-variant="${esc(o.id)}" style="--i:${i}">
+            <span class="pcard-letter" aria-hidden="true">${letter(i)}</span>
+            <span class="pcard-top"><span class="ox-icon">${projIcon(o, s)}</span>${t.variant} ${letter(i)}</span>
+            <span class="pcard-title">${esc(o.title)}</span>
+            <span class="pcard-meta">${[extOf(o), fmtSize(o.size)].filter(Boolean).join(" · ")}</span>
+            <span class="pcard-go">${o.type === "iframe" ? (t.play[s.id] || t.play.other) : t.play.other}<span class="ox-icon">play_arrow</span></span>
+          </button>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  const frameHTML = (o, e) => `<iframe src="${esc(o.src)}" title="${esc(o.title || e.p.name)}" allow="fullscreen; gamepad; autoplay; pointer-lock" allowfullscreen></iframe>`;
+
+  function outputHTML(o, e, s) {
     switch (o.type) {
       case "iframe": return `
         <div class="launch" style="--c:${e.p.color}"><div>
@@ -305,25 +374,25 @@
           <p>${t.playHint}</p>
         </div></div>`;
       case "video": return `<video src="${esc(o.src)}" ${o.poster ? `poster="${esc(o.poster)}"` : ""} controls playsinline preload="metadata"></video>`;
-      case "model": return `<model-viewer src="${esc(o.src)}" ${o.poster ? `poster="${esc(o.poster)}"` : ""} camera-controls auto-rotate shadow-intensity="1" alt="${esc(e.p.name)}"></model-viewer>`;
+      case "model": return `<model-viewer src="${esc(o.src)}" ${o.poster ? `poster="${esc(o.poster)}"` : ""} camera-controls auto-rotate shadow-intensity="1" alt="${esc(o.title)}"></model-viewer>`;
       case "image": {
         const list = [].concat(o.src);
-        return `<div class="gallery"><div class="gallery-main"><img src="${esc(list[0])}" alt="${esc(e.p.name)}"></div>${list.length > 1
+        return `<div class="gallery"><div class="gallery-main"><img src="${esc(list[0])}" alt="${esc(o.title)}"></div>${list.length > 1
           ? `<div class="gallery-thumbs">${list.map((src, i) => `<button class="ox-focus${i ? "" : " is-on"}" data-src="${esc(src)}"><img src="${esc(src)}" alt="" loading="lazy"></button>`).join("")}</div>` : ""}</div>`;
       }
-      case "text": return `<div class="reader"><article>${String(L(o) || "").split(/\n\s*\n/).map(p => `<p>${esc(p)}</p>`).join("")}</article></div>`;
+      case "text": return `<div class="reader"><article>${String(o.text ?? L(o) ?? "").split(/\n\s*\n/).map(p => `<p>${esc(p)}</p>`).join("")}</article></div>`;
       default: return "";
     }
   }
 
   function wireGallery() {
     const stage = $("#pv-stage");
-    stage.addEventListener("click", ev => {
+    stage.onclick = ev => {
       const b = ev.target.closest("[data-src]"); if (!b) return;
       stage.querySelectorAll("[data-src]").forEach(x => x.classList.toggle("is-on", x === b));
       const img = $(".gallery-main img", stage);
       img.replaceWith(Object.assign(img.cloneNode(), { src: b.dataset.src }));
-    });
+    };
   }
 
   let mvLoaded = false;
@@ -336,9 +405,10 @@
   }
 
   function play() {
-    const e = roundData().entries.find(x => x.p.id === state.pick);
+    const e = current(), o = e && currentProject(e);
+    if (!o) return;
     const stage = $("#pv-stage");
-    stage.innerHTML = `<iframe src="${esc(e.output.src)}" title="${esc(e.p.name)}" allow="fullscreen; gamepad; autoplay; pointer-lock" allowfullscreen></iframe>`;
+    stage.innerHTML = frameHTML(o, e);
     $("iframe", stage).focus();
   }
 
@@ -347,22 +417,27 @@
   app.addEventListener("click", ev => {
     const st = ev.target.closest("[data-stage]");
     if (st && st.dataset.stage !== state.stage) {
-      state.stage = st.dataset.stage; state.round = stageOf(state.stage).rounds[0].id; state.pick = null;
+      state.stage = st.dataset.stage; state.round = stageOf(state.stage).rounds[0].id; state.pick = null; state.variant = null;
       document.querySelectorAll(".stage").forEach(b => b.setAttribute("aria-selected", b === st));
       moveIndicator(); renderRound(); return;
     }
     const rd = ev.target.closest("[data-round]");
-    if (rd && rd.dataset.round !== state.round) { state.round = rd.dataset.round; state.pick = null; renderRound(); return; }
+    if (rd && rd.dataset.round !== state.round) { state.round = rd.dataset.round; state.pick = null; state.variant = null; renderRound(); return; }
+
+    const vr = ev.target.closest("[data-variant]");
+    if (vr) { state.variant = vr.dataset.variant; renderStage(); writeHash(); $("#pv-stage iframe")?.focus(); return; }
 
     const pk = ev.target.closest("[data-pick]");
     if (pk) {
       state.pick = pk.dataset.pick === state.pick && pk.classList.contains("row") ? null : pk.dataset.pick;
+      state.variant = null;
       markSelection(); renderPreview(); writeHash();
       if (state.pick && matchMedia("(max-width: 960px)").matches) $("#preview").scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
     const act = ev.target.closest("[data-act]")?.dataset.act;
-    if (act === "close") { state.pick = null; markSelection(); renderPreview(); writeHash(); }
+    if (act === "close") { state.pick = null; state.variant = null; markSelection(); renderPreview(); writeHash(); }
+    if (act === "back") { state.variant = null; renderStage(); writeHash(); }
     if (act === "play") play();
     if (act === "fs") $("#pv-stage")?.requestFullscreen?.();
 
@@ -374,7 +449,7 @@
     }
     if (ev.target.closest("#brand")) {
       ev.preventDefault();
-      state.stage = D.stages[0].id; state.round = D.stages[0].rounds[0].id; state.pick = null;
+      state.stage = D.stages[0].id; state.round = D.stages[0].rounds[0].id; state.pick = null; state.variant = null;
       renderStages(); renderRound();
     }
   });

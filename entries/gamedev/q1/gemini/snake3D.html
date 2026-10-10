@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Nokia Snake Game</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts for retro arcade typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+            user-select: none;
+            touch-action: none;
+        }
+        .retro-font {
+            font-family: 'Press Start 2P', monospace;
+        }
+        .nokia-screen {
+            background-color: #0d230d;
+            box-shadow: inset 0 0 25px rgba(0, 255, 0, 0.25), 0 10px 30px rgba(0,0,0,0.5);
+            border: 6px solid #1e293b;
+        }
+        /* Scanlines overlay for extra retro vibe */
+        .scanlines {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.03),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.03)
+            );
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+        }
+        .glow-text {
+            text-shadow: 0 0 8px rgba(74, 222, 128, 0.75);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen text-slate-100 p-2 sm:p-4 overflow-hidden">
+
+    <div class="w-full max-w-xl flex flex-col items-center">
+        <!-- Retro Phone Header -->
+        <div class="mb-3 text-center">
+            <h1 class="retro-font text-xl sm:text-2xl text-emerald-400 glow-text tracking-wider">NOKIA 3310-3D</h1>
+            <p class="text-xs text-slate-400 mt-1">Isometric Retro Edition</p>
+        </div>
+
+        <!-- Phone Chassis -->
+        <div class="w-full bg-slate-800 p-4 rounded-3xl shadow-2xl border-4 border-slate-700 relative">
+            <!-- Speaker / Earpiece slot mockup -->
+            <div class="w-16 h-1.5 bg-slate-900 rounded-full mx-auto mb-3 shadow-inner"></div>
+
+            <!-- LCD Screen Container -->
+            <div class="nokia-screen relative w-full aspect-[4/3] rounded-xl overflow-hidden flex flex-col">
+                <!-- HUD Overlay -->
+                <div class="absolute top-0 left-0 right-0 z-10 flex justify-between items-center px-4 py-2 bg-black/40 text-emerald-400 text-sm sm:text-base border-b border-emerald-900/50">
+                    <div>SCORE: <span id="score-val" class="retro-font text-xs">0</span></div>
+                    <div>HI-SCORE: <span id="highscore-val" class="retro-font text-xs">0</span></div>
+                </div>
+
+                <!-- Three.js Canvas Container -->
+                <div id="canvas-container" class="w-full h-full relative cursor-pointer"></div>
+
+                <!-- Scanlines effect -->
+                <div class="absolute inset-0 scanlines z-20"></div>
+
+                <!-- Start Screen Overlay -->
+                <div id="start-screen" class="absolute inset-0 bg-emerald-950/90 z-30 flex flex-col items-center justify-center p-6 text-center">
+                    <h2 class="retro-font text-lg sm:text-xl text-emerald-300 mb-4 glow-text">3D SNAKE</h2>
+                    <p class="text-xs sm:text-sm text-emerald-200 mb-6 leading-relaxed">
+                        Use <strong class="text-white bg-emerald-800 px-1.5 py-0.5 rounded">W A S D</strong> or Arrow Keys to navigate the isometric grid. Eat pulsing pellets and avoid walls or your own tail!
+                    </p>
+                    <button id="start-btn" class="retro-font bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs py-3 px-6 rounded-lg shadow-lg transition-transform transform active:scale-95 cursor-pointer font-bold">
+                        PRESS START
+                    </button>
+                </div>
+
+                <!-- Game Over Overlay -->
+                <div id="gameover-screen" class="absolute inset-0 bg-slate-950/90 z-30 hidden flex flex-col items-center justify-center p-6 text-center">
+                    <h2 class="retro-font text-lg sm:text-xl text-red-400 mb-2">GAME OVER</h2>
+                    <p class="text-xs text-slate-300 mb-4">Final Score: <span id="final-score" class="text-emerald-400 font-bold">0</span></p>
+                    <button id="restart-btn" class="retro-font bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs py-3 px-6 rounded-lg shadow-lg transition-transform transform active:scale-95 cursor-pointer font-bold">
+                        PLAY AGAIN (R)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Phone Keypad / Branding Area -->
+            <div class="mt-4 flex justify-between items-center px-4">
+                <div class="flex gap-1.5">
+                    <div class="w-3 h-3 rounded-full bg-slate-700 shadow-inner"></div>
+                    <div class="w-3 h-3 rounded-full bg-slate-700 shadow-inner"></div>
+                </div>
+                <span class="text-[10px] tracking-widest text-slate-500 font-bold">NOKIA ORIGINAL</span>
+                <div class="flex gap-1.5">
+                    <div class="w-3 h-3 rounded-full bg-slate-700 shadow-inner"></div>
+                    <div class="w-3 h-3 rounded-full bg-slate-700 shadow-inner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Help -->
+        <div class="mt-3 text-center text-xs text-slate-400">
+            Controls: W (Up), A (Left), S (Down), D (Right)
+        </div>
+    </div>
+
+    <script>
+        // Game Constants & Configuration
+        const GRID_SIZE = 16;
+        const TILE_SIZE = 1;
+        const INITIAL_SPEED = 150; // ms per tick
+        
+        // State Variables
+        let scene, camera, renderer;
+        let snake = [];
+        let direction = { x: 1, z: 0 };
+        let nextDirection = { x: 1, z: 0 };
+        let food = { x: 0, z: 0 };
+        let score = 0;
+        let highscore = localStorage.getItem('nokia_snake_highscore') || 0;
+        let gameInterval = null;
+        let gameRunning = false;
+        let gamePaused = false;
+        let lastTickTime = 0;
+        let currentTickRate = INITIAL_SPEED;
+
+        // Three.js Meshes
+        let snakeMeshes = [];
+        let foodMesh = null;
+        let floorGridHelper = null;
+
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('gameover-screen');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const scoreValEl = document.getElementById('score-val');
+        const highscoreValEl = document.getElementById('highscore-val');
+        const finalScoreEl = document.getElementById('final-score');
+        const container = document.getElementById('canvas-container');
+
+        // Initialize Highscore display
+        highscoreValEl.textContent = highscore;
+
+        function initThree() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a1a0a); // Deep retro matrix green tone
+            scene.fog = new THREE.FogExp2(0x0a1a0a, 0.035);
+
+            // Isometric Camera setup
+            const aspect = container.clientWidth / container.clientHeight;
+            const d = 11;
+            camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
+            
+            // Position camera for classic isometric angle looking down at grid center
+            camera.position.set(20, 20, 20);
+            camera.lookAt(0, 0, 0);
+
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x22c55e, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            directionalLight.position.set(15, 25, 10);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 1024;
+            directionalLight.shadow.mapSize.height = 1024;
+            scene.add(directionalLight);
+
+            // Subtle point light for glowing food
+            const foodLight = new THREE.PointLight(0x4ade80, 2, 8);
+            foodLight.name = 'foodLight';
+            scene.add(foodLight);
+
+            // Build Grid Floor & Boundary markers
+            createEnvironment();
+
+            // Window resize handler
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createEnvironment() {
+            // Board Floor plane
+            const boardGeometry = new THREE.BoxGeometry(GRID_SIZE * TILE_SIZE, 0.4, GRID_SIZE * TILE_SIZE);
+            const boardMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x112811, 
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const board = new THREE.Mesh(boardGeometry, boardMaterial);
+            board.position.y = -0.3;
+            board.receiveShadow = true;
+            scene.add(board);
+
+            // Grid lines overlay
+            const gridHelper = new THREE.GridHelper(GRID_SIZE * TILE_SIZE, GRID_SIZE, 0x1b4d1b, 0x163d16);
+            gridHelper.position.y = -0.08;
+            scene.add(gridHelper);
+
+            // Outer wireframe border for Nokia screen boundary feel
+            const edgesGeo = new THREE.BoxGeometry(GRID_SIZE * TILE_SIZE + 0.2, 0.6, GRID_SIZE * TILE_SIZE + 0.2);
+            const edgesMat = new THREE.MeshStandardMaterial({ 
+                color: 0x22c55e, 
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+            const borderBox = new THREE.Mesh(edgesGeo, edgesMat);
+            borderBox.position.y = -0.2;
+            scene.add(borderBox);
+        }
+
+        function onWindowResize() {
+            if (!container || !renderer) return;
+            const aspect = container.clientWidth / container.clientHeight;
+            const d = 11;
+            camera.left = -d * aspect;
+            camera.right = d * aspect;
+            camera.top = d;
+            camera.bottom = -d;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function startGame() {
+            // Reset state
+            score = 0;
+            scoreValEl.textContent = score;
+            currentTickRate = INITIAL_SPEED;
+            direction = { x: 1, z: 0 };
+            nextDirection = { x: 1, z: 0 };
+
+            // Initialize snake in the center
+            const startX = Math.floor(GRID_SIZE / 2);
+            const startZ = Math.floor(GRID_SIZE / 2);
+            snake = [
+                { x: startX, z: startZ },
+                { x: startX - 1, z: startZ },
+                { x: startX - 2, z: startZ }
+            ];
+
+            // Clear existing meshes from scene
+            clearMeshes();
+
+            // Create mesh representation for snake
+            updateSnakeMeshes();
+
+            // Spawn first food item
+            spawnFood();
+
+            // Hide screens
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+
+            gameRunning = true;
+            lastTickTime = performance.now();
+        }
+
+        function clearMeshes() {
+            snakeMeshes.forEach(mesh => scene.remove(mesh));
+            snakeMeshes = [];
+            if (foodMesh) {
+                scene.remove(foodMesh);
+                foodMesh = null;
+            }
+        }
+
+        function updateSnakeMeshes() {
+            // Remove old meshes
+            snakeMeshes.forEach(mesh => scene.remove(mesh));
+            snakeMeshes = [];
+
+            // Create new meshes for each snake segment
+            snake.forEach((segment, index) => {
+                const geometry = new THREE.BoxGeometry(0.85, 0.85, 0.85);
+                // Head is brighter, body segments vary slightly in green tone
+                const color = index === 0 ? 0x4ade80 : 0x22c55e;
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: color, 
+                    roughness: 0.3, 
+                    metalness: 0.4,
+                    emissive: index === 0 ? 0x15803d : 0x0f5132,
+                    emissiveIntensity: 0.3
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+
+                // Convert grid coordinates to 3D world coordinates centered on board
+                const worldX = (segment.x - GRID_SIZE / 2 + 0.5) * TILE_SIZE;
+                const worldZ = (segment.z - GRID_SIZE / 2 + 0.5) * TILE_SIZE;
+                mesh.position.set(worldX, 0.4, worldZ);
+
+                scene.add(mesh);
+                snakeMeshes.push(mesh);
+            });
+        }
+
+        function spawnFood() {
+            if (foodMesh) {
+                scene.remove(foodMesh);
+            }
+
+            let validPosition = false;
+            let fx, fz;
+            while (!validPosition) {
+                fx = Math.floor(Math.random() * GRID_SIZE);
+                fz = Math.floor(Math.random() * GRID_SIZE);
+
+                // Ensure food doesn't spawn on snake
+                validPosition = !snake.some(segment => segment.x === fx && segment.z === fz);
+            }
+
+            food = { x: fx, z: fz };
+
+            // Create pulsing pellet / bug mesh
+            const geometry = new THREE.SphereGeometry(0.45, 16, 16);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0x86efac, 
+                emissive: 0x4ade80,
+                emissiveIntensity: 0.8,
+                roughness: 0.2
+            });
+            foodMesh = new THREE.Mesh(geometry, material);
+            foodMesh.castShadow = true;
+
+            const worldX = (food.x - GRID_SIZE / 2 + 0.5) * TILE_SIZE;
+            const worldZ = (food.z - GRID_SIZE / 2 + 0.5) * TILE_SIZE;
+            foodMesh.position.set(worldX, 0.4, worldZ);
+
+            scene.add(foodMesh);
+
+            // Update food point light position
+            const foodLight = scene.getObjectByName('foodLight');
+            if (foodLight) {
+                foodLight.position.set(worldX, 1, worldZ);
+            }
+        }
+
+        function gameTick() {
+            if (!gameRunning || gamePaused) return;
+
+            // Apply next direction ensuring no instant 180-degree turn collision
+            if (!(nextDirection.x === -direction.x && nextDirection.z === -direction.z)) {
+                direction = { ...nextDirection };
+            }
+
+            // Calculate new head position
+            const head = { 
+                x: snake[0].x + direction.x, 
+                z: snake[0].z + direction.z 
+            };
+
+            // Check wall collision
+            if (head.x < 0 || head.x >= GRID_SIZE || head.z < 0 || head.z >= GRID_SIZE) {
+                triggerGameOver();
+                return;
+            }
+
+            // Check self collision
+            if (snake.some(segment => segment.x === head.x && segment.z === head.z)) {
+                triggerGameOver();
+                return;
+            }
+
+            // Add new head
+            snake.unshift(head);
+
+            // Check food consumption
+            if (head.x === food.x && head.z === food.z) {
+                score += 10;
+                scoreValEl.textContent = score;
+
+                if (score > highscore) {
+                    highscore = score;
+                    highscoreValEl.textContent = highscore;
+                    localStorage.setItem('nokia_snake_highscore', highscore);
+                }
+
+                // Speed up slightly with higher score
+                if (currentTickRate > 70) {
+                    currentTickRate = Math.max(70, INITIAL_SPEED - Math.floor(score / 50) * 10);
+                }
+
+                spawnFood();
+            } else {
+                // Remove tail if no food eaten
+                snake.pop();
+            }
+
+            // Refresh 3D meshes
+            updateSnakeMeshes();
+        }
+
+        function triggerGameOver() {
+            gameRunning = false;
+            finalScoreEl.textContent = score;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+
+            // Prevent default page scroll for game keys
+            if (['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','r',' '].includes(key)) {
+                e.preventDefault();
+            }
+
+            if (!gameRunning && (key === 'r' || key === ' ' || key === 'enter')) {
+                startGame();
+                return;
+            }
+
+            if (key === 'r' && !gameOverScreen.classList.contains('hidden')) {
+                startGame();
+                return;
+            }
+
+            // Map WASD and Arrow Keys to isometric direction vectors
+            // Isometric perspective alignment:
+            // W -> Up-Left / Forward on grid (-Z)
+            // S -> Down-Right / Backward on grid (+Z)
+            // A -> Down-Left / Left on grid (-X)
+            // D -> Up-Right / Right on grid (+X)
+            if (key === 'w' || e.key === 'ArrowUp') {
+                nextDirection = { x: 0, z: -1 };
+            } else if (key === 's' || e.key === 'ArrowDown') {
+                nextDirection = { x: 0, z: 1 };
+            } else if (key === 'a' || e.key === 'ArrowLeft') {
+                nextDirection = { x: -1, z: 0 };
+            } else if (key === 'd' || e.key === 'ArrowRight') {
+                nextDirection = { x: 1, z: 0 };
+            }
+        });
+
+        // Button listeners
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+
+        // Touch swipe support for mobile/tablet playability
+        let touchStartX = 0;
+        let touchStartY = 0;
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        container.addEventListener('touchend', (e) => {
+            if (!gameRunning || e.changedTouches.length === 0) return;
+            const deltaX = e.changedTouches[0].clientX - touchStartX;
+            const deltaY = e.changedTouches[0].clientY - touchStartY;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (deltaX > 30) {
+                    nextDirection = { x: 1, z: 0 }; // Right (D)
+                } else if (deltaX < -30) {
+                    nextDirection = { x: -1, z: 0 }; // Left (A)
+                }
+            } else {
+                if (deltaY > 30) {
+                    nextDirection = { x: 0, z: 1 }; // Down (S)
+                } else if (deltaY < -30) {
+                    nextDirection = { x: 0, z: -1 }; // Up (W)
+                }
+            }
+        }, { passive: true });
+
+        function animate(currentTime) {
+            requestAnimationFrame(animate);
+
+            // Handle grid tick timing
+            if (gameRunning) {
+                if (currentTime - lastTickTime >= currentTickRate) {
+                    gameTick();
+                    lastTickTime = currentTime;
+                }
+            }
+
+            // Pulse food mesh animation
+            if (foodMesh) {
+                const pulseScale = 1 + Math.sin(currentTime * 0.008) * 0.15;
+                foodMesh.scale.set(pulseScale, pulseScale, pulseScale);
+                foodMesh.rotation.y += 0.03;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Initialize on window load
+        window.onload = function () {
+            initThree();
+            requestAnimationFrame(animate);
+        };
+    </script>
+</body>
+</html>

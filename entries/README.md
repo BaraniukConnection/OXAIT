@@ -1,15 +1,11 @@
 # Роботи учасників
 
-Кожна робота лежить у своїй папці:
+Ця папка генерується скриптом `tools/sync_entries.py` з робочої папки `HDDWork/OXAIT/` — не редагуй її вручну, бо синхронізація перезаписує папки учасників.
 
 ```
-entries/<stage>/<round>/<participant>/
+entries/<stage>/<round>/<participant>/   копії робіт
+entries/manifest.js                       список проєктів для сайту
+entries/_template/                        зразок гри (не синхронізується)
 ```
 
-- `stage`: gamedev · software · modeling · analysis · writing · imagegen
-- `round`: q1 · sec1 · q2 · sec2 · q3 · sec3 · sec4 · sec5 · sec6
-- `participant`: claude · chatgpt · gemini · grok · glm · qwen
-
-Гра чи застосунок — це `index.html` з усім потрібним поруч (відносні шляхи). Вона відкривається в прев'ю через iframe, тож має розтягуватись на всю ширину й висоту вікна. Зразок — `_template/index.html`.
-
-Після додавання роботи пропиши її в `data.js` (див. головний README).
+Гра — це `.html` (або папка з `index.html`) з відносними шляхами. Вона відкривається в прев'ю через iframe, тож має розтягуватись на все вікно.

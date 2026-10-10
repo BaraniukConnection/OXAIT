@@ -566,6 +566,81 @@ img { display: block; max-width: 100%; }
 
 .foot { display: flex; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-8); padding: var(--space-4) var(--space-2) 0; border-top: 1px solid var(--line); color: var(--ink-muted); font-family: var(--font-display); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
 
+
+/* Кількість проєктів у рядку таблиці */
+.proj-count { color: var(--cyan); }
+.row.is-out .proj-count { color: inherit; }
+
+/* Вибір варіанта: картки A / B / … */
+.picker {
+  position: absolute; inset: 0; overflow: auto;
+  display: flex; flex-direction: column; justify-content: center; gap: var(--space-4); padding: var(--space-6);
+  background:
+    radial-gradient(520px 300px at 50% 40%, color-mix(in srgb, var(--c) 16%, transparent), transparent 70%),
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--c) 6%, transparent) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(0deg, color-mix(in srgb, var(--c) 6%, transparent) 0 1px, transparent 1px 40px),
+    #03060a;
+}
+.picker-ask { text-align: center; color: var(--c); text-shadow: 0 0 10px var(--c); animation: rise 360ms var(--ease) both; }
+.picker-grid { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: var(--space-4); max-width: 820px; width: 100%; margin: 0 auto; }
+.pcard {
+  --cut: 18px;
+  position: relative; overflow: hidden; min-height: 210px; padding: var(--space-5);
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2);
+  border: 0; cursor: pointer; text-align: left; color: var(--ink);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 16%, #0a121b), #070c13 70%);
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 35%, transparent);
+  transition: transform 220ms var(--ease), box-shadow 220ms var(--ease), background 220ms;
+  animation: card-in 520ms var(--ease) both; animation-delay: calc(var(--i) * 90ms + 80ms);
+}
+@keyframes card-in { from { opacity: 0; transform: translateY(18px) scale(.96); filter: brightness(2); } }
+.pcard::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .1), transparent); transform: skewX(-20deg);
+}
+.pcard:hover { transform: translateY(-4px); background: linear-gradient(160deg, color-mix(in srgb, var(--c) 28%, #0a121b), #08101a 70%); box-shadow: inset 0 0 0 1.5px var(--c), inset 0 0 40px -10px var(--c); }
+.pcard:hover::after { animation: sweep 800ms var(--ease) both; }
+.pcard:active { transform: scale(.98); }
+.pcard-letter {
+  position: absolute; right: 10px; bottom: -22px; pointer-events: none;
+  font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 150px; line-height: 1;
+  color: transparent; -webkit-text-stroke: 2px color-mix(in srgb, var(--c) 55%, transparent);
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--c) 60%, transparent));
+  transition: transform 300ms var(--ease), -webkit-text-stroke-color 300ms;
+}
+.pcard:hover .pcard-letter { transform: translateY(-6px) scale(1.05); -webkit-text-stroke-color: var(--c); }
+.pcard-top { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-display); font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--c); }
+.pcard-top .ox-icon { font-size: 20px; filter: drop-shadow(0 0 6px var(--c)); }
+.pcard-title { position: relative; max-width: 85%; font-family: var(--font-display); font-style: italic; font-size: 24px; line-height: 28px; font-weight: 900; text-shadow: 0 0 18px color-mix(in srgb, var(--c) 45%, transparent); }
+.pcard-meta { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--ink-muted); }
+.pcard-go {
+  margin-top: auto; display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px 6px 14px;
+  font-family: var(--font-display); font-style: italic; font-size: 14px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--on-accent); background: var(--c); box-shadow: 0 0 18px -2px var(--c);
+  --cut: 8px; clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+  transition: transform 220ms var(--ease);
+}
+.pcard:hover .pcard-go { transform: translateX(4px); }
+.pcard-go .ox-icon { font-size: 20px; }
+
+/* Перемикач варіантів над грою */
+.variants { display: flex; gap: var(--space-2); padding: 0 var(--space-4) var(--space-3); overflow-x: auto; scrollbar-width: none; }
+.variants:empty { display: none; }
+.variant {
+  display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0;
+  min-height: 36px; padding: 4px 14px 4px 4px; border: 0; border-radius: 4px; cursor: pointer;
+  background: rgba(255, 255, 255, .04); color: var(--ink-muted); box-shadow: inset 0 0 0 1px var(--line);
+  font-family: var(--font-display); font-size: 13px; font-weight: 800;
+  transition: background var(--t-fast), color var(--t-fast), box-shadow var(--t-fast);
+  animation: rise 300ms var(--ease) both;
+}
+.variant:hover { color: var(--ink); }
+.variant-letter { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 3px; font-style: italic; font-weight: 900; background: rgba(255, 255, 255, .06); }
+.variant[aria-pressed="true"] { color: var(--ink); background: color-mix(in srgb, var(--c) 18%, transparent); box-shadow: inset 0 0 0 1px var(--c), 0 0 16px -4px var(--c); }
+.variant[aria-pressed="true"] .variant-letter { background: var(--c); color: var(--on-accent); box-shadow: 0 0 10px var(--c); }
+.pv-actions { display: flex; gap: 2px; }
+
 /* ───────────── Адаптив ───────────── */
 
 @media (max-width: 1180px) {
@@ -597,6 +672,12 @@ img { display: block; max-width: 100%; }
   .cover { padding: var(--space-4); }
   .cover-body h3 { font-size: 26px; line-height: 30px; }
   .btn { height: 54px; font-size: 18px; padding: 0 var(--space-6); }
+  .picker { justify-content: flex-start; padding: var(--space-4); }
+  .picker-grid { grid-template-columns: 1fr; gap: var(--space-3); }
+  .pcard { min-height: 150px; padding: var(--space-4); }
+  .pcard-letter { font-size: 110px; }
+  .pcard-title { font-size: 20px; line-height: 24px; }
+  .variants { padding: 0 var(--space-2) var(--space-3); }
 }
 
 @media (prefers-reduced-motion: reduce) {
