@@ -6,7 +6,8 @@
  * results       — по ключу "<stage>/<round>":
  *     order     — порядок при рівних балах (таблиця сортується за сумою, вибулі — внизу).
  *     entries   — для кожного учасника:
- *         pills  — три групи по три таблетки; null = порожня, true = заповнена (1 бал),
+ *         pills  — три групи по три таблетки; null = порожня (ще не оцінено), true = заповнена (1 бал),
+ *                  false = оцінено, 0 балів (червона),
  *                  число — заповнена з цифрою (додається до суми), інший текст просто показується.
  *         status — "out", якщо учасник вибув (рядок червоний і йде вниз таблиці).
  *         outputs — проєкти, додані вручну (зазвичай не потрібно — їх знаходить tools/sync_entries.py):
@@ -73,7 +74,8 @@ window.OXAIT = {
     }
   ],
 
-  // Назви трьох груп таблеток (етапи всередині раунду). Можна перевизначити в results[...].groups.
+  // Назви трьох груп таблеток (етапи всередині раунду). Можна перевизначити в results[...].groups;
+  // там же поле match (regex) прив'язує проєкти до етапу — вони йдуть у порядку етапів.
   groups: [
     { uk: "Етап I",   en: "Stage I" },
     { uk: "Етап II",  en: "Stage II" },
@@ -83,13 +85,21 @@ window.OXAIT = {
   results: {
     "gamedev/q1": {
       order: ["claude", "chatgpt", "gemini", "grok", "glm", "qwen"],
+      // Завдання раунду: match (regex по імені файлу / назві) розкладає проєкти по етапах
+      groups: [
+        { uk: "Етап I · Snake 3D",    en: "Stage I · Snake 3D",    match: "snake" },
+        { uk: "Етап II · Тетріс",     en: "Stage II · Tetris",     match: "tetris" },
+        { uk: "Етап III · Платформер", en: "Stage III · Platformer" }
+      ],
       entries: {
-        claude:  { pills: [[true, true, null], [true, true, true], [null, null, null]] },
-        chatgpt: { pills: [[true, true, true], [true, true, true], [null, null, null]] },
-        gemini:  { pills: [[true, true, null], [true, true, true], [null, null, null]] },
+        claude:  { pills: [[true, true, null], [true, true, true], [true, true, true]] },
+        chatgpt: { pills: [[true, true, true], [true, true, true], [true, true, true]] },
+        gemini:  { pills: [[true, true, null], [true, true, true], [true, false, false]] },
         grok:    { status: "out" },
-        glm:     { pills: [[null, null, null], [true, true, true], [null, null, null]] },
-        qwen:    { pills: [[true, true, true], [true, true, true], [null, null, null]] }
+        glm:     { pills: [[null, null, null], [true, true, true], [false, false, false]],
+                   note: { uk: "Етап III: проєкт не запускається — 0 балів.", en: "Stage III: the project is not playable — 0 points." } },
+        qwen:    { pills: [[true, true, true], [true, true, true], [false, false, false]],
+                   note: { uk: "Етап III: проєкт не запускається — 0 балів.", en: "Stage III: the project is not playable — 0 points." } }
       }
     }
   }

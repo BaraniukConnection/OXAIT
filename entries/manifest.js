@@ -4,6 +4,13 @@ window.OXAIT_ENTRIES = {
     "chatgpt": [
       {
         "type": "iframe",
+        "title": "NEON RONIN — Midnight Protocol",
+        "src": "entries/gamedev/q1/chatgpt/Platformer.html",
+        "size": 32822,
+        "id": "platformer"
+      },
+      {
+        "type": "iframe",
         "title": "Snake / Isometric",
         "src": "entries/gamedev/q1/chatgpt/Snake3D.html",
         "size": 13292,
@@ -18,6 +25,13 @@ window.OXAIT_ENTRIES = {
       }
     ],
     "claude": [
+      {
+        "type": "iframe",
+        "title": "Neon Ronin",
+        "src": "entries/gamedev/q1/claude/neon-ronin.html",
+        "size": 69571,
+        "id": "neonronin"
+      },
       {
         "type": "iframe",
         "title": "Snake 3D",
@@ -43,6 +57,13 @@ window.OXAIT_ENTRIES = {
       }
     ],
     "gemini": [
+      {
+        "type": "iframe",
+        "title": "CYBER-KATANA: NEON SLUMS 2088",
+        "src": "entries/gamedev/q1/gemini/cyberpunk_samurai_pixel_platformer.html",
+        "size": 59547,
+        "id": "cyberpunksamuraipixelplatformer"
+      },
       {
         "type": "iframe",
         "title": "3D Nokia Snake Game",

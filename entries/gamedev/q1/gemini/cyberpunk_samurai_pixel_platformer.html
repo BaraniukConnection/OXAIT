@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER-KATANA: NEON SLUMS 2088</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #050508;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pixel-font {
+            font-family: 'Press Start 2P', monospace;
+        }
+        .neon-glow-cyan {
+            text-shadow: 0 0 5px #00f3ff, 0 0 10px #00f3ff, 0 0 20px #00f3ff;
+        }
+        .neon-glow-pink {
+            text-shadow: 0 0 5px #ff0055, 0 0 10px #ff0055, 0 0 20px #ff0055;
+        }
+        .neon-border-cyan {
+            box-shadow: 0 0 10px #00f3ff, inset 0 0 10px #00f3ff;
+            border: 2px solid #00f3ff;
+        }
+        .neon-border-pink {
+            box-shadow: 0 0 10px #ff0055, inset 0 0 10px #ff0055;
+            border: 2px solid #ff0055;
+        }
+        .cyber-card {
+            background: rgba(10, 10, 20, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+        }
+        canvas {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
+            border-radius: 4px;
+        }
+        /* Custom scrollbars for level selector */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a14; }
+        ::-webkit-scrollbar-thumb { background: #ff0055; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-black text-white flex flex-col justify-center items-center h-screen w-screen relative">
+
+    <!-- GAME CONTAINER -->
+    <div id="game-container" class="relative w-full max-w-[1024px] h-[576px] flex flex-col items-center justify-center">
+
+        <!-- CANVAS -->
+        <canvas id="gameCanvas" width="1024" height="576" class="w-full h-full bg-slate-950 block"></canvas>
+
+        <!-- RETRO HUD OVERLAY (Active during gameplay) -->
+        <div id="hud" class="absolute top-0 left-0 w-full p-4 pointer-events-none flex justify-between items-start hidden">
+            <!-- Left: Health & Dash -->
+            <div class="flex flex-col gap-2 w-64 cyber-card p-3 rounded-lg border-l-4 border-cyan-400">
+                <div class="flex justify-between items-center text-xs pixel-font text-cyan-400">
+                    <span>HP</span>
+                    <span id="hp-text">100/100</span>
+                </div>
+                <div class="w-full bg-gray-900 h-3 rounded-full overflow-hidden border border-cyan-500/50">
+                    <div id="hp-bar" class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full w-full transition-all duration-200"></div>
+                </div>
+
+                <div class="flex justify-between items-center text-[10px] pixel-font text-pink-500 mt-1">
+                    <span>CYBER DASH</span>
+                    <span id="dash-text">READY</span>
+                </div>
+                <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden border border-pink-500/50">
+                    <div id="dash-bar" class="bg-gradient-to-r from-pink-500 to-purple-500 h-full w-full transition-all duration-100"></div>
+                </div>
+            </div>
+
+            <!-- Center: Boss Bar (Level 5 Only) -->
+            <div id="boss-hud" class="w-96 cyber-card p-3 rounded-lg border-b-2 border-red-500 hidden text-center">
+                <div class="text-xs pixel-font text-red-500 mb-1 tracking-widest neon-glow-pink">MECHA-TITAN ZERO</div>
+                <div class="w-full bg-gray-900 h-4 rounded overflow-hidden border border-red-600">
+                    <div id="boss-hp-bar" class="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 h-full w-full transition-all duration-100"></div>
+                </div>
+            </div>
+
+            <!-- Right: Level Info & Chips -->
+            <div class="flex flex-col items-end gap-1 cyber-card p-3 rounded-lg border-r-4 border-pink-500">
+                <div class="text-xs pixel-font text-yellow-400" id="level-title">LVL 1: NEON SLUMS</div>
+                <div class="text-sm font-bold text-cyan-300 flex items-center gap-2">
+                    <span class="text-xs pixel-font text-pink-400">CHIPS:</span>
+                    <span id="score-text" class="pixel-font text-yellow-300">0000</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN MENU OVERLAY -->
+        <div id="main-menu" class="absolute inset-0 cyber-card flex flex-col items-center justify-center gap-6 p-8">
+            <div class="text-center">
+                <h1 class="text-5xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-400 neon-glow-cyan mb-2">
+                    CYBER-KATANA
+                </h1>
+                <p class="pixel-font text-xs text-pink-400 tracking-widest">NEON SLUMS 2088</p>
+            </div>
+
+            <div class="flex flex-col gap-3 w-64">
+                <button id="btn-start" class="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-bold pixel-font text-xs rounded transition-all transform hover:scale-105 neon-border-cyan">
+                    NEW GAME
+                </button>
+                <button id="btn-continue" class="px-6 py-3 bg-pink-600 hover:bg-pink-500 text-white font-bold pixel-font text-xs rounded transition-all transform hover:scale-105 opacity-50 cursor-not-allowed" disabled>
+                    CONTINUE
+                </button>
+                <button id="btn-select-level" class="px-6 py-3 bg-purple-700 hover:bg-purple-600 text-white font-bold pixel-font text-xs rounded transition-all transform hover:scale-105 border border-purple-400">
+                    SELECT LEVEL
+                </button>
+                <button id="btn-options" class="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold pixel-font text-xs rounded transition-all border border-cyan-500/30">
+                    SETTINGS
+                </button>
+            </div>
+
+            <div class="text-[10px] pixel-font text-gray-400 text-center mt-4">
+                [WASD] Move/8-Axis Aim | [SHIFT] Cyber Dash | [SPACE] Katana Slash
+            </div>
+        </div>
+
+        <!-- LEVEL SELECT MODAL -->
+        <div id="level-modal" class="absolute inset-0 cyber-card flex flex-col items-center justify-center p-6 hidden">
+            <h2 class="text-2xl font-bold pixel-font text-cyan-400 mb-6">SELECT MISSION</h2>
+            <div id="level-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg mb-6">
+                <!-- Level Buttons populated via JS -->
+            </div>
+            <button id="btn-close-levels" class="px-6 py-2 bg-pink-600 text-white pixel-font text-xs rounded hover:bg-pink-500">BACK</button>
+        </div>
+
+        <!-- SETTINGS MODAL -->
+        <div id="settings-modal" class="absolute inset-0 cyber-card flex flex-col items-center justify-center p-6 hidden">
+            <h2 class="text-2xl font-bold pixel-font text-pink-500 mb-6">SYSTEM OPTIONS</h2>
+            
+            <div class="flex flex-col gap-6 w-80 mb-8">
+                <div class="flex flex-col gap-2">
+                    <label class="pixel-font text-xs text-cyan-400 flex justify-between">
+                        <span>MASTER SOUND SFX</span>
+                        <span id="sfx-vol-val">80%</span>
+                    </label>
+                    <input type="range" id="sfx-slider" min="0" max="100" value="80" class="accent-cyan-400 cursor-pointer">
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="pixel-font text-xs text-pink-400 flex justify-between">
+                        <span>SYNTHWAVE MUSIC</span>
+                        <span id="music-vol-val">60%</span>
+                    </label>
+                    <input type="range" id="music-slider" min="0" max="100" value="60" class="accent-pink-500 cursor-pointer">
+                </div>
+
+                <!-- Controls Guide -->
+                <div class="border border-cyan-500/30 p-3 rounded bg-black/50 text-[11px] leading-relaxed text-gray-300">
+                    <div class="text-cyan-400 font-bold mb-1 pixel-font text-[10px]">CYBERNETIC CONTROLS:</div>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li><b>W/A/S/D:</b> 8-Axis movement & aiming</li>
+                        <li><b>S + A / D:</b> Low Roll evade (invulnerable)</li>
+                        <li><b>Shift:</b> High-speed Cyber Dash</li>
+                        <li><b>Space:</b> Katana Slash (Attacks up/front)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <button id="btn-close-settings" class="px-6 py-2 bg-cyan-500 text-black font-bold pixel-font text-xs rounded hover:bg-cyan-400">SAVE & CLOSE</button>
+        </div>
+
+        <!-- GAME OVER / VICTORY MODAL -->
+        <div id="end-modal" class="absolute inset-0 cyber-card flex flex-col items-center justify-center p-6 hidden z-20">
+            <h2 id="end-title" class="text-4xl font-black pixel-font text-red-500 mb-2 neon-glow-pink">SYSTEM FAILURE</h2>
+            <p id="end-subtitle" class="text-cyan-300 mb-6 font-semibold">Your cybernetics overloaded...</p>
+            
+            <div class="flex gap-4">
+                <button id="btn-restart" class="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-bold pixel-font text-xs rounded border border-cyan-300">
+                    RETRY
+                </button>
+                <button id="btn-menu" class="px-6 py-3 bg-pink-600 hover:bg-pink-500 text-white font-bold pixel-font text-xs rounded border border-pink-400">
+                    MAIN MENU
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- AUDIO & ENGINE LOGIC -->
+    <script>
+        // Web Audio API Synthesizer for Retro Sounds & Music
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.sfxVol = 0.8;
+                this.musicVol = 0.6;
+                this.musicInterval = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playTone(freq, type, duration, vol = 1) {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol * this.sfxVol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e){}
+            }
+
+            playSlash() {
+                this.init();
+                if (!this.ctx) return;
+                const bufferSize = this.ctx.sampleRate * 0.1;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1200;
+                filter.Q.value = 3;
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(this.sfxVol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start();
+            }
+
+            playHit() {
+                this.playTone(120, 'sawtooth', 0.15, 0.8);
+                this.playTone(60, 'square', 0.2, 1);
+            }
+
+            playDash() {
+                this.playTone(400, 'sine', 0.15, 0.5);
+                this.playTone(800, 'sine', 0.1, 0.4);
+            }
+
+            playJump() {
+                this.playTone(200, 'sine', 0.1, 0.5);
+                this.playTone(350, 'sine', 0.15, 0.5);
+            }
+
+            playChip() {
+                this.playTone(900, 'triangle', 0.08, 0.4);
+                setTimeout(() => this.playTone(1300, 'triangle', 0.1, 0.4), 60);
+            }
+
+            playExplosion() {
+                this.playTone(80, 'sawtooth', 0.4, 1);
+                this.playTone(40, 'square', 0.5, 1);
+            }
+
+            startSynthMusic() {
+                this.init();
+                if (this.musicInterval) clearInterval(this.musicInterval);
+                const notes = [110, 110, 130.81, 110, 146.83, 130.81, 98, 110]; // Bass synth line
+                let step = 0;
+                this.musicInterval = setInterval(() => {
+                    if (this.musicVol > 0 && this.ctx) {
+                        this.playTone(notes[step % notes.length], 'sawtooth', 0.18, this.musicVol * 0.25);
+                        if (step % 4 === 0) {
+                            this.playTone(55, 'sine', 0.2, this.musicVol * 0.4); // Beat kick
+                        }
+                    }
+                    step++;
+                }, 220);
+            }
+
+            stopMusic() {
+                if (this.musicInterval) clearInterval(this.musicInterval);
+            }
+        }
+
+        const sound = new SoundEngine();
+
+        const CANVAS_WIDTH = 1024;
+        const CANVAS_HEIGHT = 576;
+        const GRAVITY = 0.55;
+
+        // Save State
+        let gameState = {
+            currentLevel: 1,
+            unlockedLevel: 1,
+            score: 0,
+            hp: 100,
+            maxHp: 100
+        };
+
+        // Load saved game
+        const saved = localStorage.getItem('cyber_katana_save');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                gameState.unlockedLevel = parsed.unlockedLevel || 1;
+                gameState.score = parsed.score || 0;
+            } catch(e){}
+        }
+
+        // Keys state
+        const keys = {
+            w: false, a: false, s: false, d: false,
+            shift: false, space: false,
+            spacePressed: false, shiftPressed: false
+        };
+
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            if (['w','a','s','d'].includes(k)) keys[k] = true;
+            if (e.key === 'Shift') {
+                if (!keys.shift) keys.shiftPressed = true;
+                keys.shift = true;
+            }
+            if (e.key === ' ') {
+                if (!keys.space) keys.spacePressed = true;
+                keys.space = true;
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const k = e.key.toLowerCase();
+            if (['w','a','s','d'].includes(k)) keys[k] = false;
+            if (e.key === 'Shift') keys.shift = false;
+            if (e.key === ' ') keys.space = false;
+        });
+
+        class ParticleSystem {
+            constructor() {
+                this.particles = [];
+            }
+
+            add(x, y, color, count = 5, speed = 3, size = 3) {
+                for (let i = 0; i < count; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const spd = Math.random() * speed + 1;
+                    this.particles.push({
+                        x, y,
+                        vx: Math.cos(angle) * spd,
+                        vy: Math.sin(angle) * spd,
+                        color,
+                        size: Math.random() * size + 1,
+                        life: 1,
+                        decay: Math.random() * 0.04 + 0.02
+                    });
+                }
+            }
+
+            addGhostTrail(x, y, width, height, facingRight) {
+                this.particles.push({
+                    type: 'ghost',
+                    x, y, width, height, facingRight,
+                    life: 0.6,
+                    decay: 0.08
+                });
+            }
+
+            update() {
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.life -= p.decay;
+                    if (p.life <= 0) {
+                        this.particles.splice(i, 1);
+                        continue;
+                    }
+                    if (p.type !== 'ghost') {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                    }
+                }
+            }
+
+            draw(ctx) {
+                this.particles.forEach(p => {
+                    ctx.save();
+                    if (p.type === 'ghost') {
+                        ctx.globalAlpha = p.life * 0.5;
+                        ctx.fillStyle = '#00f3ff';
+                        ctx.fillRect(p.x, p.y, p.width, p.height);
+                    } else {
+                        ctx.globalAlpha = p.life;
+                        ctx.fillStyle = p.color;
+                        ctx.shadowColor = p.color;
+                        ctx.shadowBlur = 8;
+                        ctx.fillRect(p.x, p.y, p.size, p.size);
+                    }
+                    ctx.restore();
+                });
+            }
+        }
+
+        const particleEngine = new ParticleSystem();
+
+        class CyberSamurai {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 32;
+                this.height = 48;
+                this.vx = 0;
+                this.vy = 0;
+                this.speed = 4.5;
+                this.jumpStrength = -11.5;
+                this.isGrounded = false;
+                this.facingRight = true;
+                
+                // Combat & Dash state
+                this.isDucking = false;
+                this.isRolling = false;
+                this.rollTimer = 0;
+                this.isDashing = false;
+                this.dashTimer = 0;
+                this.dashCooldown = 0;
+                this.attackTimer = 0;
+                this.attackDir = 'FRONT'; // FRONT, UP
+                this.invulnerable = 0;
+                this.animFrame = 0;
+                this.animTimer = 0;
+            }
+
+            update(platforms) {
+                // Cool-downs
+                if (this.dashCooldown > 0) this.dashCooldown--;
+                if (this.invulnerable > 0) this.invulnerable--;
+                if (this.attackTimer > 0) this.attackTimer--;
+
+                // 8-Axis Direction determination
+                const up = keys.w;
+                const down = keys.s;
+                const left = keys.a;
+                const right = keys.d;
+
+                if (right) this.facingRight = true;
+                if (left) this.facingRight = false;
+
+                // Cyber Roll Handling (S + A or S + D)
+                if (down && (left || right) && this.isGrounded && !this.isRolling && !this.isDashing) {
+                    this.isRolling = true;
+                    this.rollTimer = 18;
+                    this.invulnerable = 20;
+                    sound.playDash();
+                }
+
+                if (this.isRolling) {
+                    this.height = 28;
+                    this.vx = (this.facingRight ? 1 : -1) * 7;
+                    this.rollTimer--;
+                    particleEngine.addGhostTrail(this.x, this.y, this.width, this.height, this.facingRight);
+                    if (this.rollTimer <= 0) {
+                        this.isRolling = false;
+                        this.height = 48;
+                    }
+                } else if (this.isDashing) {
+                    // Dash in Facing / Aim Direction
+                    this.dashTimer--;
+                    particleEngine.addGhostTrail(this.x, this.y, this.width, this.height, this.facingRight);
+                    if (this.dashTimer <= 0) {
+                        this.isDashing = false;
+                    }
+                } else {
+                    // Ducking logic
+                    if (down && this.isGrounded && !left && !right) {
+                        this.isDucking = true;
+                        this.height = 30;
+                        this.vx = 0;
+                    } else {
+                        if (this.isDucking) this.height = 48;
+                        this.isDucking = false;
+
+                        // Normal Horizontal Movement
+                        if (left) this.vx = -this.speed;
+                        else if (right) this.vx = this.speed;
+                        else this.vx *= 0.7; // Friction
+                    }
+
+                    // Jump logic (W)
+                    if (up && this.isGrounded) {
+                        this.vy = this.jumpStrength;
+                        this.isGrounded = false;
+                        sound.playJump();
+                        particleEngine.add(this.x + 16, this.y + 48, '#00f3ff', 8, 2);
+                    }
+
+                    // Cyber Dash trigger (Shift)
+                    if (keys.shiftPressed && this.dashCooldown <= 0) {
+                        this.isDashing = true;
+                        this.dashTimer = 12;
+                        this.dashCooldown = 45;
+                        this.invulnerable = 15;
+                        sound.playDash();
+
+                        // 8-Axis Dash Vector
+                        let dx = 0, dy = 0;
+                        if (up) dy = -1;
+                        if (down) dy = 1;
+                        if (left) dx = -1;
+                        if (right) dx = 1;
+
+                        if (dx === 0 && dy === 0) dx = this.facingRight ? 1 : -1;
+
+                        this.vx = dx * 10;
+                        this.vy = dy * 8;
+                    }
+
+                    // Katana Attack (Space)
+                    if (keys.spacePressed && this.attackTimer <= 0) {
+                        this.attackTimer = 16;
+                        this.attackDir = up ? 'UP' : 'FRONT';
+                        sound.playSlash();
+                    }
+                }
+
+                // Reset One-shot Keys
+                keys.spacePressed = false;
+                keys.shiftPressed = false;
+
+                // Physics Apply
+                if (!this.isDashing) {
+                    this.vy += GRAVITY;
+                }
+
+                // Horizontal Collision
+                this.x += this.vx;
+                platforms.forEach(p => {
+                    if (this.checkCollision(this, p)) {
+                        if (this.vx > 0) this.x = p.x - this.width;
+                        else if (this.vx < 0) this.x = p.x + p.width;
+                    }
+                });
+
+                // Vertical Collision
+                this.y += this.vy;
+                this.isGrounded = false;
+                platforms.forEach(p => {
+                    if (this.checkCollision(this, p)) {
+                        if (this.vy > 0) { // Landing
+                            this.y = p.y - this.height;
+                            this.vy = 0;
+                            this.isGrounded = true;
+                        } else if (this.vy < 0) { // Hitting ceiling
+                            this.y = p.y + p.height;
+                            this.vy = 0;
+                        }
+                    }
+                });
+
+                // Screen Boundaries
+                if (this.x < 0) this.x = 0;
+                if (this.x + this.width > CANVAS_WIDTH) this.x = CANVAS_WIDTH - this.width;
+                if (this.y > CANVAS_HEIGHT) {
+                    // Fell into hazard
+                    gameState.hp = 0;
+                }
+
+                // Animation Frame Timer
+                this.animTimer++;
+                if (this.animTimer % 8 === 0) {
+                    this.animFrame = (this.animFrame + 1) % 4;
+                }
+            }
+
+            checkCollision(a, b) {
+                return a.x < b.x + b.width &&
+                       a.x + a.width > b.x &&
+                       a.y < b.y + b.height &&
+                       a.y + a.height > b.y;
+            }
+
+            getAttackBox() {
+                if (this.attackTimer <= 0) return null;
+                if (this.attackDir === 'UP') {
+                    return {
+                        x: this.x - 10,
+                        y: this.y - 30,
+                        width: this.width + 20,
+                        height: 35
+                    };
+                } else {
+                    return {
+                        x: this.facingRight ? this.x + this.width : this.x - 40,
+                        y: this.y,
+                        width: 40,
+                        height: this.height
+                    };
+                }
+            }
+
+            draw(ctx) {
+                ctx.save();
+
+                // Flashing if invulnerable
+                if (this.invulnerable % 4 >= 2) ctx.globalAlpha = 0.5;
+
+                // Draw Cyber Samurai Pixel Art Body
+                const drawX = this.x;
+                const drawY = this.y;
+
+                // Cybernetic Scarf / Glow
+                ctx.fillStyle = '#ff0055';
+                ctx.shadowColor = '#ff0055';
+                ctx.shadowBlur = 10;
+                ctx.fillRect(this.facingRight ? drawX - 6 : drawX + this.width, drawY + 8, 8, 4);
+
+                // Body Armor (Dark Steel & Neon Cyber Blue)
+                ctx.fillStyle = '#0a1020';
+                ctx.fillRect(drawX, drawY, this.width, this.height);
+
+                ctx.fillStyle = '#00f3ff';
+                ctx.shadowColor = '#00f3ff';
+                ctx.shadowBlur = 6;
+                // Cyber Visor
+                if (this.facingRight) {
+                    ctx.fillRect(drawX + 18, drawY + 8, 10, 4);
+                } else {
+                    ctx.fillRect(drawX + 4, drawY + 8, 10, 4);
+                }
+
+                // Armor Highlights
+                ctx.fillRect(drawX + 8, drawY + 20, 16, 2);
+                ctx.fillRect(drawX + 12, drawY + 28, 8, 2);
+
+                // Legs animation
+                ctx.fillStyle = '#1e293b';
+                if (Math.abs(this.vx) > 0.5 && this.isGrounded) {
+                    const legOffset = (this.animFrame % 2) * 6;
+                    ctx.fillRect(drawX + 4, drawY + 36 + legOffset, 8, 12 - legOffset);
+                    ctx.fillRect(drawX + 20, drawY + 36 + (6 - legOffset), 8, 12 - (6 - legOffset));
+                } else {
+                    ctx.fillRect(drawX + 4, drawY + 36, 8, 12);
+                    ctx.fillRect(drawX + 20, drawY + 36, 8, 12);
+                }
+
+                // Katana Slash Arc Animation
+                if (this.attackTimer > 0) {
+                    const attackBox = this.getAttackBox();
+                    if (attackBox) {
+                        ctx.fillStyle = '#00f3ff';
+                        ctx.shadowColor = '#00f3ff';
+                        ctx.shadowBlur = 15;
+
+                        // Animated Slash Arc
+                        ctx.beginPath();
+                        if (this.attackDir === 'UP') {
+                            ctx.arc(drawX + 16, drawY, 35, Math.PI, 2 * Math.PI);
+                        } else {
+                            if (this.facingRight) {
+                                ctx.arc(drawX + 16, drawY + 24, 40, -Math.PI / 3, Math.PI / 3);
+                            } else {
+                                ctx.arc(drawX + 16, drawY + 24, 40, (2 * Math.PI) / 3, (4 * Math.PI) / 3);
+                            }
+                        }
+                        ctx.strokeStyle = '#00f3ff';
+                        ctx.lineWidth = 4;
+                        ctx.stroke();
+
+                        // Spark Particles
+                        particleEngine.add(
+                            attackBox.x + Math.random() * attackBox.width,
+                            attackBox.y + Math.random() * attackBox.height,
+                            '#00f3ff', 3, 4
+                        );
+                    }
+                }
+
+                ctx.restore();
+            }
+        }
+
+        class CyberPunk {
+            constructor(x, y, patrolMin, patrolMax, level) {
+                this.x = x;
+                this.y = y;
+                this.width = 30;
+                this.height = 46;
+                this.patrolMin = patrolMin;
+                this.patrolMax = patrolMax;
+                this.speed = 1.8 + level * 0.3;
+                this.facingRight = true;
+                this.hp = 30 + level * 10;
+                this.maxHp = this.hp;
+                this.isAggro = false;
+                this.weapon = level === 1 ? 'KNIFE' : level === 2 ? 'BAT' : 'CROWBAR';
+                this.hairStyle = level % 3 === 0 ? 'MOHAWK' : level % 2 === 0 ? 'MULLET' : 'BALD';
+                this.hairColor = level === 1 ? '#ff0055' : level === 2 ? '#00f3ff' : '#yellow';
+            }
+
+            update(player, platforms) {
+                // Check Aggro zone / Line of Sight
+                const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
+                if (distToPlayer < 220 && Math.abs(player.y - this.y) < 60) {
+                    this.isAggro = true;
+                }
+
+                if (this.isAggro) {
+                    // Chase Player
+                    if (player.x > this.x) {
+                        this.x += this.speed * 1.4;
+                        this.facingRight = true;
+                    } else {
+                        this.x -= this.speed * 1.4;
+                        this.facingRight = false;
+                    }
+                } else {
+                    // Normal Patrol
+                    if (this.facingRight) {
+                        this.x += this.speed;
+                        if (this.x >= this.patrolMax) this.facingRight = false;
+                    } else {
+                        this.x -= this.speed;
+                        if (this.x <= this.patrolMin) this.facingRight = true;
+                    }
+                }
+
+                // Attack Player Collision
+                if (this.checkCollision(this, player) && player.invulnerable <= 0) {
+                    gameState.hp -= 15;
+                    player.invulnerable = 30;
+                    sound.playHit();
+                    particleEngine.add(player.x + 16, player.y + 24, '#ff0055', 12, 5);
+                }
+            }
+
+            checkCollision(a, b) {
+                return a.x < b.x + b.width &&
+                       a.x + a.width > b.x &&
+                       a.y < b.y + b.height &&
+                       a.y + a.height > b.y;
+            }
+
+            draw(ctx) {
+                ctx.save();
+
+                // Cyber-Punk Vest Body
+                ctx.fillStyle = '#221133';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                // Hair / Head Style
+                ctx.fillStyle = this.hairColor;
+                ctx.shadowColor = this.hairColor;
+                ctx.shadowBlur = 6;
+                if (this.hairStyle === 'MOHAWK') {
+                    ctx.fillRect(this.x + 10, this.y - 8, 10, 10);
+                } else if (this.hairStyle === 'MULLET') {
+                    ctx.fillRect(this.x + (this.facingRight ? 2 : 18), this.y - 4, 10, 14);
+                } else {
+                    // Cyber-tattoos on Bald Head
+                    ctx.fillStyle = '#00f3ff';
+                    ctx.fillRect(this.x + 8, this.y + 2, 14, 3);
+                }
+
+                // Cybernetic implants (hand/leg)
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillRect(this.x + (this.facingRight ? 20 : 2), this.y + 18, 8, 8);
+
+                // Melee Weapon Rendering
+                ctx.fillStyle = '#e2e8f0';
+                ctx.shadowColor = '#fff';
+                ctx.shadowBlur = 4;
+                const wpX = this.facingRight ? this.x + this.width : this.x - 12;
+                if (this.weapon === 'KNIFE') {
+                    ctx.fillRect(wpX, this.y + 20, 12, 4);
+                } else if (this.weapon === 'BAT') {
+                    ctx.fillRect(wpX, this.y + 12, 14, 6);
+                } else {
+                    // Crowbar
+                    ctx.fillRect(wpX, this.y + 10, 12, 4);
+                    ctx.fillRect(wpX + 8, this.y + 14, 4, 8);
+                }
+
+                // Health Bar
+                if (this.hp < this.maxHp) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.fillRect(this.x, this.y - 12, this.width, 4);
+                    ctx.fillStyle = '#ff0055';
+                    ctx.fillRect(this.x, this.y - 12, (this.width * this.hp) / this.maxHp, 4);
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // Level 5 BOSS: MECHA-TITAN ZERO
+        class BossMechaTitan {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 96;
+                this.height = 110;
+                this.hp = 350;
+                this.maxHp = 350;
+                this.vx = 2;
+                this.vy = 0;
+                this.attackTimer = 0;
+                this.phase = 1;
+                this.facingRight = false;
+            }
+
+            update(player, platforms) {
+                this.attackTimer++;
+
+                // Phase logic based on health
+                if (this.hp < 150) this.phase = 2;
+
+                // Move logic
+                this.x += this.vx;
+                if (this.x < 600 || this.x > 880) this.vx *= -1;
+
+                this.facingRight = player.x > this.x;
+
+                // Boss Attacks
+                if (this.attackTimer % (this.phase === 1 ? 120 : 80) === 0) {
+                    // Ground Slam Shockwave
+                    sound.playExplosion();
+                    particleEngine.add(this.x + 48, this.y + this.height, '#ff0055', 25, 8);
+
+                    // Check Shockwave hit
+                    if (player.isGrounded && player.invulnerable <= 0) {
+                        gameState.hp -= 20;
+                        player.invulnerable = 30;
+                        sound.playHit();
+                    }
+                }
+
+                // Melee Collision
+                if (this.checkCollision(this, player) && player.invulnerable <= 0) {
+                    gameState.hp -= 25;
+                    player.invulnerable = 35;
+                    sound.playHit();
+                }
+            }
+
+            checkCollision(a, b) {
+                return a.x < b.x + b.width &&
+                       a.x + a.width > b.x &&
+                       a.y < b.y + b.height &&
+                       a.y + a.height > b.y;
+            }
+
+            draw(ctx) {
+                ctx.save();
+
+                // Giant Mech Body
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                // Hazard Stripes
+                ctx.fillStyle = '#eab308';
+                for (let i = 0; i < this.width; i += 20) {
+                    ctx.fillRect(this.x + i, this.y + 20, 10, 12);
+                }
+
+                // Glowing Eye Optical Sensor
+                ctx.fillStyle = this.phase === 1 ? '#00f3ff' : '#ff0055';
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = 15;
+                ctx.fillRect(this.facingRight ? this.x + 60 : this.x + 20, this.y + 15, 20, 8);
+
+                // Arm Cannons
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(this.x - 16, this.y + 40, 20, 40);
+                ctx.fillRect(this.x + this.width - 4, this.y + 40, 20, 40);
+
+                ctx.restore();
+            }
+        }
+
+        class DataChip {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 16;
+                this.height = 16;
+                this.collected = false;
+                this.floatTimer = Math.random() * Math.PI;
+            }
+
+            update(player) {
+                if (this.collected) return;
+                this.floatTimer += 0.05;
+
+                // Pickup collision
+                if (
+                    player.x < this.x + this.width &&
+                    player.x + player.width > this.x &&
+                    player.y < this.y + this.height &&
+                    player.y + player.height > this.y
+                ) {
+                    this.collected = true;
+                    gameState.score += 100;
+                    sound.playChip();
+                    particleEngine.add(this.x + 8, this.y + 8, '#eab308', 10, 3);
+                }
+            }
+
+            draw(ctx) {
+                if (this.collected) return;
+                ctx.save();
+                const floatY = this.y + Math.sin(this.floatTimer) * 4;
+                ctx.fillStyle = '#eab308';
+                ctx.shadowColor = '#eab308';
+                ctx.shadowBlur = 10;
+                ctx.fillRect(this.x, floatY, this.width, this.height);
+                ctx.restore();
+            }
+        }
+
+        const LEVELS = [
+            {
+                title: "LVL 1: NEON ALLEY SLUMS",
+                platforms: [
+                    {x: 0, y: 520, width: 1024, height: 56, type: 'STEEL'},
+                    {x: 200, y: 400, width: 180, height: 20, type: 'NEON'},
+                    {x: 450, y: 320, width: 160, height: 20, type: 'STEEL'},
+                    {x: 700, y: 240, width: 220, height: 20, type: 'NEON'},
+                ],
+                enemies: [
+                    {x: 220, y: 354, min: 200, max: 350},
+                    {x: 480, y: 274, min: 450, max: 580},
+                    {x: 720, y: 194, min: 700, max: 880}
+                ],
+                chips: [{x: 280, y: 360}, {x: 520, y: 280}, {x: 800, y: 200}],
+                exit: {x: 950, y: 180, width: 40, height: 60}
+            },
+            {
+                title: "LVL 2: ROOFTOP TRANSIT HUB",
+                platforms: [
+                    {x: 0, y: 520, width: 300, height: 56, type: 'STEEL'},
+                    {x: 360, y: 450, width: 140, height: 20, type: 'NEON'},
+                    {x: 560, y: 380, width: 160, height: 20, type: 'STEEL'},
+                    {x: 780, y: 300, width: 244, height: 20, type: 'NEON'},
+                    {x: 400, y: 220, width: 180, height: 20, type: 'STEEL'}
+                ],
+                enemies: [
+                    {x: 580, y: 334, min: 560, max: 680},
+                    {x: 800, y: 254, min: 780, max: 980},
+                    {x: 420, y: 174, min: 400, max: 550}
+                ],
+                chips: [{x: 400, y: 410}, {x: 850, y: 260}, {x: 480, y: 180}],
+                exit: {x: 450, y: 160, width: 40, height: 60}
+            },
+            {
+                title: "LVL 3: UNDER-CITY MATRIX PIPELINE",
+                platforms: [
+                    {x: 0, y: 520, width: 220, height: 56, type: 'STEEL'},
+                    {x: 280, y: 460, width: 120, height: 20, type: 'NEON'},
+                    {x: 460, y: 400, width: 120, height: 20, type: 'STEEL'},
+                    {x: 640, y: 340, width: 120, height: 20, type: 'NEON'},
+                    {x: 800, y: 260, width: 224, height: 20, type: 'STEEL'}
+                ],
+                enemies: [
+                    {x: 50, y: 474, min: 10, max: 180},
+                    {x: 820, y: 214, min: 800, max: 980}
+                ],
+                chips: [{x: 320, y: 420}, {x: 500, y: 360}, {x: 880, y: 220}],
+                exit: {x: 940, y: 200, width: 40, height: 60}
+            },
+            {
+                title: "LVL 4: CORPORATE CYBER SPIRE",
+                platforms: [
+                    {x: 0, y: 520, width: 200, height: 56, type: 'STEEL'},
+                    {x: 250, y: 440, width: 150, height: 20, type: 'NEON'},
+                    {x: 100, y: 360, width: 150, height: 20, type: 'STEEL'},
+                    {x: 320, y: 280, width: 150, height: 20, type: 'NEON'},
+                    {x: 550, y: 220, width: 200, height: 20, type: 'STEEL'},
+                    {x: 800, y: 160, width: 224, height: 20, type: 'NEON'}
+                ],
+                enemies: [
+                    {x: 270, y: 394, min: 250, max: 370},
+                    {x: 570, y: 174, min: 550, max: 720},
+                    {x: 820, y: 114, min: 800, max: 980}
+                ],
+                chips: [{x: 150, y: 320}, {x: 600, y: 180}, {x: 880, y: 120}],
+                exit: {x: 950, y: 100, width: 40, height: 60}
+            },
+            {
+                title: "LVL 5: CORE CHAMBER - BOSS FIGHT",
+                platforms: [
+                    {x: 0, y: 520, width: 1024, height: 56, type: 'STEEL'},
+                    {x: 150, y: 380, width: 160, height: 20, type: 'NEON'},
+                    {x: 714, y: 380, width: 160, height: 20, type: 'NEON'}
+                ],
+                enemies: [], // Boss spawned directly
+                chips: [],
+                exit: null
+            }
+        ];
+
+        class CyberGameEngine {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.player = null;
+                this.platforms = [];
+                this.enemies = [];
+                this.chips = [];
+                this.boss = null;
+                this.currentLevelData = null;
+                this.isRunning = false;
+                this.rainParticles = [];
+
+                // Rain background initialization
+                for (let i = 0; i < 60; i++) {
+                    this.rainParticles.push({
+                        x: Math.random() * CANVAS_WIDTH,
+                        y: Math.random() * CANVAS_HEIGHT,
+                        length: Math.random() * 15 + 10,
+                        speed: Math.random() * 8 + 10
+                    });
+                }
+            }
+
+            loadLevel(lvlIdx) {
+                gameState.currentLevel = lvlIdx;
+                this.currentLevelData = LEVELS[lvlIdx - 1];
+
+                // Player initialization
+                this.player = new CyberSamurai(50, 440);
+                this.platforms = this.currentLevelData.platforms;
+
+                // Load Enemies
+                this.enemies = this.currentLevelData.enemies.map(
+                    e => new CyberPunk(e.x, e.y, e.min, e.max, lvlIdx)
+                );
+
+                // Load Chips
+                this.chips = this.currentLevelData.chips.map(c => new DataChip(c.x, c.y));
+
+                // Boss Initialization if level 5
+                if (lvlIdx === 5) {
+                    this.boss = new BossMechaTitan(700, 410);
+                    document.getElementById('boss-hud').classList.remove('hidden');
+                } else {
+                    this.boss = null;
+                    document.getElementById('boss-hud').classList.add('hidden');
+                }
+
+                // Update HUD Text
+                document.getElementById('level-title').innerText = this.currentLevelData.title;
+            }
+
+            start() {
+                this.isRunning = true;
+                sound.startSynthMusic();
+                this.loop();
+            }
+
+            stop() {
+                this.isRunning = false;
+                sound.stopMusic();
+            }
+
+            loop() {
+                if (!this.isRunning) return;
+
+                this.update();
+                this.render();
+
+                requestAnimationFrame(() => this.loop());
+            }
+
+            update() {
+                // Update Player
+                this.player.update(this.platforms);
+
+                // Check Katana Attack on Enemies
+                const attackBox = this.player.getAttackBox();
+                if (attackBox) {
+                    // Attack normal punks
+                    this.enemies.forEach(e => {
+                        if (
+                            attackBox.x < e.x + e.width &&
+                            attackBox.x + attackBox.width > e.x &&
+                            attackBox.y < e.y + e.height &&
+                            attackBox.y + attackBox.height > e.y
+                        ) {
+                            e.hp -= 15;
+                            sound.playHit();
+                            particleEngine.add(e.x + 15, e.y + 20, '#ff0055', 10, 4);
+                        }
+                    });
+
+                    // Attack Boss
+                    if (this.boss && this.boss.hp > 0) {
+                        if (
+                            attackBox.x < this.boss.x + this.boss.width &&
+                            attackBox.x + attackBox.width > this.boss.x &&
+                            attackBox.y < this.boss.y + this.boss.height &&
+                            attackBox.y + attackBox.height > this.boss.y
+                        ) {
+                            this.boss.hp -= 8;
+                            sound.playHit();
+                            particleEngine.add(this.boss.x + 48, this.boss.y + 50, '#00f3ff', 8, 5);
+                        }
+                    }
+                }
+
+                // Update Enemies
+                for (let i = this.enemies.length - 1; i >= 0; i--) {
+                    const e = this.enemies[i];
+                    e.update(this.player, this.platforms);
+                    if (e.hp <= 0) {
+                        particleEngine.add(e.x + 15, e.y + 20, '#ff0055', 20, 6);
+                        gameState.score += 250;
+                        this.enemies.splice(i, 1);
+                    }
+                }
+
+                // Update Boss
+                if (this.boss) {
+                    this.boss.update(this.player, this.platforms);
+                    if (this.boss.hp <= 0) {
+                        particleEngine.add(this.boss.x + 48, this.boss.y + 50, '#ff0055', 50, 10);
+                        this.triggerVictory();
+                        return;
+                    }
+                }
+
+                // Update Data Chips
+                this.chips.forEach(c => c.update(this.player));
+
+                // Check Level Exit (Portal)
+                if (this.currentLevelData.exit && this.boss === null) {
+                    const ex = this.currentLevelData.exit;
+                    if (
+                        this.player.x < ex.x + ex.width &&
+                        this.player.x + this.player.width > ex.x &&
+                        this.player.y < ex.y + ex.height &&
+                        this.player.y + this.player.height > ex.y
+                    ) {
+                        this.nextLevel();
+                    }
+                }
+
+                // Particle Engine Update
+                particleEngine.update();
+
+                // Check Game Over
+                if (gameState.hp <= 0) {
+                    this.triggerGameOver();
+                }
+
+                // Sync HUD elements
+                this.updateHUD();
+            }
+
+            nextLevel() {
+                if (gameState.currentLevel < 5) {
+                    const next = gameState.currentLevel + 1;
+                    if (next > gameState.unlockedLevel) {
+                        gameState.unlockedLevel = next;
+                        this.saveProgression();
+                    }
+                    this.loadLevel(next);
+                } else {
+                    this.triggerVictory();
+                }
+            }
+
+            saveProgression() {
+                localStorage.setItem('cyber_katana_save', JSON.stringify({
+                    unlockedLevel: gameState.unlockedLevel,
+                    score: gameState.score
+                }));
+            }
+
+            triggerGameOver() {
+                this.stop();
+                sound.playExplosion();
+                document.getElementById('end-title').innerText = "SYSTEM FAILURE";
+                document.getElementById('end-title').className = "text-4xl font-black pixel-font text-red-500 mb-2 neon-glow-pink";
+                document.getElementById('end-subtitle').innerText = "Your cybernetics were destroyed in action.";
+                document.getElementById('end-modal').classList.remove('hidden');
+            }
+
+            triggerVictory() {
+                this.stop();
+                sound.playChip();
+                gameState.unlockedLevel = 5;
+                this.saveProgression();
+                document.getElementById('end-title').innerText = "MISSION ACCOMPLISHED";
+                document.getElementById('end-title').className = "text-4xl font-black pixel-font text-cyan-400 mb-2 neon-glow-cyan";
+                document.getElementById('end-subtitle').innerText = `You conquered the Neon Slums! Final Score: ${gameState.score}`;
+                document.getElementById('end-modal').classList.remove('hidden');
+            }
+
+            updateHUD() {
+                document.getElementById('hp-bar').style.width = `${Math.max(0, gameState.hp)}%`;
+                document.getElementById('hp-text').innerText = `${Math.max(0, gameState.hp)}/100`;
+
+                const dashPct = Math.max(0, 100 - (this.player.dashCooldown / 45) * 100);
+                document.getElementById('dash-bar').style.width = `${dashPct}%`;
+                document.getElementById('dash-text').innerText = dashPct === 100 ? 'READY' : 'CHARGING';
+
+                document.getElementById('score-text').innerText = String(gameState.score).padStart(4, '0');
+
+                if (this.boss) {
+                    const bossPct = Math.max(0, (this.boss.hp / this.boss.maxHp) * 100);
+                    document.getElementById('boss-hp-bar').style.width = `${bossPct}%`;
+                }
+            }
+
+            render() {
+                // Clear Canvas
+                this.ctx.fillStyle = '#05050a';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                /* Parallax Cyber City Background */
+                this.drawBackground();
+
+                // Draw Platforms with Cyber decor (trash, neon under-glow)
+                this.drawPlatforms();
+
+                // Draw Level Exit Portal
+                if (this.currentLevelData.exit) {
+                    const ex = this.currentLevelData.exit;
+                    this.ctx.fillStyle = 'rgba(0, 243, 255, 0.3)';
+                    this.ctx.shadowColor = '#00f3ff';
+                    this.ctx.shadowBlur = 15;
+                    this.ctx.fillRect(ex.x, ex.y, ex.width, ex.height);
+                    this.ctx.fillStyle = '#00f3ff';
+                    this.ctx.fillRect(ex.x + 10, ex.y + 10, ex.width - 20, ex.height - 20);
+                }
+
+                // Draw Data Chips
+                this.chips.forEach(c => c.draw(this.ctx));
+
+                // Draw Enemies
+                this.enemies.forEach(e => e.draw(this.ctx));
+
+                // Draw Boss
+                if (this.boss) this.boss.draw(this.ctx);
+
+                // Draw Player
+                this.player.draw(this.ctx);
+
+                // Draw Particle System
+                particleEngine.draw(this.ctx);
+
+                // Draw Foreground Rain Effect
+                this.drawRain();
+            }
+
+            drawBackground() {
+                const ctx = this.ctx;
+                // Layer 1: Futuristic City Skyline Silhouettes
+                ctx.fillStyle = '#0c0f1d';
+                ctx.fillRect(100, 200, 80, 376);
+                ctx.fillRect(240, 150, 110, 426);
+                ctx.fillRect(420, 260, 90, 316);
+                ctx.fillRect(600, 180, 130, 396);
+                ctx.fillRect(800, 220, 100, 356);
+
+                // Flickering Cyber Billboards
+                ctx.fillStyle = '#ff0055';
+                ctx.shadowColor = '#ff0055';
+                ctx.shadowBlur = 12;
+                ctx.fillRect(260, 180, 40, 20);
+
+                ctx.fillStyle = '#00f3ff';
+                ctx.shadowColor = '#00f3ff';
+                ctx.fillRect(630, 220, 50, 30);
+                ctx.shadowBlur = 0;
+            }
+
+            drawPlatforms() {
+                const ctx = this.ctx;
+                this.platforms.forEach(p => {
+                    // Steel base
+                    ctx.fillStyle = '#1e293b';
+                    ctx.fillRect(p.x, p.y, p.width, p.height);
+
+                    // Platform Tops & Hazard Stripes
+                    if (p.type === 'NEON') {
+                        ctx.fillStyle = '#ff0055';
+                        ctx.shadowColor = '#ff0055';
+                        ctx.shadowBlur = 8;
+                        ctx.fillRect(p.x, p.y, p.width, 3);
+                        ctx.shadowBlur = 0;
+                    } else {
+                        ctx.fillStyle = '#00f3ff';
+                        ctx.shadowColor = '#00f3ff';
+                        ctx.shadowBlur = 8;
+                        ctx.fillRect(p.x, p.y, p.width, 3);
+                        ctx.shadowBlur = 0;
+                    }
+
+                    // Cyber Junk / Trash decor on platform edges
+                    ctx.fillStyle = '#475569';
+                    ctx.fillRect(p.x + 10, p.y - 6, 8, 6); // Trash Can / Tech Box
+                    ctx.fillRect(p.x + p.width - 25, p.y - 4, 12, 4); // Wires
+                });
+            }
+
+            drawRain() {
+                const ctx = this.ctx;
+                ctx.strokeStyle = 'rgba(0, 243, 255, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                this.rainParticles.forEach(r => {
+                    r.y += r.speed;
+                    r.x -= 2;
+                    if (r.y > CANVAS_HEIGHT) {
+                        r.y = -20;
+                        r.x = Math.random() * CANVAS_WIDTH;
+                    }
+                    ctx.moveTo(r.x, r.y);
+                    ctx.lineTo(r.x - 3, r.y + r.length);
+                });
+                ctx.stroke();
+            }
+        }
+
+        const game = new CyberGameEngine();
+
+        // Menu Elements
+        const mainMenu = document.getElementById('main-menu');
+        const hud = document.getElementById('hud');
+        const levelModal = document.getElementById('level-modal');
+        const settingsModal = document.getElementById('settings-modal');
+        const endModal = document.getElementById('end-modal');
+
+        // Buttons
+        const btnStart = document.getElementById('btn-start');
+        const btnContinue = document.getElementById('btn-continue');
+        const btnSelectLevel = document.getElementById('btn-select-level');
+        const btnOptions = document.getElementById('btn-options');
+        const btnCloseLevels = document.getElementById('btn-close-levels');
+        const btnCloseSettings = document.getElementById('btn-close-settings');
+        const btnRestart = document.getElementById('btn-restart');
+        const btnMenu = document.getElementById('btn-menu');
+
+        // Audio Sliders
+        const sfxSlider = document.getElementById('sfx-slider');
+        const musicSlider = document.getElementById('music-slider');
+
+        // Check Continue Button State
+        if (gameState.unlockedLevel > 1) {
+            btnContinue.classList.remove('opacity-50', 'cursor-not-allowed');
+            btnContinue.disabled = false;
+        }
+
+        // Start New Game
+        btnStart.addEventListener('click', () => {
+            sound.init();
+            gameState.hp = 100;
+            gameState.score = 0;
+            mainMenu.classList.add('hidden');
+            hud.classList.remove('hidden');
+            game.loadLevel(1);
+            game.start();
+        });
+
+        // Continue Saved Game
+        btnContinue.addEventListener('click', () => {
+            sound.init();
+            gameState.hp = 100;
+            mainMenu.classList.add('hidden');
+            hud.classList.remove('hidden');
+            game.loadLevel(gameState.unlockedLevel);
+            game.start();
+        });
+
+        // Level Select Grid population
+        btnSelectLevel.addEventListener('click', () => {
+            const grid = document.getElementById('level-grid');
+            grid.innerHTML = '';
+            LEVELS.forEach((lvl, idx) => {
+                const lvlNum = idx + 1;
+                const isUnlocked = lvlNum <= gameState.unlockedLevel;
+                const btn = document.createElement('button');
+                btn.className = `p-4 border rounded pixel-font text-xs flex flex-col items-center justify-center gap-2 transition-all ${
+                    isUnlocked 
+                    ? 'border-cyan-400 bg-gray-900/80 hover:bg-cyan-500 hover:text-black cursor-pointer' 
+                    : 'border-gray-800 bg-gray-950/50 text-gray-600 cursor-not-allowed'
+                }`;
+                btn.innerHTML = `<span>MISSION ${lvlNum}</span><span class="text-[9px] opacity-75">${lvl.title.split(':')[1]}</span>`;
+                if (isUnlocked) {
+                    btn.addEventListener('click', () => {
+                        sound.init();
+                        gameState.hp = 100;
+                        levelModal.classList.add('hidden');
+                        mainMenu.classList.add('hidden');
+                        hud.classList.remove('hidden');
+                        game.loadLevel(lvlNum);
+                        game.start();
+                    });
+                }
+                grid.appendChild(btn);
+            });
+            levelModal.classList.remove('hidden');
+        });
+
+        btnCloseLevels.addEventListener('click', () => levelModal.classList.add('hidden'));
+
+        // Settings Modal
+        btnOptions.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+        btnCloseSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+        sfxSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            sound.sfxVol = val / 100;
+            document.getElementById('sfx-vol-val').innerText = `${val}%`;
+        });
+
+        musicSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            sound.musicVol = val / 100;
+            document.getElementById('music-vol-val').innerText = `${val}%`;
+        });
+
+        // End Modal Buttons
+        btnRestart.addEventListener('click', () => {
+            gameState.hp = 100;
+            endModal.classList.add('hidden');
+            game.loadLevel(gameState.currentLevel);
+            game.start();
+        });
+
+        btnMenu.addEventListener('click', () => {
+            endModal.classList.add('hidden');
+            hud.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>

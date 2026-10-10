@@ -404,6 +404,7 @@ img { display: block; max-width: 100%; }
   animation-duration: 700ms;
   animation-delay: calc(var(--i) * 60ms + 420ms + var(--p) * 90ms);
 }
+.pill.is-miss { background: repeating-linear-gradient(90deg, rgba(255, 51, 85, .22) 0 2px, transparent 2px 5px); box-shadow: inset 0 0 0 1px rgba(255, 51, 85, .5); }
 @keyframes pill-charge {
   0% { opacity: 0; transform: skewX(-20deg) scaleX(0); }
   60% { opacity: 1; transform: skewX(-20deg) scaleX(1); filter: brightness(2.2); }

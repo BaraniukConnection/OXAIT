@@ -89,13 +89,22 @@
     const r = D.results[`${state.stage}/${state.round}`] || {};
     const order = (r.order || []).filter(id => byId[id]);
     D.participants.forEach(p => order.includes(p.id) || order.push(p.id));
+    const groups = r.groups || D.groups;
+    // Етап проєкту: перша група, чий match підходить до файлу чи назви; інакше — група без match
+    const byStage = groups.some(g => g.match);
+    const stageOfProject = o => {
+      const hay = `${o.src} ${o.title}`, i = groups.findIndex(g => g.match && new RegExp(g.match, "i").test(hay));
+      return i >= 0 ? i : groups.findIndex(g => !g.match);
+    };
     const entries = order.map(id => {
       const e = (r.entries || {})[id] || {};
       const pills = [0, 1, 2].map(g => [0, 1, 2].map(i => e.pills?.[g]?.[i] ?? null));
       const nums = pills.flat().map(v => v === true ? 1 : v).filter(v => typeof v === "number");
       // Проєкти: з entries/manifest.js (tools/sync_entries.py) + вручну з data.js
       const projects = [...(M[`${state.stage}/${state.round}`]?.[id] || []), ...(e.outputs || []), ...(e.output ? [e.output] : [])]
-        .map((o, i) => ({ ...o, id: o.id || String(i + 1), title: o.title || `${i + 1}` }));
+        .map((o, i) => ({ ...o, id: o.id || String(i + 1), title: o.title || `${i + 1}` }))
+        .map(o => ({ ...o, group: byStage ? stageOfProject(o) : null }))
+        .sort((a, b) => (a.group ?? 0) - (b.group ?? 0));
       return { p: byId[id], pills, total: nums.length ? nums.reduce((a, b) => a + b, 0) : null, out: e.status === "out", projects, note: e.note || null };
     });
     // Більше балів — вище, вибулі — внизу; при рівності лишається порядок з order
@@ -104,7 +113,7 @@
       const prev = entries[i - 1];
       e.rank = e.out ? null : (prev && !prev.out && e.total !== null && prev.total === e.total ? prev.rank : i + 1);
     });
-    return { entries, groups: r.groups || D.groups, live: entries.some(e => e.total !== null || e.out) };
+    return { entries, groups, live: entries.some(e => e.total !== null || e.out) };
   }
 
   /* ───── Маршрут ───── */
@@ -211,7 +220,7 @@
     let p = 0;
     return `<div class="pills">${pills.map(g => `<span class="pill-group">${g.map(v => {
       const filled = v !== null && v !== "" && v !== false;
-      return `<span class="pill${filled ? " is-filled" : ""}" style="--p:${p++};--i:${delayIndex}">${filled && v !== true ? `<i>${esc(v)}</i>` : ""}</span>`;
+      return `<span class="pill${filled ? " is-filled" : v === false ? " is-miss" : ""}" style="--p:${p++};--i:${delayIndex}">${filled && v !== true ? `<i>${esc(v)}</i>` : ""}</span>`;
     }).join("")}</span>`).join("")}</div>`;
   }
 
@@ -355,7 +364,7 @@
           ${e.projects.map((o, i) => `
           <button class="pcard ox-focus" data-variant="${esc(o.id)}" style="--i:${i}">
             <span class="pcard-letter" aria-hidden="true">${letter(i)}</span>
-            <span class="pcard-top"><span class="ox-icon">${projIcon(o, s)}</span>${t.variant} ${letter(i)}</span>
+            <span class="pcard-top"><span class="ox-icon">${projIcon(o, s)}</span>${o.group != null && o.group >= 0 ? esc(L(roundData().groups[o.group])) : `${t.variant} ${letter(i)}`}</span>
             <span class="pcard-title">${esc(o.title)}</span>
             <span class="pcard-meta">${[extOf(o), fmtSize(o.size)].filter(Boolean).join(" · ")}</span>
             <span class="pcard-go">${o.type === "iframe" ? (t.play[s.id] || t.play.other) : t.play.other}<span class="ox-icon">play_arrow</span></span>
