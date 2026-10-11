@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Flight Game - Low Poly Dogfight</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 3D WebGL Canvas Container -->
+    <div id="game-container"></div>
+
+    <!-- HUD Vector & Canvas Overlay -->
+    <canvas id="hud-canvas"></canvas>
+
+    <!-- IN-GAME HUD OVERLAY -->
+    <div id="hud-overlay" class="hidden">
+        <!-- Top Status Bar -->
+        <div class="hud-top-bar">
+            <!-- Objective Panel -->
+            <div class="hud-objective-panel">
+                <div class="objective-title">Current Objective</div>
+                <div class="objective-text">ELIMINATE ALL ROGUE SU-57 TARGETS</div>
+                <div class="targets-remaining">
+                    <span>HOSTILES:</span>
+                    <span id="hud-targets-count">6 / 6</span>
+                </div>
+            </div>
+
+            <!-- Health Panel -->
+            <div class="hud-health-panel">
+                <div class="health-title">
+                    <span>AIRCRAFT INTEGRITY</span>
+                    <span id="hud-health-text">100%</span>
+                </div>
+                <div class="health-bar-bg">
+                    <div id="hud-health-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Status Bar -->
+        <div class="hud-bottom-bar">
+            <!-- Tactical Radar -->
+            <div class="hud-radar-panel">
+                <canvas id="radar-canvas" width="240" height="240"></canvas>
+            </div>
+
+            <!-- Throttle Bar -->
+            <div class="hud-throttle-panel">
+                <div class="throttle-bar-container">
+                    <div id="hud-throttle-bar"></div>
+                </div>
+                <div class="throttle-label">THR</div>
+                <div id="hud-throttle-text">60%</div>
+            </div>
+
+            <!-- Weapon Status Panel -->
+            <div class="hud-weapon-panel">
+                <div class="weapon-header">
+                    <span>ACTIVE WEAPON</span>
+                    <span id="hud-weapon-type">[MG]</span>
+                </div>
+                <div id="hud-weapon-name">20mm Autocannon</div>
+                <div class="weapon-footer">
+                    <div id="hud-weapon-ammo">READY</div>
+                    <div class="weapon-switch-hint">[C] CYCLE WEAPON</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HANGAR / AIRCRAFT SELECTION SCREEN -->
+    <div id="hangar-screen">
+        <div class="hangar-header">
+            <h1>Arcade Flight Combat</h1>
+            <p>Low Poly Aerial Theater &bull; Tactical Interception</p>
+        </div>
+
+        <div class="hangar-content">
+            <!-- 4 Aircraft Cards -->
+            <div class="plane-cards-grid">
+                <!-- 1. Thunder (EF Typhoon) -->
+                <div class="plane-card active" data-plane="Thunder">
+                    <div class="plane-badge">CANARD DELTA</div>
+                    <div class="plane-name">Thunder</div>
+                    <div class="plane-origin">Eurofighter Typhoon</div>
+
+                    <div class="stat-row">
+                        <span>Speed (2/4)</span>
+                        <div class="stat-pips">
+                            <div class="pip filled"></div>
+                            <div class="pip filled"></div>
+                            <div class="pip"></div>
+                            <div class="pip"></div>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span>Manoeuvrability (2/4)</span>
+                        <div class="stat-pips">
+                            <div class="pip filled"></div>
+                            <div class="pip filled"></div>
+                            <div class="pip"></div>
+                            <div class="pip"></div>
+                        </div>
+                    </div>
+
+                    <div class="special-weapon-box">
+                        <div class="special-title">SPECIAL WEAPONRY</div>
+                        <div class="special-desc">HighSpeed AA Missile &bull; Hypersonic velocity rocket motor with minimal reaction time.</div>
+                    </div>
+                </div>
+
+                <!-- 2. Vulture (Gryphen) -->
+                <div class="plane-card" data-plane="Vulture">
+                    <div class="plane-badge">CLOSE-COUPLED DELTA</div>
+                    <div class="plane-name">Vulture</div>
+                    <div class="plane-origin">JAS-39 Gripen</div>
+
+                    <div class="stat-row">
+                        <span>Speed (2/4)</span>
+                        <div class="stat-pips">
+                            <div class="pip filled"></div>
+                            <div class="pip filled"></div>
+                            <div class="pip"></div>
+                            <div class="pip"></div>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span>Manoeuvrability (2/4)</span>
+                        <div class="stat-pips">
+                            <div class="pip filled"></div>
+                            <div class="pip filled"></div>
+                            <div class="pip"></div>
+                            <div class="pip"></div>
+                        </div>
+                    </div>
+
+                    <div class="special-weapon-box">
+                        <div class="special-title">SPECIAL WEAPONRY</div>
+                        <div class="special-desc">Radar Guided AA Missile &bull; Extreme turn rate tracking active exclusively inside the Radar Lock Circle.</div>
+                    </div>
+                </div>
+
+                <!-- 3. Falcon (Ukrainian Su-27) -->
+                <div class="plane-card" data-plane="Falcon">
+                    <div class="plane-badge">UKRAINIAN AIR FORCE</div>
+                    <div class="plane-name">Falcon</div>
+                    <div class="plane-origin">Ukrainian-Coloured Su-27</div>
+
+                    <div class="stat-row">
+                        <span>Speed (3/4)</span>
+                        <div class="stat-pips">
+                            <div class="pip filled"></div>
+                            <div class="pip filled"></div>
+                            <div class="pip filled"></div>
+                            <div class="pip"></div>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span>Manoeuvrability (3/4)</span>
+                        <div class="stat-pips">
+                            <div class="pip filled"></div>
+                            <div class="pip filled"></div>
+                            <div class="pip filled"></div>
+                            <div class="pip"></div>
+                        </div>
+                    </div>
+
+                    <div class="special-weapon-box">
+                        <div class="special-title">SPECIAL WEAPONRY</div>
+                        <div class="special-desc">4x Multilock Missile &bull; Salvo of 4 swarming missiles tracking multiple hostiles or swarming single target.</div>
+                    </div>
+                </div>
+
+                <!-- 4. Shadow (F-22) -->
+                <div class="plane-card" data-plane="Shadow">
+                    <div class="plane-badge">STEALTH AIR SUPERIORITY</div>
+                    <div class="plane-name">Shadow</div>
+                    <div class="plane-origin">F-22 Raptor</div>
+
+                    <div class="stat-row">
+                        <span>Speed (3/4)</span>
+                        <div class="stat-pips">
+                            <div class="pip filled"></div>
+                            <div class="pip filled"></div>
+                            <div class="pip filled"></div>
+                            <div class="pip"></div>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span>Manoeuvrability (3/4)</span>
+                        <div class="stat-pips">
+                            <div class="pip filled"></div>
+                            <div class="pip filled"></div>
+                            <div class="pip filled"></div>
+                            <div class="pip"></div>
+                        </div>
+                    </div>
+
+                    <div class="special-weapon-box">
+                        <div class="special-title">SPECIAL WEAPONRY</div>
+                        <div class="special-desc">HighPower Missile &bull; Devastating high-explosive warhead with massive damage and explosive blast shockwave.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Overview -->
+            <div class="controls-summary">
+                <div class="control-item"><span>&uarr; &darr; &larr; &rarr;</span> Pitch &amp; Roll</div>
+                <div class="control-item"><span>W / S</span> Throttle / Airbrake</div>
+                <div class="control-item"><span>A / D</span> Yaw (Rudder)</div>
+                <div class="control-item"><span>SPACE</span> Shoot</div>
+                <div class="control-item"><span>C</span> Switch Weaponry</div>
+                <div class="control-item"><span>ESC</span> Pause</div>
+            </div>
+        </div>
+
+        <div class="launch-btn-container">
+            <button id="btn-start" class="btn-launch">ENGAGE MISSION</button>
+        </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div id="game-over-screen" class="modal-screen hidden">
+        <div class="modal-card gameover">
+            <div class="modal-title">MISSION FAILED</div>
+            <div id="game-over-reason" class="modal-desc">AIRCRAFT DESTROYED</div>
+            <button id="btn-retry" class="btn-modal">REDEPLOY AIRCRAFT</button>
+        </div>
+    </div>
+
+    <!-- VICTORY MODAL -->
+    <div id="victory-screen" class="modal-screen hidden">
+        <div class="modal-card">
+            <div class="modal-title">MISSION ACCOMPLISHED</div>
+            <div class="modal-desc">ALL ROGUE SU-57 TARGETS ELIMINATED</div>
+            <div class="modal-stats">
+                <div class="stat-box">
+                    <div id="victory-time" class="val">0m 0s</div>
+                    <div class="lbl">Mission Duration</div>
+                </div>
+                <div class="stat-box">
+                    <div id="victory-kills" class="val">6 Rogues</div>
+                    <div class="lbl">Hostiles Downed</div>
+                </div>
+            </div>
+            <button id="btn-victory-replay" class="btn-modal">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <!-- PAUSE / OPTIONS MENU -->
+    <div id="pause-menu" class="modal-screen hidden">
+        <div class="modal-card">
+            <div class="modal-title">TACTICAL PAUSE</div>
+            <div class="modal-desc">Flight Systems On Standby</div>
+            <div style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: center;">
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 0.6rem; font-size: 1.1rem;">
+                    <input type="checkbox" id="chk-invert-pitch">
+                    <span>Invert Pitch Control (Up = Pitch Up)</span>
+                </label>
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 0.6rem; font-size: 1.1rem;">
+                    <input type="checkbox" id="chk-mute-audio">
+                    <span>Mute Audio</span>
+                </label>
+            </div>
+            <div style="display: flex; gap: 1.5rem; justify-content: center;">
+                <button id="btn-resume" class="btn-modal">RESUME</button>
+                <button id="btn-hangar-return" class="btn-modal" style="background: #334455; color: #fff;">HANGAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="three.min.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/aircraft_models.js"></script>
+    <script src="js/terrain.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/weapons.js"></script>
+    <script src="js/flight_physics.js"></script>
+    <script src="js/rogue_ai.js"></script>
+    <script src="js/hud.js"></script>
+    <script src="js/game.js"></script>
+
+    <script>
+        // UI Wiring and Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            const game = new ArcadeFlightGame();
+            let selectedPlane = 'Thunder';
+
+            // Aircraft Card Clicks
+            const cards = document.querySelectorAll('.plane-card');
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    cards.forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    selectedPlane = card.dataset.plane;
+                    if (window.soundEngine) window.soundEngine.playUIClick();
+                    game.updateHangarModel(selectedPlane);
+                });
+            });
+
+            // Start Mission Button
+            document.getElementById('btn-start').addEventListener('click', () => {
+                game.startMission(selectedPlane);
+            });
+
+            // Retry Button
+            document.getElementById('btn-retry').addEventListener('click', () => {
+                game.startMission(selectedPlane);
+            });
+
+            // Victory Replay Button
+            document.getElementById('btn-victory-replay').addEventListener('click', () => {
+                document.getElementById('victory-screen').classList.add('hidden');
+                document.getElementById('hangar-screen').classList.remove('hidden');
+                game.state = 'MENU';
+                game.updateHangarModel(selectedPlane);
+            });
+
+            // Resume Button
+            document.getElementById('btn-resume').addEventListener('click', () => {
+                document.getElementById('pause-menu').classList.add('hidden');
+            });
+
+            // Return to Hangar from pause
+            document.getElementById('btn-hangar-return').addEventListener('click', () => {
+                document.getElementById('pause-menu').classList.add('hidden');
+                document.getElementById('hud-overlay').classList.add('hidden');
+                document.getElementById('hangar-screen').classList.remove('hidden');
+                game.state = 'MENU';
+                game.updateHangarModel(selectedPlane);
+            });
+
+            // Options: Invert Pitch
+            const invertChk = document.getElementById('chk-invert-pitch');
+            invertChk.addEventListener('change', (e) => {
+                if (game.player) {
+                    game.player.invertPitch = e.target.checked;
+                }
+            });
+
+            // Options: Mute Audio
+            const muteChk = document.getElementById('chk-mute-audio');
+            muteChk.addEventListener('change', (e) => {
+                if (window.soundEngine) {
+                    window.soundEngine.setMuted(e.target.checked);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

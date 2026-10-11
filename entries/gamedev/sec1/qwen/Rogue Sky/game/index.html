@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROGUE SKIES — Arcade Flight Combat</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#05070c; font-family:'Segoe UI', Arial, sans-serif; color:#cfe8ff; }
+  canvas { display:block; }
+  #app { position:fixed; inset:0; }
+
+  /* ---------- MENU / PLANE SELECT ---------- */
+  #menu { position:fixed; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:center;
+          background:radial-gradient(ellipse at 50% 30%, #16283f 0%, #070d18 65%, #04070d 100%); }
+  #menu h1 { font-size:64px; letter-spacing:12px; color:#7fd4ff; text-shadow:0 0 24px #1e90ff88, 0 0 4px #fff3; margin-bottom:4px; }
+  #menu .sub { font-size:15px; letter-spacing:6px; color:#5f86ad; margin-bottom:34px; text-transform:uppercase; }
+  #planes { display:flex; gap:18px; margin-bottom:30px; }
+  .planeCard { width:230px; background:#0d1a2bcc; border:2px solid #23456b; border-radius:10px; padding:14px 16px; cursor:pointer;
+               transition:all .18s ease; position:relative; }
+  .planeCard:hover { transform:translateY(-4px); border-color:#4fa8e0; }
+  .planeCard.selected { border-color:#7fd4ff; background:#12304dee; box-shadow:0 0 22px #1e90ff55; }
+  .planeCard canvas { width:100%; height:120px; }
+  .planeCard .pname { font-size:22px; font-weight:bold; color:#bfe6ff; letter-spacing:2px; }
+  .planeCard .pmodel { font-size:12px; color:#6f9cc4; margin-bottom:8px; }
+  .statRow { display:flex; align-items:center; font-size:12px; margin:3px 0; color:#9dc4e6; }
+  .statRow .lbl { width:88px; }
+  .pips { display:flex; gap:3px; }
+  .pip { width:16px; height:8px; background:#1c3550; border-radius:2px; }
+  .againBtn { padding:14px 70px; font-size:22px; letter-spacing:6px; background:linear-gradient(#1e6fae,#134a75);
+      color:#eaf7ff; border:2px solid #4fa8e0; border-radius:8px; cursor:pointer; text-transform:uppercase; }
+  .pip.on { background:#4fa8e0; box-shadow:0 0 6px #4fa8e0aa; }
+  .special { margin-top:8px; font-size:12px; color:#ffd27f; min-height:30px; line-height:1.3; }
+  #startBtn, #againBtn { padding:14px 70px; font-size:22px; letter-spacing:6px; background:linear-gradient(#1e6fae,#134a75);
+      color:#eaf7ff; border:2px solid #4fa8e0; border-radius:8px; cursor:pointer; text-transform:uppercase; }
+  #startBtn:hover { background:linear-gradient(#2a8cd6,#1a5e92); box-shadow:0 0 20px #2a8cd688; }
+  #controlsHint { margin-top:26px; font-size:13px; color:#587ea3; text-align:center; line-height:1.7; }
+  kbd { background:#16283f; border:1px solid #2f5b8a; border-radius:4px; padding:1px 7px; font-family:monospace; color:#9fd0f5; }
+
+  /* ---------- HUD ---------- */
+  #hud { position:fixed; inset:0; z-index:10; pointer-events:none; display:none; }
+  .hudPanel { position:absolute; background:#08131fcc; border:1px solid #1f4066; border-radius:6px; padding:8px 12px; font-size:14px; }
+  #speedPanel { left:16px; bottom:16px; width:230px; }
+  #throttleBarWrap { height:10px; background:#0c2036; border:1px solid #2a5580; border-radius:3px; margin-top:5px; }
+  #throttleBar { height:100%; width:50%; background:linear-gradient(90deg,#2a8cd6,#7fd4ff); border-radius:3px; transition:width .1s; }
+  #altPanel { right:16px; bottom:16px; width:230px; text-align:right; }
+  #weaponPanel { right:16px; top:16px; text-align:right; min-width:220px; }
+  #weaponName { font-size:18px; font-weight:bold; color:#ffd27f; letter-spacing:1px; }
+  #weaponCount { font-size:14px; color:#9dc4e6; }
+  #mgHeatWrap { height:8px; background:#0c2036; border:1px solid #2a5580; border-radius:3px; margin-top:6px; }
+  #mgHeat { height:100%; width:0%; background:#e05b3a; border-radius:3px; }
+  #objective { left:16px; top:16px; }
+  #objective b { color:#7fd4ff; font-size:18px; }
+  #lockIndicator { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-size:15px; letter-spacing:3px;
+      color:#ff5b5b; text-shadow:0 0 8px #ff000088; display:none; animation:blink .5s infinite alternate; }
+  @keyframes blink { from {opacity:.35;} to {opacity:1;} }
+  #centerMsg { position:absolute; left:50%; top:32%; transform:translateX(-50%); font-size:34px; letter-spacing:6px;
+      color:#7fd4ff; text-shadow:0 0 18px #1e90ff; display:none; text-align:center; }
+  #helpBox { left:50%; bottom:14px; transform:translateX(-50%); font-size:12px; color:#6f9cc4; white-space:nowrap; }
+  #crosshair { position:absolute; left:50%; top:50%; width:26px; height:26px; transform:translate(-50%,-50%); opacity:.85; }
+  #damageFlash { position:absolute; inset:0; background:radial-gradient(ellipse at center, transparent 55%, #ff2b2b55 100%); opacity:0; }
+  #minimap { position:absolute; left:50%; top:16px; transform:translateX(-50%); width:170px; height:170px;
+      border:1px solid #1f4066; border-radius:50%; background:#08131fcc; }
+
+  /* ---------- END SCREENS ---------- */
+  .endScreen { position:fixed; inset:0; z-index:30; display:none; flex-direction:column; align-items:center; justify-content:center;
+      background:#04070dcc; backdrop-filter: blur(3px); }
+  .endScreen h2 { font-size:56px; letter-spacing:10px; margin-bottom:14px; }
+  #victory h2 { color:#7fffb0; text-shadow:0 0 26px #21d07a88; }
+  #defeat h2 { color:#ff6b6b; text-shadow:0 0 26px #ff000088; }
+  .endScreen p { color:#9dc4e6; margin-bottom:28px; font-size:18px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- ================= MAIN MENU ================= -->
+<div id="menu">
+  <h1>ROGUE SKIES</h1>
+  <div class="sub">Arcade Flight Combat</div>
+  <div id="planes"></div>
+  <button id="startBtn">Start Mission</button>
+  <div id="controlsHint">
+    <kbd>&uarr;</kbd><kbd>&darr;</kbd> pitch &nbsp;&nbsp; <kbd>&larr;</kbd><kbd>&rarr;</kbd> roll &nbsp;&nbsp;
+    <kbd>W</kbd>/<kbd>S</kbd> throttle &nbsp;&nbsp; <kbd>A</kbd>/<kbd>D</kbd> yaw &nbsp;&nbsp;
+    <kbd>Space</kbd> fire &nbsp;&nbsp; <kbd>C</kbd> change weapon &nbsp;&nbsp; <kbd>H</kbd> help
+  </div>
+</div>
+
+<!-- ================= HUD ================= -->
+<div id="hud">
+  <div class="hudPanel" id="objective">MISSION: shoot down all <b id="tgtCount">0</b> Rogue targets<br><span id="tgtLeft"></span></div>
+  <canvas id="minimap" width="170" height="170"></canvas>
+  <div class="hudPanel" id="speedPanel">
+    SPD <span id="spdVal">0</span> km/h<br>
+    <div style="font-size:11px;color:#6f9cc4">THROTTLE</div>
+    <div id="throttleBarWrap"><div id="throttleBar"></div></div>
+  </div>
+  <div class="hudPanel" id="altPanel">
+    ALT <span id="altVal">0</span> m &nbsp; HDG <span id="hdgVal">0</span>&deg;<br>
+    <span style="color:#7fffb0">HULL</span> <span id="hullVal">100</span>%
+  </div>
+  <div class="hudPanel" id="weaponPanel">
+    <div id="weaponName">MG</div>
+    <div id="weaponCount"></div>
+    <div id="mgHeatWrap"><div id="mgHeat"></div></div>
+    <div style="font-size:11px;color:#6f9cc4;margin-top:4px">[C] change weapon</div>
+  </div>
+  <svg id="crosshair" viewBox="0 0 26 26">
+    <circle cx="13" cy="13" r="9" fill="none" stroke="#7fd4ff" stroke-width="1.2"/>
+    <line x1="13" y1="0" x2="13" y2="5" stroke="#7fd4ff"/><line x1="13" y1="21" x2="13" y2="26" stroke="#7fd4ff"/>
+    <line x1="0" y1="13" x2="5" y2="13" stroke="#7fd4ff"/><line x1="21" y1="13" x2="26" y2="13" stroke="#7fd4ff"/>
+  </svg>
+  <div id="lockIndicator">▲ LOCK ON ▲</div>
+  <div id="centerMsg"></div>
+  <div class="hudPanel" id="helpBox">↑↓ pitch · ←→ roll · W/S throttle · A/D yaw · SPACE fire · C weapon · H help toggle</div>
+  <div id="damageFlash"></div>
+</div>
+
+<!-- ================= END SCREENS ================= -->
+<div class="endScreen" id="victory"><h2>ALL TARGETS DESTROYED</h2><p id="vicStats"></p><button id="againBtn1" class="againBtn">Fly Again</button></div>
+<div class="endScreen" id="defeat"><h2>PLANE DOWN</h2><p id="deaStats"></p><button id="againBtn2" class="againBtn">Retry Mission</button></div>
+
+<script src="vendor/three.min.js"></script>
+<script src="terrain.js"></script>
+<script src="models.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

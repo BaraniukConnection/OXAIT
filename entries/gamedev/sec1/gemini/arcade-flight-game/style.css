@@ -1,0 +1,557 @@
+/* Arcade Flight Game - Cyber Military Tactical HUD Styling */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #050a0e;
+    font-family: 'Rajdhani', sans-serif;
+    color: #e2f1ff;
+}
+
+#game-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Canvas overlays */
+#hud-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ===================================================
+   HANGAR / PLANE SELECTION SCREEN
+   =================================================== */
+#hangar-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2.5rem 3.5rem;
+    background: radial-gradient(circle at center, rgba(10, 25, 38, 0.4) 0%, rgba(3, 8, 14, 0.92) 80%);
+    backdrop-filter: blur(4px);
+}
+
+.hangar-header {
+    text-align: center;
+}
+
+.hangar-header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3.2rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    color: #00ffcc;
+    text-shadow: 0 0 20px rgba(0, 255, 204, 0.6), 0 0 40px rgba(0, 255, 204, 0.3);
+    text-transform: uppercase;
+}
+
+.hangar-header p {
+    font-size: 1.2rem;
+    letter-spacing: 3px;
+    color: #8da4be;
+    margin-top: 0.3rem;
+    text-transform: uppercase;
+}
+
+/* Aircraft cards grid */
+.hangar-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.plane-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 1280px;
+}
+
+.plane-card {
+    background: rgba(12, 28, 44, 0.75);
+    border: 2px solid rgba(0, 255, 204, 0.25);
+    border-radius: 8px;
+    padding: 1.4rem;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.plane-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: #00ffcc;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.plane-card:hover {
+    border-color: rgba(0, 255, 204, 0.8);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 255, 204, 0.25);
+    background: rgba(18, 42, 66, 0.85);
+}
+
+.plane-card.active {
+    border-color: #00ffcc;
+    background: rgba(16, 45, 70, 0.95);
+    box-shadow: 0 0 30px rgba(0, 255, 204, 0.4);
+}
+
+.plane-card.active::before {
+    opacity: 1;
+}
+
+.plane-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    background: rgba(0, 255, 204, 0.15);
+    color: #00ffcc;
+    letter-spacing: 1px;
+}
+
+.plane-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.2rem;
+}
+
+.plane-origin {
+    font-size: 0.95rem;
+    color: #7a94ad;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    color: #9cb3cb;
+}
+
+.stat-pips {
+    display: flex;
+    gap: 4px;
+}
+
+.pip {
+    width: 18px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+}
+
+.pip.filled {
+    background: #00ffcc;
+    box-shadow: 0 0 6px #00ffcc;
+}
+
+.special-weapon-box {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.4);
+    border-left: 3px solid #ffcc00;
+    border-radius: 0 4px 4px 0;
+}
+
+.special-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ffcc00;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.special-desc {
+    font-size: 0.9rem;
+    color: #d1dfed;
+    margin-top: 0.25rem;
+    line-height: 1.25;
+}
+
+/* Controls Info */
+.controls-summary {
+    background: rgba(8, 20, 32, 0.85);
+    border: 1px solid rgba(0, 255, 204, 0.3);
+    border-radius: 6px;
+    padding: 0.8rem 2rem;
+    display: flex;
+    gap: 2.5rem;
+    font-size: 0.95rem;
+    color: #a0bed8;
+}
+
+.control-item span {
+    color: #00ffcc;
+    font-weight: 700;
+}
+
+/* Launch Button */
+.launch-btn-container {
+    text-align: center;
+}
+
+.btn-launch {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+    padding: 1rem 3.5rem;
+    background: linear-gradient(135deg, #00ffcc 0%, #0099ff 100%);
+    color: #03101c;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 0 25px rgba(0, 255, 204, 0.6);
+    transition: all 0.25s ease;
+    text-transform: uppercase;
+}
+
+.btn-launch:hover {
+    transform: scale(1.04);
+    box-shadow: 0 0 40px rgba(0, 255, 204, 0.9);
+}
+
+/* ===================================================
+   HUD OVERLAY (IN-GAME)
+   =================================================== */
+#hud-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 15;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem;
+}
+
+/* Top Status Bar */
+.hud-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.hud-objective-panel {
+    background: rgba(6, 18, 28, 0.7);
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    padding: 0.8rem 1.4rem;
+    border-radius: 4px;
+    border-left: 4px solid #00ff88;
+}
+
+.objective-title {
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    color: #7ba892;
+    text-transform: uppercase;
+}
+
+.objective-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-top: 0.2rem;
+}
+
+.targets-remaining {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ff3b30;
+}
+
+/* Health Gauge */
+.hud-health-panel {
+    background: rgba(6, 18, 28, 0.7);
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    padding: 0.8rem 1.4rem;
+    border-radius: 4px;
+    width: 260px;
+}
+
+.health-title {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #7ba892;
+    margin-bottom: 0.4rem;
+    letter-spacing: 1px;
+}
+
+.health-bar-bg {
+    width: 100%;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 255, 136, 0.5);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+#hud-health-bar {
+    width: 100%;
+    height: 100%;
+    background: #00ff88;
+    transition: width 0.2s ease, background 0.3s;
+}
+
+/* Bottom Bar */
+.hud-bottom-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+/* Radar scope */
+.hud-radar-panel {
+    position: relative;
+    width: 240px;
+    height: 240px;
+}
+
+#radar-canvas {
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+}
+
+/* Throttle Gauge */
+.hud-throttle-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(6, 18, 28, 0.7);
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    padding: 0.8rem;
+    border-radius: 4px;
+}
+
+.throttle-bar-container {
+    width: 22px;
+    height: 140px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid #00ff88;
+    position: relative;
+    border-radius: 2px;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+}
+
+#hud-throttle-bar {
+    width: 100%;
+    height: 60%;
+    background: linear-gradient(to top, #00ff88, #00ffff);
+    transition: height 0.1s linear;
+}
+
+.throttle-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #7ba892;
+    margin-top: 0.4rem;
+}
+
+#hud-throttle-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #00ff88;
+}
+
+/* Weapon HUD */
+.hud-weapon-panel {
+    background: rgba(6, 18, 28, 0.7);
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    padding: 1rem 1.6rem;
+    border-radius: 4px;
+    min-width: 280px;
+    border-right: 4px solid #00ff88;
+}
+
+.weapon-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #7ba892;
+    letter-spacing: 1px;
+}
+
+#hud-weapon-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-top: 0.2rem;
+}
+
+.weapon-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.6rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.weapon-switch-hint {
+    color: #638575;
+    font-weight: 600;
+}
+
+/* ===================================================
+   MODALS (VICTORY, GAMEOVER, PAUSE)
+   =================================================== */
+.modal-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 30;
+    background: rgba(2, 6, 10, 0.88);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-card {
+    background: rgba(10, 24, 38, 0.95);
+    border: 2px solid #00ffcc;
+    border-radius: 8px;
+    padding: 3rem 4rem;
+    text-align: center;
+    max-width: 620px;
+    box-shadow: 0 0 50px rgba(0, 255, 204, 0.3);
+}
+
+.modal-card.gameover {
+    border-color: #ff3b30;
+    box-shadow: 0 0 50px rgba(255, 59, 48, 0.35);
+}
+
+.modal-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.8rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: #00ffcc;
+    margin-bottom: 0.6rem;
+}
+
+.modal-card.gameover .modal-title {
+    color: #ff3b30;
+}
+
+.modal-desc {
+    font-size: 1.2rem;
+    color: #a8c1d9;
+    margin-bottom: 2rem;
+}
+
+.modal-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 1.2rem;
+    border-radius: 6px;
+}
+
+.stat-box .val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.stat-box .lbl {
+    font-size: 0.85rem;
+    color: #7b96b0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-modal {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 0.9rem 2.8rem;
+    background: #00ffcc;
+    color: #03101c;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-modal:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px #00ffcc;
+}
+
+.modal-card.gameover .btn-modal {
+    background: #ff3b30;
+    color: #ffffff;
+}
+
+.modal-card.gameover .btn-modal:hover {
+    box-shadow: 0 0 25px #ff3b30;
+}

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="../../../../../../assets/js/pybridge.js" data-server="../server.py"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rogue Strike</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <canvas id="hud"></canvas>
+
+  <div id="loading" class="screen show">
+    <div class="center">
+      <div class="logo">ROGUE<span>STRIKE</span></div>
+      <div class="loadbar"><i></i></div>
+      <p class="dim">Generating terrain&hellip;</p>
+    </div>
+  </div>
+
+  <div id="title" class="screen">
+    <div class="title-wrap">
+      <div class="logo big">ROGUE<span>STRIKE</span></div>
+      <p class="tag">OPERATION CLEAR SKIES</p>
+      <p class="brief">Rogue fighters patrol the valleys and peaks. Each one guards its own airspace and attacks anyone who enters it.
+        <b>Shoot down every Rogue.</b></p>
+      <div class="opts">
+        <div class="opt">
+          <label>DIFFICULTY</label>
+          <div class="seg" id="diff">
+            <button data-v="easy">EASY</button><button data-v="normal">NORMAL</button><button data-v="hard">HARD</button>
+          </div>
+        </div>
+        <div class="opt">
+          <label>PITCH CONTROL</label>
+          <div class="seg" id="pitchmode">
+            <button data-v="normal">↓ = NOSE UP</button><button data-v="invert">↑ = NOSE UP</button>
+          </div>
+        </div>
+      </div>
+      <button class="primary" id="btn-start">START GAME</button>
+      <div class="controls">
+        <div><kbd>↑</kbd><kbd>↓</kbd> Pitch</div>
+        <div><kbd>←</kbd><kbd>→</kbd> Roll</div>
+        <div><kbd>W</kbd><kbd>S</kbd> Throttle</div>
+        <div><kbd>A</kbd><kbd>D</kbd> Yaw</div>
+        <div><kbd>Space</kbd> Fire</div>
+        <div><kbd>C</kbd> Change weapon</div>
+        <div><kbd>V</kbd> Camera</div>
+        <div><kbd>P</kbd>/<kbd>Esc</kbd> Pause · <kbd>M</kbd> Mute</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="hangar" class="screen">
+    <div class="hangar-top">
+      <div class="hdr">SELECT AIRCRAFT</div>
+    </div>
+    <div class="hangar-info">
+      <div class="pname" id="h-name"></div>
+      <div class="ptype" id="h-type"></div>
+      <div class="stat"><span>SPEED</span><div class="pips" id="h-speed"></div></div>
+      <div class="stat"><span>MANEUVERABILITY</span><div class="pips" id="h-agil"></div></div>
+      <p class="blurb" id="h-blurb"></p>
+      <div class="wlist">
+        <div class="w"><b>GUN</b><span>Machine gun · unlimited</span></div>
+        <div class="w"><b>MSL</b><span>Standard AA missile · 80</span></div>
+        <div class="w special"><b id="h-sp-name"></b><span id="h-sp-full"></span><em id="h-sp-desc"></em></div>
+      </div>
+      <div class="best" id="h-best"></div>
+    </div>
+    <div class="hangar-bottom">
+      <button class="arrow" id="h-prev">◀</button>
+      <div class="tabs" id="h-tabs"></div>
+      <button class="arrow" id="h-next">▶</button>
+    </div>
+    <div class="hangar-actions">
+      <button id="h-back">BACK</button>
+      <button class="primary" id="h-go">SORTIE ▸</button>
+    </div>
+  </div>
+
+  <div id="pause" class="screen dimbg">
+    <div class="center panel">
+      <div class="hdr">PAUSED</div>
+      <button class="primary" id="p-resume">RESUME</button>
+      <button id="p-restart">RESTART MISSION</button>
+      <button id="p-hangar">CHANGE AIRCRAFT</button>
+      <button id="p-menu">MAIN MENU</button>
+      <div class="controls small">
+        <div><kbd>↑</kbd><kbd>↓</kbd> Pitch</div><div><kbd>←</kbd><kbd>→</kbd> Roll</div>
+        <div><kbd>W</kbd><kbd>S</kbd> Throttle</div><div><kbd>A</kbd><kbd>D</kbd> Yaw</div>
+        <div><kbd>Space</kbd> Fire</div><div><kbd>C</kbd> Weapon</div>
+        <div><kbd>V</kbd> Camera</div><div><kbd>I</kbd> Invert pitch</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="end" class="screen dimbg">
+    <div class="center panel">
+      <div class="result" id="e-title"></div>
+      <p class="dim" id="e-reason"></p>
+      <div class="stats" id="e-stats"></div>
+      <p class="record" id="e-record"></p>
+      <button class="primary" id="e-retry">RETRY</button>
+      <button id="e-hangar">CHANGE AIRCRAFT</button>
+      <button id="e-menu">MAIN MENU</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

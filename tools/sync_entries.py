@@ -18,7 +18,7 @@ import re
 import shutil
 import sys
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 SOURCE = Path(sys.argv[1] if len(sys.argv) > 1 else "/mnt/a44cd674-0a24-4dfd-97d2-d19af3b984f6/HDDWork/OXAIT")
 ROOT = Path(__file__).resolve().parent.parent
@@ -63,7 +63,7 @@ def title_of(path, fallback):
 
 def find_server(folder):
     """server.py з власним обробником (do_GET/do_POST) — йому потрібен Python, а не лише статика."""
-    for py in sorted(folder.glob("*.py")):
+    for py in sorted(list(folder.glob("*.py")) + list(folder.glob("*/*.py"))):
         code = py.read_text(errors="ignore")
         if "http.server" in code and re.search(r"def do_(GET|POST)\b", code):
             return py
@@ -74,7 +74,9 @@ def find_entry(folder):
     for rel in ("index.html", "static/index.html", "public/index.html", "web/index.html"):
         if (folder / rel).exists():
             return folder / rel
-    return None
+    # будь-яка підпапка першого рівня з index.html (наприклад game/), крім бібліотек
+    found = [p for p in sorted(folder.glob("*/index.html")) if p.parent.name.lower() not in ("vendor", "node_modules", "lib", "libs")]
+    return found[0] if found else None
 
 
 def rel(target, start):
@@ -135,9 +137,9 @@ def main():
                         rec["text"] = item.read_text(errors="ignore")
                     items.append(rec)
             for i, rec in enumerate(items):
-                src = Path(rec["src"])
+                src = Path(unquote(rec["src"]))
                 if src.stem == "index":
-                    src = src.parent.parent if src.parent.name in ("static", "public", "web") else src.parent
+                    src = Path(*src.parts[:5])  # entries/<stage>/<round>/<учасник>/<проєкт>
                 rec["id"] = key(src.stem if src.suffix else src.name) or str(i)
             manifest.setdefault(target_round, {})[pid] = items
             copied += len(items)

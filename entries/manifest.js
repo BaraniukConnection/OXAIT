@@ -102,7 +102,7 @@ window.OXAIT_ENTRIES = {
         "type": "iframe",
         "title": "Case Simulator",
         "src": "entries/gamedev/sec1/claude/cs-case-simulator/static/index.html",
-        "size": 1576102,
+        "size": 1576270,
         "python": true,
         "id": "cscasesimulator"
       },
@@ -113,9 +113,24 @@ window.OXAIT_ENTRIES = {
         "size": 1429584,
         "python": true,
         "id": "houndhunt"
+      },
+      {
+        "type": "iframe",
+        "title": "Rogue Strike",
+        "src": "entries/gamedev/sec1/claude/rogue-strike/static/index.html",
+        "size": 1438592,
+        "python": true,
+        "id": "roguestrike"
       }
     ],
     "gemini": [
+      {
+        "type": "iframe",
+        "title": "Arcade Flight Game - Low Poly Dogfight",
+        "src": "entries/gamedev/sec1/gemini/arcade-flight-game/index.html",
+        "size": 766242,
+        "id": "arcadeflightgame"
+      },
       {
         "type": "iframe",
         "title": "Arcade Tank Sim - City Combat",
@@ -132,7 +147,15 @@ window.OXAIT_ENTRIES = {
         "id": "csgocasesimulator"
       }
     ],
-    "qwen": [],
+    "qwen": [
+      {
+        "type": "iframe",
+        "title": "ROGUE SKIES — Arcade Flight Combat",
+        "src": "entries/gamedev/sec1/qwen/Rogue%20Sky/game/index.html",
+        "size": 739369,
+        "id": "roguesky"
+      }
+    ],
     "chatgpt": [
       {
         "type": "iframe",

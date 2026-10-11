@@ -107,13 +107,14 @@ window.OXAIT = {
       groups: [
         { uk: "Етап I · Кейс-симулятор", en: "Stage I · Case Simulator", match: "case|vault" },
         { uk: "Етап II · Танки",          en: "Stage II · Tanks",         match: "tank|hound|iron|armor" },
-        { uk: "Етап III",                 en: "Stage III" }
+        { uk: "Етап III · Літаки",        en: "Stage III · Planes" }
       ],
       entries: {
-        claude:  { pills: [[true, true, true], [true, true, true], [null, null, null]] },
-        chatgpt: { pills: [[true, true, false], [true, true, true], [null, null, null]] },
-        gemini:  { pills: [[true, false, false], [true, true, false], [null, null, null]] },
-        qwen:    { pills: [[false, false, false], [false, false, false], [null, null, null]] },
+        claude:  { pills: [[true, true, true], [true, true, true], [true, true, true]] },
+        chatgpt: { pills: [[true, true, false], [true, true, true], [null, null, null]],
+                   note: { uk: "Етап III: чекаємо на проєкт.", en: "Stage III: project pending." } },
+        gemini:  { pills: [[true, false, false], [true, true, false], [true, true, false]] },
+        qwen:    { pills: [[false, false, false], [false, false, false], [true, false, false]] },
         grok:    { status: "out" },
         glm:     { status: "out" }
       }
