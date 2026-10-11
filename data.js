@@ -105,14 +105,14 @@ window.OXAIT = {
     "gamedev/sec1": {
       order: ["claude", "chatgpt", "gemini", "qwen", "grok", "glm"],
       groups: [
-        { uk: "Етап I · Кейс-симулятор", en: "Stage I · Case Simulator" },
-        { uk: "Етап II",  en: "Stage II" },
-        { uk: "Етап III", en: "Stage III" }
+        { uk: "Етап I · Кейс-симулятор", en: "Stage I · Case Simulator", match: "case|vault" },
+        { uk: "Етап II · Танки",          en: "Stage II · Tanks",         match: "tank|hound|iron|armor" },
+        { uk: "Етап III",                 en: "Stage III" }
       ],
       entries: {
-        claude:  { pills: [[true, true, true], [null, null, null], [null, null, null]] },
-        chatgpt: { pills: [[true, true, false], [null, null, null], [null, null, null]] },
-        gemini:  { pills: [[true, false, false], [null, null, null], [null, null, null]] },
+        claude:  { pills: [[true, true, true], [true, true, true], [null, null, null]] },
+        chatgpt: { pills: [[true, true, false], [true, true, true], [null, null, null]] },
+        gemini:  { pills: [[true, false, false], [true, true, false], [null, null, null]] },
         qwen:    { pills: [[false, false, false], [null, null, null], [null, null, null]] },
         grok:    { status: "out" },
         glm:     { status: "out" }

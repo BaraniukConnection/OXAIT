@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="../../../../../../assets/js/pybridge.js" data-server="../server.py"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hound Hunt</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="loading">LOADING…</div>
+
+  <!-- main menu -->
+  <section id="menu" class="screen">
+    <div class="menu-box">
+      <div class="logo">HOUND<span>HUNT</span></div>
+      <p class="tag">Arcade tank hunt in an open city</p>
+      <button id="btn-start" class="btn primary">START GAME</button>
+      <button id="btn-controls" class="btn">CONTROLS</button>
+      <div id="controls" class="panel hidden">
+        <table>
+          <tr><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></td><td>Drive hull</td></tr>
+          <tr><td>Mouse</td><td>Aim turret</td></tr>
+          <tr><td>Left click</td><td>Fire</td></tr>
+          <tr><td>Right click (hold)</td><td>Gunner sight</td></tr>
+          <tr><td>Wheel</td><td>Sight zoom</td></tr>
+          <tr><td><kbd>Esc</kbd> / <kbd>P</kbd></td><td>Pause</td></tr>
+          <tr><td><kbd>M</kbd></td><td>Mute</td></tr>
+        </table>
+        <p>Hounds are parked enemy tanks. Each watches a ring around itself and opens fire once you are inside it <em>and</em> in line of sight. Buildings block their view. Side hits deal ×1.25, rear hits ×1.6.</p>
+      </div>
+    </div>
+    <button id="mute" class="mute">SOUND ON</button>
+  </section>
+
+  <!-- tank select -->
+  <section id="select" class="screen hidden">
+    <h2>CHOOSE YOUR TANK</h2>
+    <div id="tank-cards"></div>
+    <div class="select-foot">
+      <button id="btn-back" class="btn">◀ BACK</button>
+      <span class="hint">← → to browse · click selected card or Enter to deploy</span>
+      <button id="btn-deploy" class="btn primary">DEPLOY ▶</button>
+    </div>
+  </section>
+
+  <!-- in-game HUD -->
+  <section id="hud" class="hidden">
+    <div id="vignette"></div>
+    <div id="scope" class="hidden">
+      <svg viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid meet">
+        <g stroke="#111" stroke-width="0.6" fill="none">
+          <line x1="-100" y1="0" x2="-8" y2="0"/><line x1="8" y1="0" x2="100" y2="0"/>
+          <line x1="0" y1="8" x2="0" y2="100"/>
+          <path d="M -5 7 L 0 1 L 5 7" stroke-width="0.8"/>
+          <g stroke-width="0.4">
+            <line x1="-2" y1="16" x2="2" y2="16"/><line x1="-3" y1="26" x2="3" y2="26"/><line x1="-2" y1="36" x2="2" y2="36"/>
+            <line x1="-20" y1="-1.5" x2="-20" y2="1.5"/><line x1="-35" y1="-2.5" x2="-35" y2="2.5"/>
+            <line x1="20" y1="-1.5" x2="20" y2="1.5"/><line x1="35" y1="-2.5" x2="35" y2="2.5"/>
+          </g>
+        </g>
+      </svg>
+      <div class="scope-info"><span id="s-zoom">6×</span><span id="s-range">RNG 0000 m</span></div>
+    </div>
+    <div class="hud-top">
+      <div class="obj"><span class="lbl">HOUNDS</span><b id="h-left">8</b><span id="h-total">/ 8</span></div>
+      <div class="timer" id="h-time">00:00</div>
+    </div>
+    <div id="h-spotted" class="hidden">⚠ SPOTTED</div>
+    <div id="h-feed"></div>
+    <canvas id="minimap" width="220" height="220"></canvas>
+    <div id="markers"></div>
+    <div id="crosshair"></div>
+    <div id="gunmark"></div>
+    <div id="hitmark"></div>
+    <div id="dmg-ind"></div>
+    <div class="hud-bl">
+      <div class="tank-name" id="h-tank">BASTION</div>
+      <div class="bar hp"><i id="h-hp"></i><span>HULL <b id="h-hpv">100</b></span></div>
+      <div class="speed"><b id="h-speed">0</b> km/h</div>
+    </div>
+    <div class="hud-bc">
+      <div class="bar reload"><i id="h-reload"></i></div>
+      <div id="h-reload-t">READY</div>
+    </div>
+    <div class="hud-br">WASD drive · Mouse aim · LMB fire · RMB sight · Esc pause</div>
+  </section>
+
+  <!-- pause -->
+  <section id="pause" class="screen hidden">
+    <div class="menu-box">
+      <h2>PAUSED</h2>
+      <button id="btn-resume" class="btn primary">RESUME</button>
+      <button id="btn-restart" class="btn">RESTART (NEW CITY)</button>
+      <button id="btn-quit" class="btn">QUIT TO MENU</button>
+      <label class="sens">Mouse sensitivity <input id="sens" type="range" min="0.3" max="2.5" step="0.05"></label>
+    </div>
+  </section>
+
+  <!-- end -->
+  <section id="end" class="screen hidden">
+    <div class="menu-box wide">
+      <h2 id="end-title">MISSION COMPLETE</h2>
+      <p id="end-sub"></p>
+      <div id="end-stats"></div>
+      <p id="end-record"></p>
+      <div class="row">
+        <button id="btn-again" class="btn primary">PLAY AGAIN</button>
+        <button id="btn-change" class="btn">CHANGE TANK</button>
+        <button id="btn-menu" class="btn">MAIN MENU</button>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

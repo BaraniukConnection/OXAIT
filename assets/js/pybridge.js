@@ -93,6 +93,8 @@ def boot(path):
 def tick(i):
     """Одна ітерація фонового потоку: перший sleep — пропускаємо, другий — зупинка."""
     t, real, seen, interval = _threads[i], time.sleep, [0], [None]
+    if getattr(t, "_target", None) is None:  # Timer та інші одноразові — не фонові цикли
+        return None
     def fake(s=0):
         seen[0] += 1
         if seen[0] > 1:

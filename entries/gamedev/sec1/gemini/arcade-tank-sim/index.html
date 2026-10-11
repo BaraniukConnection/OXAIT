@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Tank Sim - City Combat</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Local Three.js library -->
+    <script src="three.min.js"></script>
+</head>
+<body>
+    <div id="game-container">
+        <!-- 3D Canvas -->
+        <canvas id="webgl-canvas"></canvas>
+
+        <!-- START / TANK SELECTION MENU -->
+        <div id="start-menu" class="ui-screen">
+            <div class="menu-header">
+                <div class="badge">TACTICAL COMBAT SIMULATOR</div>
+                <h1 class="game-title">ARMORED THUNDER</h1>
+                <p class="game-subtitle">Open City Low-Poly Tank Warfare</p>
+            </div>
+
+            <!-- Interactive 3D Showcase overlay info -->
+            <div class="showcase-hint">
+                <span>◀ 3D LIVE HANGAR PREVIEW ▶</span>
+            </div>
+
+            <!-- TANK SELECTION CARDS -->
+            <div class="tank-selection-grid">
+                <!-- Liberator (Abrams) -->
+                <div class="tank-card" data-tank="liberator">
+                    <div class="card-header">
+                        <span class="tank-tag">USA</span>
+                        <h3 class="tank-name">LIBERATOR</h3>
+                        <span class="tank-analog">Abrams Analog</span>
+                    </div>
+                    <div class="tank-stats">
+                        <div class="stat-row">
+                            <span class="stat-name">SPEED</span>
+                            <div class="stat-bar"><div class="fill" style="width: 25%;"></div></div>
+                            <span class="stat-fraction">1/4</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">ARMOR</span>
+                            <div class="stat-bar"><div class="fill" style="width: 75%;"></div></div>
+                            <span class="stat-fraction">3/4</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">POWER</span>
+                            <div class="stat-bar"><div class="fill" style="width: 75%;"></div></div>
+                            <span class="stat-fraction">3/4</span>
+                        </div>
+                    </div>
+                    <p class="tank-desc">Heavy armored juggernaut. Devastating kinetic punch with extreme frontal armor.</p>
+                </div>
+
+                <!-- Hunter (Leopard 2A6) -->
+                <div class="tank-card" data-tank="hunter">
+                    <div class="card-header">
+                        <span class="tank-tag">GER</span>
+                        <h3 class="tank-name">HUNTER</h3>
+                        <span class="tank-analog">Leopard 2A6 Analog</span>
+                    </div>
+                    <div class="tank-stats">
+                        <div class="stat-row">
+                            <span class="stat-name">SPEED</span>
+                            <div class="stat-bar"><div class="fill" style="width: 75%;"></div></div>
+                            <span class="stat-fraction">3/4</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">ARMOR</span>
+                            <div class="stat-bar"><div class="fill" style="width: 50%;"></div></div>
+                            <span class="stat-fraction">2/4</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">POWER</span>
+                            <div class="stat-bar"><div class="fill" style="width: 50%;"></div></div>
+                            <span class="stat-fraction">2/4</span>
+                        </div>
+                    </div>
+                    <p class="tank-desc">Agile predator with wedge arrowhead armor. Rapid reload and superior maneuverability.</p>
+                </div>
+
+                <!-- Royal (Challenger 2) -->
+                <div class="tank-card" data-tank="royal">
+                    <div class="card-header">
+                        <span class="tank-tag">UK</span>
+                        <h3 class="tank-name">ROYAL</h3>
+                        <span class="tank-analog">Challenger 2 Analog</span>
+                    </div>
+                    <div class="tank-stats">
+                        <div class="stat-row">
+                            <span class="stat-name">SPEED</span>
+                            <div class="stat-bar"><div class="fill" style="width: 50%;"></div></div>
+                            <span class="stat-fraction">2/4</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">ARMOR</span>
+                            <div class="stat-bar"><div class="fill" style="width: 25%;"></div></div>
+                            <span class="stat-fraction">1/4</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">POWER</span>
+                            <div class="stat-bar"><div class="fill" style="width: 75%;"></div></div>
+                            <span class="stat-fraction">3/4</span>
+                        </div>
+                    </div>
+                    <p class="tank-desc">Rifled 120mm cannon specialist delivering lethal high-damage alpha strikes from distance.</p>
+                </div>
+
+                <!-- Bastion (BM Oplot) - Selected by Default -->
+                <div class="tank-card selected" data-tank="bastion">
+                    <div class="card-header">
+                        <span class="tank-tag">UKR</span>
+                        <h3 class="tank-name">BASTION</h3>
+                        <span class="tank-analog">BM Oplot Analog</span>
+                    </div>
+                    <div class="tank-stats">
+                        <div class="stat-row">
+                            <span class="stat-name">SPEED</span>
+                            <div class="stat-bar"><div class="fill" style="width: 50%;"></div></div>
+                            <span class="stat-fraction">2/4</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">ARMOR</span>
+                            <div class="stat-bar"><div class="fill" style="width: 50%;"></div></div>
+                            <span class="stat-fraction">2/4</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">POWER</span>
+                            <div class="stat-bar"><div class="fill" style="width: 50%;"></div></div>
+                            <span class="stat-fraction">2/4</span>
+                        </div>
+                    </div>
+                    <p class="tank-desc">Balanced combatant equipped with Duplet ERA reactive protection and panoramic sight.</p>
+                </div>
+            </div>
+
+            <!-- CONTROLS GUIDE & BRIEFING -->
+            <div class="mission-briefing">
+                <div class="briefing-box">
+                    <h4>MISSION OBJECTIVE</h4>
+                    <p>Infiltrate the city sector. Locate and eliminate all <strong>T-80 "Hound"</strong> defense tanks. Hounds remain stationary until you enter their circular detection zone, after which they open lethal cannon fire.</p>
+                </div>
+                <div class="controls-box">
+                    <h4>COMBAT CONTROLS</h4>
+                    <div class="key-pills">
+                        <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Drive & Track Steering</span>
+                        <span><kbd>MOUSE</kbd> Aim Turret</span>
+                        <span><kbd>LMB</kbd> Fire Cannon</span>
+                        <span><kbd>RMB</kbd> Gunner Sight Zoom</span>
+                        <span><kbd>M</kbd> Mute Audio</span>
+                    </div>
+                </div>
+            </div>
+
+            <button id="start-game-btn" class="btn-start">DEPLOY TANK TO CITY</button>
+        </div>
+
+        <!-- IN-GAME HUD OVERLAY -->
+        <div id="game-hud" class="ui-screen hidden">
+            <!-- Top Alert Banner -->
+            <div id="hud-warning" class="warning-banner hidden">
+                ⚠️ WARNING: TARGET ACQUIRED BY HOUND!
+            </div>
+
+            <!-- Top Left: Mission Objective -->
+            <div class="hud-panel hud-objective">
+                <div class="panel-label">MISSION STATUS</div>
+                <div class="objective-value">
+                    TARGETS: <span id="targets-count">8</span> / <span id="targets-total">8</span>
+                </div>
+                <div class="target-subtext">Eliminate all static T-80 Hounds</div>
+            </div>
+
+            <!-- Top Right: Minimap Radar -->
+            <div class="hud-panel hud-radar">
+                <div class="panel-label">TACTICAL SCANNER</div>
+                <canvas id="minimap-canvas" width="180" height="180"></canvas>
+                <div class="radar-legend">
+                    <span class="legend-item"><span class="dot green"></span> Player</span>
+                    <span class="legend-item"><span class="dot red"></span> Hound</span>
+                    <span class="legend-item"><span class="circle-icon"></span> View Zone</span>
+                </div>
+            </div>
+
+            <!-- Center Arcade Reticle -->
+            <div id="arcade-crosshair" class="crosshair-wrapper">
+                <div class="crosshair-circle"></div>
+                <div class="crosshair-dot"></div>
+            </div>
+
+            <!-- Bottom Left: Tank Armor & Health -->
+            <div class="hud-panel hud-health">
+                <div class="tank-title" id="hud-tank-name">BASTION</div>
+                <div class="stat-title">HULL INTEGRITY</div>
+                <div class="hp-bar-container">
+                    <div id="hp-fill" class="hp-bar-fill"></div>
+                </div>
+                <div class="hp-info">
+                    <span id="hp-text">140 / 140</span>
+                    <span class="hp-label">ARMOR STATUS: NOMINAL</span>
+                </div>
+            </div>
+
+            <!-- Bottom Center: Reload Progress -->
+            <div class="hud-panel hud-reload">
+                <div class="reload-bar-container">
+                    <div id="reload-fill" class="reload-bar-fill"></div>
+                </div>
+                <div id="reload-text" class="reload-status">READY TO FIRE</div>
+            </div>
+
+            <!-- Bottom Right: Speedometer & Gear -->
+            <div class="hud-panel hud-speedometer">
+                <div class="speed-number">
+                    <span id="speed-value">0</span> <small>KM/H</small>
+                </div>
+                <div class="gear-indicator">
+                    GEAR: <span id="gear-value">N</span>
+                </div>
+                <div class="control-hint">
+                    [LMB] Fire &bull; [RMB] Sight &bull; [WASD] Drive
+                </div>
+            </div>
+
+            <!-- Hit Confirmation Marker -->
+            <div id="hit-marker" class="hit-marker hidden">
+                <div class="hm-line hm-tl"></div>
+                <div class="hm-line hm-tr"></div>
+                <div class="hm-line hm-bl"></div>
+                <div class="hm-line hm-br"></div>
+            </div>
+
+            <!-- Gunner Optic Sight Overlay (RMB) -->
+            <div id="sniper-sight-overlay" class="sniper-overlay hidden">
+                <div class="optic-vignette"></div>
+                <div class="optic-reticle">
+                    <!-- Mil dot grid lines -->
+                    <div class="optic-horizontal"></div>
+                    <div class="optic-vertical"></div>
+                    <div class="optic-chevrons">
+                        <div class="chevron c1">^</div>
+                        <div class="chevron c2">^</div>
+                        <div class="chevron c3">^</div>
+                    </div>
+                    <div class="optic-stadia">
+                        <div class="stadia-tick t100">100m</div>
+                        <div class="stadia-tick t200">200m</div>
+                        <div class="stadia-tick t300">300m</div>
+                    </div>
+                </div>
+                <div class="optic-readouts">
+                    <div class="readout-box" id="sniper-range-text">RNG: 0m</div>
+                    <div class="readout-box" id="sniper-compass-text">000° N</div>
+                    <div class="readout-box opt-mode">OPTIC 4.0x / APFSDS</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VICTORY MODAL -->
+        <div id="victory-modal" class="modal-overlay hidden">
+            <div class="modal-card victory-card">
+                <div class="modal-badge victory-badge">MISSION ACCOMPLISHED</div>
+                <h2>CITY SECTOR SECURED</h2>
+                <p>All enemy T-80 "Hound" defense tanks have been neutralized. Outstanding marksmanship, commander!</p>
+                <div class="modal-actions">
+                    <button class="btn-primary btn-restart">PLAY AGAIN / CHANGE TANK</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEFEAT MODAL -->
+        <div id="defeat-modal" class="modal-overlay hidden">
+            <div class="modal-card defeat-card">
+                <div class="modal-badge defeat-badge">CRITICAL FAILURE</div>
+                <h2>TANK DESTROYED</h2>
+                <p>Your tank hull was breached and knocked out by Hound cannon fire. Fall back and regroup!</p>
+                <div class="modal-actions">
+                    <button class="btn-primary btn-restart">RETRY MISSION</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Scripts -->
+    <script src="js/audio.js"></script>
+    <script src="js/tankBuilder.js"></script>
+    <script src="js/cityMap.js"></script>
+    <script src="js/projectile.js"></script>
+    <script src="js/hud.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>

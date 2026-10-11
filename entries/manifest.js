@@ -102,12 +102,27 @@ window.OXAIT_ENTRIES = {
         "type": "iframe",
         "title": "Case Simulator",
         "src": "entries/gamedev/sec1/claude/cs-case-simulator/static/index.html",
-        "size": 1575291,
+        "size": 1576102,
         "python": true,
         "id": "cscasesimulator"
+      },
+      {
+        "type": "iframe",
+        "title": "Hound Hunt",
+        "src": "entries/gamedev/sec1/claude/hound-hunt/static/index.html",
+        "size": 1429584,
+        "python": true,
+        "id": "houndhunt"
       }
     ],
     "gemini": [
+      {
+        "type": "iframe",
+        "title": "Arcade Tank Sim - City Combat",
+        "src": "entries/gamedev/sec1/gemini/arcade-tank-sim/index.html",
+        "size": 759450,
+        "id": "arcadetanksim"
+      },
       {
         "type": "iframe",
         "title": "CS:GO Case Simulator 3D - Storage Warehouse",
@@ -125,6 +140,13 @@ window.OXAIT_ENTRIES = {
         "src": "entries/gamedev/sec1/chatgpt/case-vault/index.html",
         "size": 1347046,
         "id": "casevault"
+      },
+      {
+        "type": "iframe",
+        "title": "Iron District — Arcade Armor",
+        "src": "entries/gamedev/sec1/chatgpt/iron-district/index.html",
+        "size": 45004,
+        "id": "irondistrict"
       }
     ]
   }
