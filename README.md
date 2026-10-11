@@ -97,6 +97,19 @@ groups: [
 
 Проєкт можна додати й вручну, без скрипта: `outputs: [{ type: "iframe", title: "...", src: "entries/..." }]` (типи: `iframe`, `image`, `video`, `model`, `text`).
 
+### Вкладка-стаття (висновки)
+
+Раунд з `type: "article"` показується як стаття замість таблиці: зображення `image` закріплене зліва, справа блоки тексту з `article`. Блок з `who: ["claude"]` оформлюється карткою учасника (колір, аватар, підсумки в інших раундах етапу); блок без `who` — вступ.
+
+```js
+{ id: "results", code: "★", title: { uk: "Перший етап — Висновки", en: "Stage One — Conclusions" }, type: "article",
+  image: "assets/img/results-gamedev.webp",
+  article: [
+    { text: { uk: ["Вступ…"], en: ["Intro…"] } },
+    { who: ["qwen", "glm"], text: { uk: ["Абзац…"], en: ["Paragraph…"] } }
+  ] }
+```
+
 ## Посилання
 
 Кожен стан має свою адресу: `#/uk/gamedev/q1/claude/tetris` — мова, етап, раунд, учасник, проєкт. Посилання з мовою пропускає екран вибору мови.

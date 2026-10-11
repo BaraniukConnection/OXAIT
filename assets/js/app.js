@@ -87,8 +87,8 @@
   const roundOf = () => stageOf(state.stage).rounds.find(r => r.id === state.round);
 
   // Дані раунду з усіма значеннями за замовчуванням
-  function roundData() {
-    const r = D.results[`${state.stage}/${state.round}`] || {};
+  function roundData(key = `${state.stage}/${state.round}`) {
+    const r = D.results[key] || {};
     const order = (r.order || []).filter(id => byId[id]);
     D.participants.forEach(p => order.includes(p.id) || order.push(p.id));
     const groups = r.groups || D.groups;
@@ -103,7 +103,7 @@
       const pills = [0, 1, 2].map(g => [0, 1, 2].map(i => e.pills?.[g]?.[i] ?? null));
       const nums = pills.flat().map(v => v === true ? 1 : v).filter(v => typeof v === "number");
       // Проєкти: з entries/manifest.js (tools/sync_entries.py) + вручну з data.js
-      const projects = [...(M[`${state.stage}/${state.round}`]?.[id] || []), ...(e.outputs || []), ...(e.output ? [e.output] : [])]
+      const projects = [...(M[key]?.[id] || []), ...(e.outputs || []), ...(e.output ? [e.output] : [])]
         .map((o, i) => ({ ...o, id: o.id || String(i + 1), title: o.title || `${i + 1}` }))
         .map(o => ({ ...o, group: byStage ? stageOfProject(o) : null }))
         .sort((a, b) => (a.group ?? 0) - (b.group ?? 0));
@@ -213,9 +213,62 @@
         <span class="chip-code">${esc(x.code)}</span>${esc(L(x.title))}
       </button>`).join("");
     $("#round-meta").innerHTML = `<span>${esc(L(s.title))} · ${esc(r.code)}</span><span class="sep"></span><span>${t.participants(D.participants.length)}</span>${roundData().live ? `<span class="sep"></span><span class="live">${t.live}</span>` : ""}`;
-    renderBoard();
-    renderPreview();
+    const isArticle = r.type === "article";
+    $(".arena").hidden = isArticle;
+    $("#report").hidden = !isArticle;
+    if (isArticle) { state.pick = null; state.variant = null; renderReport(s, r); }
+    else { renderBoard(); renderPreview(); }
     writeHash();
+  }
+
+  /* ───── Висновки (стаття) ───── */
+
+  let revealer;
+  function renderReport(s, r) {
+    // Підсумки учасника в інших раундах цього етапу
+    const rounds = s.rounds.filter(x => x.type !== "article");
+    const standings = rounds.map(x => ({ x, entries: roundData(`${s.id}/${x.id}`).entries }));
+    const chips = id => standings.map(({ x, entries }) => {
+      const e = entries.find(y => y.p.id === id);
+      if (!e) return "";
+      const val = e.out ? t.out : e.total ?? "—";
+      return `<span class="rchip${e.out ? " is-out" : ""}"><b>${esc(x.code)}</b>${esc(val)}</span>`;
+    }).join("");
+
+    const blocks = r.article.map((b, i) => {
+      const paras = [].concat(L(b.text) || []).map(p => `<p>${esc(p)}</p>`).join("");
+      if (!b.who) return `<div class="rblock rblock-intro" style="--i:${i}">${paras}</div>`;
+      const ps = b.who.map(id => byId[id]).filter(Boolean);
+      return `
+        <section class="rblock rcard" style="--c:${ps[0].color};--c2:${(ps[1] || ps[0]).color};--i:${i}">
+          <header class="rcard-head">
+            <span class="rcard-avatars">${ps.map(avatar).join("")}</span>
+            <div class="rcard-who">
+              <h3>${ps.map(p => esc(p.name)).join(" · ")}</h3>
+              <div class="rcard-chips">${ps.map(p => `<span class="rcard-line">${ps.length > 1 ? `<i>${esc(p.mono)}</i>` : ""}${chips(p.id)}</span>`).join("")}</div>
+            </div>
+          </header>
+          ${paras}
+        </section>`;
+    }).join("");
+
+    $("#report").innerHTML = `
+      <div class="report-grid">
+        <figure class="report-figure hud">
+          <img src="${esc(r.image)}" alt="${esc(L(r.title))}">
+          <figcaption><span class="overline">OXAIT · ${esc(L(s.title))}</span><h2>${esc(L(r.title))}</h2></figcaption>
+        </figure>
+        <div class="report-body">${blocks}</div>
+      </div>`;
+
+    // Блоки проявляються, коли доходять до екрана
+    revealer?.disconnect();
+    const items = document.querySelectorAll("#report .rblock");
+    if (!("IntersectionObserver" in window)) return items.forEach(el => el.classList.add("is-in"));
+    revealer = new IntersectionObserver(es => es.forEach(en => {
+      if (en.isIntersecting) { en.target.classList.add("is-in"); revealer.unobserve(en.target); }
+    }), { rootMargin: "0px 0px -8% 0px" });
+    items.forEach(el => revealer.observe(el));
   }
 
   function pillsHTML(pills, delayIndex) {
