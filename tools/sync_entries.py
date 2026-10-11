@@ -119,7 +119,7 @@ def main():
                 continue
             dest = ENTRIES / target_round / pid
             shutil.rmtree(dest, ignore_errors=True)
-            shutil.copytree(pdir, dest, ignore=shutil.ignore_patterns(".*", "__pycache__", "*.pyc"))
+            shutil.copytree(pdir, dest, ignore=shutil.ignore_patterns(".*", "__pycache__", "*.pyc", "*.zip", "*.rar", "*.7z", "*.tar*"))
             items = []
             for item in sorted(dest.iterdir(), key=lambda p: p.name.lower()):
                 entry = item.is_dir() and find_entry(item)

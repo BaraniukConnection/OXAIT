@@ -111,8 +111,7 @@ window.OXAIT = {
       ],
       entries: {
         claude:  { pills: [[true, true, true], [true, true, true], [true, true, true]] },
-        chatgpt: { pills: [[true, true, false], [true, true, true], [null, null, null]],
-                   note: { uk: "Етап III: чекаємо на проєкт.", en: "Stage III: project pending." } },
+        chatgpt: { pills: [[true, true, false], [true, true, true], [true, true, false]] },
         gemini:  { pills: [[true, false, false], [true, true, false], [true, true, false]] },
         qwen:    { pills: [[false, false, false], [false, false, false], [true, false, false]] },
         grok:    { status: "out" },

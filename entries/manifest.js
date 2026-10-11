@@ -102,7 +102,7 @@ window.OXAIT_ENTRIES = {
         "type": "iframe",
         "title": "Case Simulator",
         "src": "entries/gamedev/sec1/claude/cs-case-simulator/static/index.html",
-        "size": 1576270,
+        "size": 1576274,
         "python": true,
         "id": "cscasesimulator"
       },
@@ -170,6 +170,13 @@ window.OXAIT_ENTRIES = {
         "src": "entries/gamedev/sec1/chatgpt/iron-district/index.html",
         "size": 45004,
         "id": "irondistrict"
+      },
+      {
+        "type": "iframe",
+        "title": "SKYFRONT · Alpine intercept",
+        "src": "entries/gamedev/sec1/chatgpt/skyfront/index.html",
+        "size": 43217,
+        "id": "skyfront"
       }
     ]
   }
