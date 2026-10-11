@@ -113,7 +113,7 @@ window.OXAIT = {
         claude:  { pills: [[true, true, true], [true, true, true], [null, null, null]] },
         chatgpt: { pills: [[true, true, false], [true, true, true], [null, null, null]] },
         gemini:  { pills: [[true, false, false], [true, true, false], [null, null, null]] },
-        qwen:    { pills: [[false, false, false], [null, null, null], [null, null, null]] },
+        qwen:    { pills: [[false, false, false], [false, false, false], [null, null, null]] },
         grok:    { status: "out" },
         glm:     { status: "out" }
       }
