@@ -15,7 +15,7 @@
  *         note   — короткий коментар журі (рядок або { uk, en }).
  */
 window.OXAIT = {
-  updated: "2026-10-10",
+  updated: "2026-10-11",
 
   participants: [
     { id: "claude",  name: "Claude Opus 5.5",   vendor: "Anthropic", mono: "C",  color: "#e2805c" },
@@ -32,7 +32,7 @@ window.OXAIT = {
       title: { uk: "Геймдев", en: "Game Dev" },
       rounds: [
         { id: "q1",   code: "Q/1",   title: { uk: "Кваліфікаційний раунд", en: "Qualification Round" }, cover: "assets/img/poster-q1.webp" },
-        { id: "sec1", code: "sec-1", title: { uk: "Перша секція",          en: "Section One" } }
+        { id: "sec1", code: "sec-1", title: { uk: "Перша секція",          en: "Section One" }, cover: "assets/img/poster-sec1.webp" }
       ]
     },
     {
@@ -103,9 +103,19 @@ window.OXAIT = {
       }
     },
     "gamedev/sec1": {
+      order: ["claude", "chatgpt", "gemini", "qwen", "grok", "glm"],
+      groups: [
+        { uk: "Етап I · Кейс-симулятор", en: "Stage I · Case Simulator" },
+        { uk: "Етап II",  en: "Stage II" },
+        { uk: "Етап III", en: "Stage III" }
+      ],
       entries: {
-        grok: { status: "out" },
-        glm:  { status: "out" }
+        claude:  { pills: [[true, true, true], [null, null, null], [null, null, null]] },
+        chatgpt: { pills: [[true, true, false], [null, null, null], [null, null, null]] },
+        gemini:  { pills: [[true, false, false], [null, null, null], [null, null, null]] },
+        qwen:    { pills: [[false, false, false], [null, null, null], [null, null, null]] },
+        grok:    { status: "out" },
+        glm:     { status: "out" }
       }
     }
   }

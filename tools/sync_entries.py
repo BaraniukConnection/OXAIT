@@ -5,11 +5,15 @@
   раунд     — Q1, SEC1, Q2, SEC2, Q3, SEC3, SEC4, SEC5, SEC6 (регістр і дефіси не важливі)
   учасник   — Claude, ChatGPT, Gemini, Grok, GLM (або ZAI), QWEN
   проєкт    — файл (.html, зображення, відео, .glb/.gltf, .md/.txt) або папка з index.html
+              (у корені чи в static/). Якщо поруч лежить server.py з власним HTTP-обробником,
+              у копію index.html підключається assets/js/pybridge.js — сервер запускається
+              в браузері через Pyodide, бо GitHub Pages не виконує Python.
 
 Запуск:  python3 tools/sync_entries.py [SOURCE]
 """
 import html
 import json
+import os
 import re
 import shutil
 import sys
@@ -57,6 +61,42 @@ def title_of(path, fallback):
     return t or pretty(fallback)
 
 
+def find_server(folder):
+    """server.py з власним обробником (do_GET/do_POST) — йому потрібен Python, а не лише статика."""
+    for py in sorted(folder.glob("*.py")):
+        code = py.read_text(errors="ignore")
+        if "http.server" in code and re.search(r"def do_(GET|POST)\b", code):
+            return py
+    return None
+
+
+def find_entry(folder):
+    for rel in ("index.html", "static/index.html", "public/index.html", "web/index.html"):
+        if (folder / rel).exists():
+            return folder / rel
+    return None
+
+
+def rel(target, start):
+    return Path(os.path.relpath(target, start)).as_posix()
+
+
+def prepare_python(entry, server):
+    """Копія для GitHub Pages: шляхи від кореня сервера → відносні, плюс pybridge першим скриптом."""
+    root = entry.parent
+    for f in list(root.rglob("*.html")) + list(root.rglob("*.css")):
+        prefix = rel(root, f.parent)
+        prefix = "" if prefix == "." else prefix + "/"
+        text = f.read_text(errors="ignore")
+        text = re.sub(r'((?:src|href)=["\'])/(?!/)', lambda m: m.group(1) + prefix, text)
+        text = re.sub(r'(url\(\s*["\']?)/(?!/)', lambda m: m.group(1) + prefix, text)
+        f.write_text(text)
+    tag = f'<script src="{rel(ROOT / "assets/js/pybridge.js", root)}" data-server="{rel(server, root)}"></script>'
+    text = entry.read_text(errors="ignore")
+    text, n = re.subn(r"(<head[^>]*>)", lambda m: m.group(1) + "\n" + tag, text, count=1, flags=re.I)
+    entry.write_text(text if n else tag + "\n" + text)
+
+
 def url(path):
     return "/".join(quote(p) for p in path.relative_to(ROOT).parts)
 
@@ -77,12 +117,17 @@ def main():
                 continue
             dest = ENTRIES / target_round / pid
             shutil.rmtree(dest, ignore_errors=True)
-            shutil.copytree(pdir, dest)
+            shutil.copytree(pdir, dest, ignore=shutil.ignore_patterns(".*", "__pycache__", "*.pyc"))
             items = []
             for item in sorted(dest.iterdir(), key=lambda p: p.name.lower()):
-                if item.is_dir() and (item / "index.html").exists():
-                    entry = item / "index.html"
-                    items.append({"type": "iframe", "title": title_of(entry, item.name), "src": url(entry), "size": sum(f.stat().st_size for f in item.rglob("*") if f.is_file())})
+                entry = item.is_dir() and find_entry(item)
+                if entry:
+                    rec = {"type": "iframe", "title": title_of(entry, item.name), "src": url(entry), "size": sum(f.stat().st_size for f in item.rglob("*") if f.is_file())}
+                    server = find_server(item)
+                    if server:
+                        prepare_python(entry, server)
+                        rec["python"] = True
+                    items.append(rec)
                 elif item.is_file() and item.suffix.lower() in TYPES:
                     kind = TYPES[item.suffix.lower()]
                     rec = {"type": kind, "title": title_of(item, item.stem) if kind == "iframe" else pretty(item.stem), "src": url(item), "size": item.stat().st_size}
@@ -90,7 +135,10 @@ def main():
                         rec["text"] = item.read_text(errors="ignore")
                     items.append(rec)
             for i, rec in enumerate(items):
-                rec["id"] = key(Path(rec["src"]).stem if Path(rec["src"]).stem != "index" else Path(rec["src"]).parent.name) or str(i)
+                src = Path(rec["src"])
+                if src.stem == "index":
+                    src = src.parent.parent if src.parent.name in ("static", "public", "web") else src.parent
+                rec["id"] = key(src.stem if src.suffix else src.name) or str(i)
             manifest.setdefault(target_round, {})[pid] = items
             copied += len(items)
             print(f"  {target_round}/{pid}: {', '.join(r['title'] for r in items) or '—'}")

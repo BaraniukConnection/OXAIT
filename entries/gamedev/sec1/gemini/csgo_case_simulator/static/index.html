@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="../../../../../../assets/js/pybridge.js" data-server="../server.py"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS:GO Case Simulator 3D - Storage Warehouse</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Three.js 3D Library & Confetti with fallback -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>window.THREE || document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>')</script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script>window.confetti || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.5.1/confetti.browser.min.js"><\/script>')</script>
+</head>
+<body>
+
+    <!-- 3D WebGL Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- TOP CS:GO STATUS HUD -->
+    <header class="top-hud">
+        <div class="hud-title-box">
+            <div class="hud-logo">CS:GO <span>CASE SIM</span></div>
+            <div class="hud-subtitle">Storage Warehouse // 3D Environment</div>
+        </div>
+
+        <div class="hud-stats-group">
+            <div class="hud-stat-pill">
+                <span class="label">Wallet Balance</span>
+                <span class="value" id="hud-balance">$1,000.00</span>
+            </div>
+            <div class="hud-stat-pill">
+                <span class="label">Cases Opened</span>
+                <span class="value" id="hud-opened">0</span>
+            </div>
+            <div class="hud-stat-pill">
+                <span class="label">Total P&L</span>
+                <span class="value pos" id="hud-pnl">+$0.00</span>
+            </div>
+        </div>
+
+        <div class="hud-controls-group">
+            <button class="btn btn-primary btn-add-funds" data-amount="500">+ Deposit $500</button>
+            <button class="btn" id="btn-sound-toggle">🔊 Audio On</button>
+        </div>
+    </header>
+
+    <!-- WORKBENCH HUD (LEFT STATION) -->
+    <div id="workbench-hud" class="hidden">
+        <div class="wb-header">
+            <div class="wb-title">Unboxing Workbench</div>
+            <span class="hud-subtitle">[STATION: LEFT]</span>
+        </div>
+
+        <div class="wb-select-box">
+            <label for="workbench-case-select">Select Case to Open:</label>
+            <select id="workbench-case-select">
+                <!-- Populated dynamically -->
+            </select>
+        </div>
+
+        <div class="wb-details">
+            <div class="wb-row">
+                <span class="lbl">Active Case:</span>
+                <span class="val" id="wb-case-name">Assault Case</span>
+            </div>
+            <div class="wb-row">
+                <span class="lbl">Market Price:</span>
+                <span class="val" id="wb-case-price">$170</span>
+            </div>
+            <div class="wb-row">
+                <span class="lbl">Owned in Stock:</span>
+                <span class="val" id="wb-case-owned">1</span>
+            </div>
+            <div class="wb-row">
+                <span class="lbl">Drop Pool:</span>
+                <span class="val" id="wb-case-weapons">M4A1 / AK-47</span>
+            </div>
+        </div>
+
+        <button id="btn-open-case" class="btn-open-big">Open Case</button>
+    </div>
+
+    <!-- PC TERMINAL WINDOW (RIGHT STATION) -->
+    <div id="pc-terminal-overlay" class="hidden">
+        <div class="pc-window-bar">
+            <div class="pc-window-title">TERMINAL // BLACK MARKET SYSTEM v2.4</div>
+            <span class="hud-subtitle">[STATION: RIGHT]</span>
+        </div>
+
+        <!-- LIVE PRICE TICKER -->
+        <div class="market-ticker-banner">
+            <div id="market-ticker-content">
+                <span class="ticker-event">CONNECTING TO CS:GO MARKET TICKER...</span>
+            </div>
+        </div>
+
+        <!-- PC TABS -->
+        <div class="pc-tabs-nav">
+            <button class="pc-tab-btn active" data-tab="tab-buy-cases">🛒 Buy Cases</button>
+            <button class="pc-tab-btn" data-tab="tab-skin-market">📈 Live Skin Market</button>
+            <button class="pc-tab-btn" data-tab="tab-inventory">🎒 My Inventory</button>
+        </div>
+
+        <div class="pc-tab-body">
+            <!-- TAB 1: BUY CASES -->
+            <div id="tab-buy-cases" class="pc-tab-pane active">
+                <div id="shop-case-grid" class="shop-case-grid">
+                    <!-- Populated by market.js -->
+                </div>
+            </div>
+
+            <!-- TAB 2: LIVE SKIN MARKET -->
+            <div id="tab-skin-market" class="pc-tab-pane">
+                <div class="market-controls">
+                    <div class="market-filter-group">
+                        <button class="market-filter-btn active" data-category="All">All</button>
+                        <button class="market-filter-btn" data-category="Assault">Assault</button>
+                        <button class="market-filter-btn" data-category="Pistol">Pistols</button>
+                        <button class="market-filter-btn" data-category="SMG">SMGs</button>
+                        <button class="market-filter-btn" data-category="Shotgun">Shotguns</button>
+                        <button class="market-filter-btn" data-category="LMG">LMGs</button>
+                        <button class="market-filter-btn" data-category="Legendary">Legendary Only</button>
+                    </div>
+                    <div class="market-search-box">
+                        <input type="text" id="market-search" placeholder="Search weapon or pattern...">
+                    </div>
+                </div>
+
+                <div id="market-grid" class="market-grid">
+                    <!-- Populated dynamically with live charts -->
+                </div>
+            </div>
+
+            <!-- TAB 3: USER INVENTORY -->
+            <div id="tab-inventory" class="pc-tab-pane">
+                <div class="inventory-summary-bar">
+                    <div class="inv-stat">Owned Skins: <strong id="inv-total-count">0</strong></div>
+                    <div class="inv-stat">Total Portfolio Value: <strong id="inv-total-value">$0.00</strong></div>
+                    <button id="sell-commons-btn" class="btn">Sell All Common Skins</button>
+                </div>
+
+                <div id="inventory-empty" class="hidden" style="text-align: center; padding: 40px; color: #8395a7;">
+                    Your inventory is empty. Open some cases at the workbench or buy them in the shop!
+                </div>
+
+                <div id="inventory-grid" class="inventory-grid">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3D TURNTABLE INSPECTION BADGE -->
+    <div id="inspect-turntable-badge">
+        <div class="badge-weapon">AK-47</div>
+        <div class="badge-skin" style="color: #ff9f43">Hyper Hazard</div>
+        <div class="badge-rarity">Legendary // Poly-Tech</div>
+    </div>
+
+    <div class="inspect-instructions">
+        <span>🖱️ Drag to Orbit 360° | <kbd>F</kbd> Inspect Weapon</span>
+        <button id="btn-inspect-trigger" class="btn" style="margin-left: 10px; padding: 4px 10px;">Inspect (F)</button>
+    </div>
+
+    <!-- NAVIGATION PILLS -->
+    <nav class="station-nav-bar">
+        <button class="nav-station-btn active" data-station="station-room">
+            <span>🏭 Overview</span> <kbd>[1]</kbd>
+        </button>
+        <button class="nav-station-btn" data-station="station-left">
+            <span>📦 Open Cases (Left)</span> <kbd>[2]</kbd>
+        </button>
+        <button class="nav-station-btn" data-station="station-right">
+            <span>🖥️ PC Market (Right)</span> <kbd>[3]</kbd>
+        </button>
+        <button class="nav-station-btn" data-station="station-inspect">
+            <span>🔍 3D Inspect</span> <kbd>[4]</kbd>
+        </button>
+    </nav>
+
+    <!-- CS:GO HORIZONTAL ROULETTE REEL OVERLAY -->
+    <div id="roulette-overlay" class="hidden">
+        <div class="roulette-viewport">
+            <div class="roulette-center-line"></div>
+            <div id="roulette-track" class="roulette-track"></div>
+        </div>
+    </div>
+
+    <!-- UNBOXED WINNER MODAL -->
+    <div id="unboxed-modal" class="hidden">
+        <div class="unboxed-content">
+            <div class="unboxed-header-tag">★ NEW ITEM UNLOCKED ★</div>
+
+            <div id="unboxed-card-box" class="unboxed-card-box">
+                <div id="unboxed-weapon-name" class="unboxed-weapon-name">AK-47</div>
+                <div id="unboxed-skin-name" class="unboxed-skin-name">Hyper Hazard</div>
+                <div id="unboxed-rarity" class="unboxed-rarity">LEGENDARY GRADE</div>
+                <div id="unboxed-condition" class="unboxed-condition">Factory New (Float: 0.0241)</div>
+                
+                <div class="unboxed-val-label">Current Market Value</div>
+                <div id="unboxed-value" class="unboxed-value">$1,450.00</div>
+            </div>
+
+            <div class="unboxed-modal-actions">
+                <button id="unboxed-inspect-btn" class="btn btn-unboxed-inspect">Inspect in 3D</button>
+                <button id="unboxed-sell-btn" class="btn btn-unboxed-sell">Sell for $1,450.00</button>
+                <button id="unboxed-close-btn" class="btn">Keep & Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Modules -->
+    <script src="js/config.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/texture_generator.js"></script>
+    <script src="js/weapons.js"></script>
+    <script src="js/warehouse.js"></script>
+    <script src="js/roulette.js"></script>
+    <script src="js/market.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>

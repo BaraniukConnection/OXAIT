@@ -34,6 +34,7 @@
       back: "До вибору проєктів",
       projects: n => `${n} ${n % 10 === 1 && n % 100 !== 11 ? "проєкт" : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? "проєкти" : "проєктів"}`,
       kb: "КБ",
+      pyHint: "Сервер на Python запускається прямо в браузері (Pyodide) — перший запуск триває кілька секунд.",
       total: "Разом",
       fullscreen: "На весь екран", newTab: "Відкрити в новій вкладці", reload: "Перезапустити", close: "Закрити",
       stage: "Етап"
@@ -67,6 +68,7 @@
       back: "Back to Projects",
       projects: n => `${n} project${n === 1 ? "" : "s"}`,
       kb: "KB",
+      pyHint: "The Python server runs right in your browser (Pyodide) — the first start takes a few seconds.",
       total: "Total",
       fullscreen: "Full Screen", newTab: "Open in New Tab", reload: "Restart", close: "Close",
       stage: "Stage"
@@ -105,7 +107,7 @@
         .map((o, i) => ({ ...o, id: o.id || String(i + 1), title: o.title || `${i + 1}` }))
         .map(o => ({ ...o, group: byStage ? stageOfProject(o) : null }))
         .sort((a, b) => (a.group ?? 0) - (b.group ?? 0));
-      return { p: byId[id], pills, total: nums.length ? nums.reduce((a, b) => a + b, 0) : null, out: e.status === "out", projects, note: e.note || null };
+      return { p: byId[id], pills, total: pills.flat().some(v => v !== null && v !== "") ? nums.reduce((a, b) => a + b, 0) : null, out: e.status === "out", projects, note: e.note || null };
     });
     // Більше балів — вище, вибулі — внизу; при рівності лишається порядок з order
     entries.sort((a, b) => (a.out - b.out) || ((b.total ?? -1) - (a.total ?? -1)));
@@ -366,7 +368,7 @@
             <span class="pcard-letter" aria-hidden="true">${letter(i)}</span>
             <span class="pcard-top"><span class="ox-icon">${projIcon(o, s)}</span>${o.group != null && o.group >= 0 ? esc(L(roundData().groups[o.group])) : `${t.variant} ${letter(i)}`}</span>
             <span class="pcard-title">${esc(o.title)}</span>
-            <span class="pcard-meta">${[extOf(o), fmtSize(o.size)].filter(Boolean).join(" · ")}</span>
+            <span class="pcard-meta">${[o.python ? "PYTHON" : extOf(o), fmtSize(o.size)].filter(Boolean).join(" · ")}</span>
             <span class="pcard-go">${o.type === "iframe" ? (t.play[s.id] || t.play.other) : t.play.other}<span class="ox-icon">play_arrow</span></span>
           </button>`).join("")}
         </div>
@@ -380,7 +382,7 @@
       case "iframe": return `
         <div class="launch" style="--c:${e.p.color}"><div>
           <span class="btn-wrap"><button class="btn btn-primary ox-focus" data-act="play"><span class="ox-icon">play_arrow</span>${t.play[s.id] || t.play.other}</button></span>
-          <p>${t.playHint}</p>
+          <p>${o.title ? `<b class="launch-title">${esc(o.title)}</b>` : ""}${o.python ? `<span class="py-badge">Python</span> ${t.pyHint}` : t.playHint}</p>
         </div></div>`;
       case "video": return `<video src="${esc(o.src)}" ${o.poster ? `poster="${esc(o.poster)}"` : ""} controls playsinline preload="metadata"></video>`;
       case "model": return `<model-viewer src="${esc(o.src)}" ${o.poster ? `poster="${esc(o.poster)}"` : ""} camera-controls auto-rotate shadow-intensity="1" alt="${esc(o.title)}"></model-viewer>`;

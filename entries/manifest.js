@@ -95,5 +95,37 @@ window.OXAIT_ENTRIES = {
         "id": "tetris"
       }
     ]
+  },
+  "gamedev/sec1": {
+    "claude": [
+      {
+        "type": "iframe",
+        "title": "Case Simulator",
+        "src": "entries/gamedev/sec1/claude/cs-case-simulator/static/index.html",
+        "size": 1575291,
+        "python": true,
+        "id": "cscasesimulator"
+      }
+    ],
+    "gemini": [
+      {
+        "type": "iframe",
+        "title": "CS:GO Case Simulator 3D - Storage Warehouse",
+        "src": "entries/gamedev/sec1/gemini/csgo_case_simulator/static/index.html",
+        "size": 198910,
+        "python": true,
+        "id": "csgocasesimulator"
+      }
+    ],
+    "qwen": [],
+    "chatgpt": [
+      {
+        "type": "iframe",
+        "title": "Case Vault — Storage 07",
+        "src": "entries/gamedev/sec1/chatgpt/case-vault/index.html",
+        "size": 1347046,
+        "id": "casevault"
+      }
+    ]
   }
 };

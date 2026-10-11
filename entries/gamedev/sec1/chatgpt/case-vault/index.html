@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111817"><title>Case Vault — Storage 07</title><link rel="icon" href="data:,"><link rel="stylesheet" href="style.css"></head><body>
+<canvas id="world" aria-label="Interactive 3D storage room"></canvas>
+<div class="vignette"></div><div id="loading"><div class="brand-mark">▧</div><h1>CASE VAULT</h1><p>Unlocking storage 07…</p></div>
+<header><a class="brand" href="#" aria-label="Return to room"><span class="brand-mark">▧</span><span>CASE VAULT<small>COUNTER-STRIKE INSPIRED SIMULATOR</small></span></a><div class="status"><i></i> LOCAL SESSION</div><div class="wallet"><small>AVAILABLE CREDITS</small><strong id="balance">5,000 <span>CR</span></strong></div><button class="icon-button" id="settings" title="Settings & save">⚙</button></header>
+<section id="room-title"><div class="eyebrow">PRIVATE COLLECTION / 07</div><h1>A little luck.<br>A better collection.</h1><p>Your cases. Your collection. Your next find.</p></section>
+<div id="hotspots"><button id="bench-hotspot" class="hotspot"><span>↗</span><div>OPEN A CASE<small>Workbench · left side</small></div></button><button id="shop-hotspot" class="hotspot"><span>↗</span><div>SHOP & MARKET<small>Terminal · right side</small></div></button></div>
+<div id="room-hint"><span class="live-dot"></span> STORAGE 07 <span class="divider">/</span> <span id="room-stats">2 sealed cases · 0 skins</span></div>
+<nav id="navigation"><button data-view="room" class="active"><span>01</span> Storage</button><button data-view="bench"><span>02</span> Workbench <b id="case-count">2</b></button><button data-view="shop"><span>03</span> Terminal</button><button data-view="collection"><span>04</span> Collection <b id="skin-count">0</b></button></nav>
+<div id="controls"><kbd>W A S D</kbd> move <span>·</span> drag to look <span>·</span> <kbd>1–4</kbd> stations <span>·</span> <kbd>Esc</kbd> room</div>
+<aside id="panel" hidden></aside><div id="reveal" hidden></div><div id="toast" role="status"></div>
+<div id="modal" hidden></div><script type="module" src="app.js"></script></body></html>
