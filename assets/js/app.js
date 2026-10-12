@@ -118,7 +118,8 @@
     entries.sort((a, b) => (a.out - b.out) || ((b.total ?? -1) - (a.total ?? -1)));
     entries.forEach((e, i) => {
       const prev = entries[i - 1];
-      e.rank = e.out ? null : (prev && !prev.out && e.total !== null && prev.total === e.total ? prev.rank : i + 1);
+      // Щільна нумерація: рівні бали ділять місце, наступний іде без пропуску (1, 1, 2…)
+      e.rank = e.out ? null : !prev ? 1 : e.total !== null && prev.total === e.total ? prev.rank : prev.rank + 1;
     });
     return { entries, groups, scored: n > 0, live: entries.some(e => e.total !== null || e.out) };
   }
