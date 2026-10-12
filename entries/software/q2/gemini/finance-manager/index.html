@@ -1,0 +1,3364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apple Finance — Liquid Glass</title>
+  <style>
+    /* ==========================================================================
+       APPLE LIQUID GLASS SYSTEM VARIABLES & TOKENS
+       ========================================================================== */
+    :root {
+      --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+      
+      /* Dark Vision / Liquid Glass Default */
+      --bg-base: #06080e;
+      --glass-surface: rgba(255, 255, 255, 0.05);
+      --glass-surface-hover: rgba(255, 255, 255, 0.09);
+      --glass-surface-active: rgba(255, 255, 255, 0.13);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-border-highlight: rgba(255, 255, 255, 0.35);
+      --glass-specular: inset 0 1px 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.25);
+      --glass-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.65), 0 1px 3px rgba(0, 0, 0, 0.4);
+      --glass-shadow-sm: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+      --glass-blur: blur(28px) saturate(210%);
+      --glass-blur-heavy: blur(48px) saturate(220%);
+
+      /* Text & Typography */
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.65);
+      --text-tertiary: rgba(255, 255, 255, 0.42);
+      --text-quaternary: rgba(255, 255, 255, 0.25);
+
+      /* Apple System Colors */
+      --apple-blue: #0A84FF;
+      --apple-blue-glow: rgba(10, 132, 255, 0.35);
+      --apple-green: #30D158;
+      --apple-green-glow: rgba(48, 209, 88, 0.35);
+      --apple-red: #FF453A;
+      --apple-red-glow: rgba(255, 69, 58, 0.35);
+      --apple-orange: #FF9F0A;
+      --apple-purple: #BF5AF2;
+      --apple-cyan: #64D2FF;
+      --apple-yellow: #FFD60A;
+      --apple-pink: #FF375F;
+      --apple-indigo: #5E5CE6;
+
+      /* Radii */
+      --radius-sm: 12px;
+      --radius-md: 18px;
+      --radius-lg: 26px;
+      --radius-xl: 34px;
+      --radius-pill: 9999px;
+
+      /* Transitions */
+      --spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+      --spring-bouncy: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    [data-theme="light"] {
+      --bg-base: #eceef5;
+      --glass-surface: rgba(255, 255, 255, 0.62);
+      --glass-surface-hover: rgba(255, 255, 255, 0.78);
+      --glass-surface-active: rgba(255, 255, 255, 0.9);
+      --glass-border: rgba(255, 255, 255, 0.6);
+      --glass-border-highlight: rgba(255, 255, 255, 0.9);
+      --glass-specular: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.05);
+      --glass-shadow: 0 20px 48px -12px rgba(30, 40, 80, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04);
+      --glass-shadow-sm: 0 8px 24px -4px rgba(30, 40, 80, 0.08);
+      
+      --text-primary: #12141a;
+      --text-secondary: rgba(18, 20, 26, 0.68);
+      --text-tertiary: rgba(18, 20, 26, 0.44);
+      --text-quaternary: rgba(18, 20, 26, 0.24);
+
+      --apple-blue: #0071E3;
+      --apple-green: #248A3D;
+      --apple-red: #D70015;
+    }
+
+    /* ==========================================================================
+       RESET & BASE STYLING
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-stack);
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Ambient Liquid Mesh Background */
+    .ambient-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .liquid-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.55;
+      mix-blend-mode: screen;
+      animation: floatMotion 22s infinite alternate var(--spring-smooth);
+      will-change: transform, opacity;
+    }
+
+    [data-theme="light"] .liquid-orb {
+      mix-blend-mode: multiply;
+      opacity: 0.28;
+      filter: blur(100px);
+    }
+
+    .orb-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, #5E5CE6 0%, rgba(94,92,230,0) 70%);
+      top: -120px;
+      left: 10%;
+      animation-duration: 26s;
+    }
+
+    .orb-2 {
+      width: 650px;
+      height: 650px;
+      background: radial-gradient(circle, #0A84FF 0%, rgba(10,132,255,0) 70%);
+      top: 35%;
+      right: -80px;
+      animation-duration: 32s;
+      animation-delay: -5s;
+    }
+
+    .orb-3 {
+      width: 550px;
+      height: 550px;
+      background: radial-gradient(circle, #BF5AF2 0%, rgba(191,90,242,0) 70%);
+      bottom: -150px;
+      left: 20%;
+      animation-duration: 28s;
+      animation-delay: -10s;
+    }
+
+    .orb-4 {
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, #30D158 0%, rgba(48,209,88,0) 70%);
+      top: 15%;
+      right: 30%;
+      opacity: 0.35;
+      animation-duration: 35s;
+      animation-delay: -15s;
+    }
+
+    @keyframes floatMotion {
+      0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+      50% { transform: translate3d(60px, -40px, 0) scale(1.12) rotate(18deg); }
+      100% { transform: translate3d(-50px, 50px, 0) scale(0.95) rotate(-15deg); }
+    }
+
+    /* Subtlest dynamic glass grain texture */
+    .glass-grain {
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 0);
+      background-size: 24px 24px;
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    [data-theme="light"] .glass-grain {
+      background-image: radial-gradient(rgba(0,0,0,0.04) 1px, transparent 0);
+      opacity: 0.45;
+    }
+
+    /* ==========================================================================
+       LIQUID GLASS UTILITIES & PRISM EFFECTS
+       ========================================================================== */
+    .liquid-glass {
+      background: var(--glass-surface);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-specular), var(--glass-shadow);
+      border-radius: var(--radius-lg);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s var(--spring-smooth);
+    }
+
+    /* Apple specular edge highlight */
+    .liquid-glass::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(
+        135deg,
+        var(--glass-border-highlight) 0%,
+        rgba(255, 255, 255, 0.05) 30%,
+        rgba(255, 255, 255, 0.01) 70%,
+        var(--glass-border-highlight) 100%
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0.8;
+      transition: opacity 0.3s ease;
+    }
+
+    .liquid-glass:hover::before {
+      opacity: 1;
+    }
+
+    .liquid-card {
+      padding: 24px;
+    }
+
+    .interactive-card {
+      cursor: pointer;
+    }
+
+    .interactive-card:hover {
+      transform: translateY(-3px) scale(1.008);
+      background: var(--glass-surface-hover);
+      box-shadow: var(--glass-specular), 0 24px 56px -10px rgba(0,0,0,0.7);
+    }
+
+    .interactive-card:active {
+      transform: scale(0.985);
+      transition-duration: 0.15s;
+    }
+
+    /* ==========================================================================
+       APP LAYOUT
+       ========================================================================== */
+    #app-container {
+      position: relative;
+      z-index: 2;
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 32px 28px 100px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      min-height: 100vh;
+    }
+
+    /* ==========================================================================
+       FLOATING TOP NAVIGATION / APPLE VISION DOCK
+       ========================================================================== */
+    .glass-nav-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 12px 24px;
+      border-radius: var(--radius-pill);
+      background: var(--glass-surface);
+      backdrop-filter: var(--glass-blur-heavy);
+      -webkit-backdrop-filter: var(--glass-blur-heavy);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-specular), var(--glass-shadow-sm);
+      position: sticky;
+      top: 20px;
+      z-index: 100;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .apple-logo-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.05));
+      border: 1px solid rgba(255,255,255,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+      box-shadow: var(--glass-specular);
+      transition: transform 0.4s var(--spring-bouncy);
+    }
+
+    .apple-logo-badge svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    .brand-section:hover .apple-logo-badge {
+      transform: rotate(-8deg) scale(1.05);
+    }
+
+    .brand-text h1 {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    /* Segmented Navigation Bar */
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 4px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+    }
+
+    [data-theme="light"] .nav-tabs {
+      background: rgba(0, 0, 0, 0.05);
+      border-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .tab-pill {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 500;
+      padding: 8px 18px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s var(--spring-smooth);
+      position: relative;
+      z-index: 2;
+    }
+
+    .tab-pill svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      fill: none;
+    }
+
+    .tab-pill:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-pill.active {
+      color: #fff;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(14px);
+      box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.5), 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    [data-theme="light"] .tab-pill.active {
+      background: #ffffff;
+      color: #000;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+
+    /* Actions Pill */
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-liquid {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: var(--radius-pill);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-surface);
+      color: var(--text-primary);
+      backdrop-filter: var(--glass-blur);
+      box-shadow: var(--glass-specular), var(--glass-shadow-sm);
+      transition: all 0.28s var(--spring-smooth);
+      outline: none;
+    }
+
+    .btn-liquid:hover {
+      background: var(--glass-surface-hover);
+      transform: translateY(-1.5px);
+      border-color: var(--glass-border-highlight);
+    }
+
+    .btn-liquid:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary-liquid {
+      background: linear-gradient(135deg, rgba(10, 132, 255, 0.85) 0%, rgba(94, 92, 230, 0.85) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: #ffffff;
+      box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.6), 0 8px 24px -4px var(--apple-blue-glow);
+    }
+
+    .btn-primary-liquid:hover {
+      background: linear-gradient(135deg, rgba(10, 132, 255, 0.98) 0%, rgba(94, 92, 230, 0.98) 100%);
+      box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 0.8), 0 10px 28px -2px var(--apple-blue-glow);
+      transform: translateY(-2px) scale(1.02);
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      border-radius: 50%;
+    }
+
+    .icon-btn svg {
+      width: 17px;
+      height: 17px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ==========================================================================
+       DYNAMIC ISLAND NOTIFICATION
+       ========================================================================== */
+    #dynamic-island-banner {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-120px) scale(0.85);
+      z-index: 1000;
+      background: #000000;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: var(--radius-pill);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.85), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+      font-size: 13.5px;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.5s var(--spring-bouncy);
+    }
+
+    #dynamic-island-banner.show {
+      transform: translateX(-50%) translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    #dynamic-island-banner .island-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #dynamic-island-banner .island-icon svg {
+      width: 13px;
+      height: 13px;
+      stroke: currentColor;
+      stroke-width: 2.5;
+    }
+
+    /* ==========================================================================
+       MAIN VIEW CONTAINERS & TRANSITIONS
+       ========================================================================== */
+    .view-content {
+      display: none;
+      flex-direction: column;
+      gap: 28px;
+      animation: viewSlideIn 0.45s var(--spring-smooth) forwards;
+    }
+
+    .view-content.active {
+      display: flex;
+    }
+
+    @keyframes viewSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.995);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* ==========================================================================
+       DASHBOARD OVERVIEW METRICS HERO
+       ========================================================================== */
+    .hero-metrics-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 1100px) {
+      .hero-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 680px) {
+      .hero-metrics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .metric-card-primary {
+      background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+      position: relative;
+    }
+
+    .metric-card-primary::after {
+      content: '';
+      position: absolute;
+      top: -30%;
+      right: -20%;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, var(--apple-blue-glow) 0%, transparent 70%);
+      filter: blur(25px);
+      pointer-events: none;
+    }
+
+    .metric-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .metric-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .metric-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: var(--radius-pill);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .metric-badge.green {
+      background: rgba(48, 209, 88, 0.15);
+      color: var(--apple-green);
+      border: 1px solid rgba(48, 209, 88, 0.3);
+    }
+
+    .metric-badge.red {
+      background: rgba(255, 69, 58, 0.15);
+      color: var(--apple-red);
+      border: 1px solid rgba(255, 69, 58, 0.3);
+    }
+
+    .metric-badge.blue {
+      background: rgba(10, 132, 255, 0.15);
+      color: var(--apple-blue);
+      border: 1px solid rgba(10, 132, 255, 0.3);
+    }
+
+    .metric-amount {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric-sub {
+      font-size: 12.5px;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* ==========================================================================
+       DASHBOARD SPLIT: CHARTS & CARDS
+       ========================================================================== */
+    .split-layout-2col {
+      display: grid;
+      grid-template-columns: 1.8fr 1.2fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 990px) {
+      .split-layout-2col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+
+    .card-header-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .card-header-title svg {
+      width: 19px;
+      height: 19px;
+      stroke: var(--apple-blue);
+      stroke-width: 2.2;
+    }
+
+    .chart-box {
+      width: 100%;
+      height: 270px;
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* Glass Custom Tooltip */
+    #chart-custom-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(15, 18, 28, 0.88);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.4);
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      color: #fff;
+      display: none;
+      z-index: 50;
+      transform: translate(-50%, -120%);
+      white-space: nowrap;
+      transition: opacity 0.15s ease;
+    }
+
+    /* Donut breakdown legend */
+    .donut-layout {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      height: 270px;
+    }
+
+    @media (max-width: 600px) {
+      .donut-layout {
+        flex-direction: column;
+        height: auto;
+      }
+    }
+
+    .donut-canvas-wrap {
+      flex: 1;
+      height: 100%;
+      min-height: 220px;
+      position: relative;
+    }
+
+    .donut-center-metric {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .donut-center-metric .lbl {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .donut-center-metric .val {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .donut-legend-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 250px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .donut-legend-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12.5px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background 0.2s;
+    }
+
+    .donut-legend-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .donut-legend-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+    }
+
+    .legend-color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .donut-legend-pct {
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+
+    /* ==========================================================================
+       APPLE WALLET CARDS SECTION (ACCOUNTS)
+       ========================================================================== */
+    .accounts-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .accounts-wallet-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 22px;
+    }
+
+    .wallet-card {
+      height: 200px;
+      padding: 22px 24px;
+      border-radius: 22px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.4s var(--spring-smooth);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.6), 0 16px 36px -10px rgba(0,0,0,0.5);
+    }
+
+    .wallet-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 24px 50px -10px rgba(0,0,0,0.65);
+    }
+
+    .wallet-card::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      right: -30%;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* Distinct Apple Card Hues with frosted glass glow */
+    .card-hue-midnight {
+      background: linear-gradient(135deg, rgba(20, 24, 42, 0.88) 0%, rgba(10, 12, 22, 0.94) 100%);
+    }
+    .card-hue-titanium {
+      background: linear-gradient(135deg, rgba(75, 80, 92, 0.85) 0%, rgba(38, 41, 48, 0.92) 100%);
+    }
+    .card-hue-pacific {
+      background: linear-gradient(135deg, rgba(10, 100, 190, 0.85) 0%, rgba(5, 45, 95, 0.92) 100%);
+    }
+    .card-hue-emerald {
+      background: linear-gradient(135deg, rgba(24, 120, 60, 0.85) 0%, rgba(10, 55, 28, 0.92) 100%);
+    }
+    .card-hue-iris {
+      background: linear-gradient(135deg, rgba(135, 45, 190, 0.85) 0%, rgba(55, 15, 85, 0.92) 100%);
+    }
+    .card-hue-amber {
+      background: linear-gradient(135deg, rgba(210, 110, 15, 0.85) 0%, rgba(95, 45, 5, 0.92) 100%);
+    }
+
+    .wallet-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      position: relative;
+      z-index: 2;
+    }
+
+    .card-chip {
+      width: 36px;
+      height: 28px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #d1a852 0%, #ecd08c 50%, #b28532 100%);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.4), 0 2px 5px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-chip::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.25);
+      border-radius: 3px;
+    }
+
+    .card-network-badge {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      opacity: 0.85;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .wallet-card-mid {
+      position: relative;
+      z-index: 2;
+    }
+
+    .card-name-label {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 2px;
+      font-weight: 500;
+    }
+
+    .card-balance-display {
+      font-size: 26px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .wallet-card-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 2;
+    }
+
+    .card-masked-num {
+      font-size: 12.5px;
+      letter-spacing: 0.15em;
+      color: rgba(255, 255, 255, 0.6);
+      font-family: monospace;
+    }
+
+    .card-actions-quick {
+      display: flex;
+      gap: 6px;
+    }
+
+    .card-mini-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .card-mini-btn:hover {
+      background: rgba(255, 255, 255, 0.35);
+      transform: scale(1.1);
+    }
+
+    .card-mini-btn svg {
+      width: 13px;
+      height: 13px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+    }
+
+    /* ==========================================================================
+       SAVINGS GOALS CARDS
+       ========================================================================== */
+    .savings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 22px;
+    }
+
+    .savings-card {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .savings-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .savings-icon-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .savings-emoji-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: var(--glass-specular);
+    }
+
+    .savings-details h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .savings-details p {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .liquid-progress-track {
+      width: 100%;
+      height: 10px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .liquid-progress-fill {
+      height: 100%;
+      border-radius: var(--radius-pill);
+      background: linear-gradient(90deg, var(--apple-blue) 0%, var(--apple-cyan) 100%);
+      position: relative;
+      transition: width 0.8s var(--spring-smooth);
+      box-shadow: 0 0 12px var(--apple-blue-glow);
+    }
+
+    .liquid-progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+      animation: liquidShimmer 2.5s infinite;
+    }
+
+    @keyframes liquidShimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .savings-stats-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .savings-cur-amt {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .savings-target-amt {
+      font-size: 12.5px;
+      color: var(--text-tertiary);
+    }
+
+    .savings-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .btn-savings-action {
+      flex: 1;
+      padding: 8px;
+      font-size: 12.5px;
+      border-radius: var(--radius-pill);
+    }
+
+    /* ==========================================================================
+       TRANSACTIONS FEED & FILTERS
+       ========================================================================== */
+    .transactions-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+      max-width: 380px;
+    }
+
+    .search-input-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-tertiary);
+      stroke-width: 2.2;
+    }
+
+    .glass-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      padding: 9px 16px 9px 40px;
+      font-family: inherit;
+      font-size: 13.5px;
+      color: var(--text-primary);
+      outline: none;
+      backdrop-filter: blur(10px);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
+      transition: all 0.25s ease;
+    }
+
+    .glass-input:focus {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: var(--apple-blue);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 0 0 3px rgba(10, 132, 255, 0.25);
+    }
+
+    .filters-cluster {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .glass-select {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      padding: 8px 16px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text-primary);
+      outline: none;
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .glass-select option {
+      background: #141724;
+      color: #ffffff;
+    }
+
+    .transactions-table-card {
+      padding: 8px 16px;
+    }
+
+    .transactions-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .transaction-row {
+      display: grid;
+      grid-template-columns: 50px 2.2fr 1.2fr 1.2fr 1.2fr 44px;
+      align-items: center;
+      padding: 14px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      transition: background 0.2s, transform 0.2s;
+      border-radius: 12px;
+    }
+
+    @media (max-width: 860px) {
+      .transaction-row {
+        grid-template-columns: 44px 1.8fr 1fr 1fr 36px;
+      }
+      .col-account-cell {
+        display: none;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .transaction-row {
+        grid-template-columns: 44px 1.5fr 1fr 36px;
+      }
+      .col-date-cell {
+        display: none;
+      }
+    }
+
+    .transaction-row:last-child {
+      border-bottom: none;
+    }
+
+    .transaction-row:hover {
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateX(4px);
+    }
+
+    .tx-icon-pill {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .tx-main-info {
+      padding-left: 6px;
+    }
+
+    .tx-merchant {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .tx-category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .tx-date {
+      font-size: 12.5px;
+      color: var(--text-tertiary);
+    }
+
+    .tx-account-name {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tx-amount {
+      font-size: 15px;
+      font-weight: 600;
+      text-align: right;
+      padding-right: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tx-amount.expense {
+      color: var(--apple-red);
+    }
+
+    .tx-amount.income {
+      color: var(--apple-green);
+    }
+
+    .tx-amount.transfer {
+      color: var(--apple-blue);
+    }
+
+    .tx-delete-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tx-delete-btn:hover {
+      background: rgba(255, 69, 58, 0.2);
+      color: var(--apple-red);
+    }
+
+    .tx-delete-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-tertiary);
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      stroke: var(--text-tertiary);
+      margin-bottom: 12px;
+      opacity: 0.6;
+    }
+
+    /* ==========================================================================
+       MODAL SHEETS (APPLE VISION SHEET STYLE)
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 520px;
+      background: rgba(22, 26, 38, 0.88);
+      backdrop-filter: var(--glass-blur-heavy);
+      border: 1px solid var(--glass-border-highlight);
+      border-radius: var(--radius-xl);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6), 0 32px 80px -15px rgba(0,0,0,0.85);
+      padding: 30px;
+      position: relative;
+      transform: scale(0.92) translateY(20px);
+      transition: transform 0.4s var(--spring-bouncy);
+    }
+
+    [data-theme="light"] .modal-card {
+      background: rgba(255, 255, 255, 0.94);
+    }
+
+    .modal-backdrop.open .modal-card {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .modal-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .modal-close-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .modal-close-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      stroke-width: 2.2;
+    }
+
+    /* Modal Form Controls */
+    .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .form-input, .form-select {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-family: inherit;
+      font-size: 14.5px;
+      color: var(--text-primary);
+      outline: none;
+      transition: border 0.2s, background 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--apple-blue);
+      box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.2);
+    }
+
+    .form-select option {
+      background: #181b28;
+      color: #fff;
+    }
+
+    /* Segmented pill switch for Modal */
+    .type-switcher {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 4px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .type-pill {
+      background: transparent;
+      border: none;
+      padding: 9px;
+      border-radius: var(--radius-pill);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .type-pill.active {
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .type-pill.active.expense {
+      background: rgba(255, 69, 58, 0.3);
+      color: #ff6e67;
+      border: 1px solid rgba(255, 69, 58, 0.4);
+    }
+
+    .type-pill.active.income {
+      background: rgba(48, 209, 88, 0.25);
+      color: #55e679;
+      border: 1px solid rgba(48, 209, 88, 0.4);
+    }
+
+    /* Locked Category Notice (Predetermined Categories) */
+    .category-lock-note {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .category-lock-note svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+    }
+
+    /* Quick Amount Presets */
+    .quick-amount-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .quick-amt-btn {
+      flex: 1;
+      padding: 6px;
+      font-size: 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quick-amt-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-primary);
+    }
+
+    /* Hue Selector */
+    .hue-selector-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .hue-circle-choice {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .hue-circle-choice:hover {
+      transform: scale(1.15);
+    }
+
+    .hue-circle-choice.selected {
+      border-color: #ffffff;
+      transform: scale(1.15);
+      box-shadow: 0 0 12px rgba(255,255,255,0.6);
+    }
+
+    /* Modal Submit buttons */
+    .modal-footer {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .modal-footer .btn-liquid {
+      flex: 1;
+      padding: 12px;
+      font-size: 14px;
+    }
+
+    /* ==========================================================================
+       RESPONSIVENESS & TOUCH ENHANCEMENTS
+       ========================================================================== */
+    @media (max-width: 820px) {
+      #app-container {
+        padding: 16px 14px 100px 14px;
+        gap: 20px;
+      }
+      .glass-nav-header {
+        flex-wrap: wrap;
+        border-radius: 20px;
+        top: 10px;
+      }
+      .nav-tabs {
+        order: 3;
+        width: 100%;
+        overflow-x: auto;
+        justify-content: flex-start;
+      }
+      .tab-pill {
+        white-space: nowrap;
+        padding: 8px 14px;
+        font-size: 12.5px;
+      }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- Ambient Liquid Mesh Glow Layer -->
+  <div class="ambient-canvas">
+    <div class="liquid-orb orb-1"></div>
+    <div class="liquid-orb orb-2"></div>
+    <div class="liquid-orb orb-3"></div>
+    <div class="liquid-orb orb-4"></div>
+  </div>
+  <div class="glass-grain"></div>
+
+  <!-- Dynamic Island Notification Toast -->
+  <div id="dynamic-island-banner">
+    <div class="island-icon" id="island-icon">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+    <span id="island-msg">Transaction recorded</span>
+  </div>
+
+  <div id="app-container">
+
+    <!-- FLOATING APPLE LIQUID GLASS NAVIGATION BAR -->
+    <header class="glass-nav-header">
+      <div class="brand-section">
+        <div class="apple-logo-badge">
+          <!-- Apple SVG Mark -->
+          <svg viewBox="0 0 170 170">
+            <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.67-7.81-11.96-14.34-6.3-9.69-11.2-20.57-14.7-32.65-3.5-12.08-5.25-23.75-5.25-35 0-14.28 3.52-26.06 10.56-35.34 7.04-9.28 15.77-14.07 26.19-14.37 4.9.11 10.45 1.34 16.65 3.69 6.2 2.36 10.23 3.6 12.08 3.73 1.63 0 5.8-1.34 12.51-4.02 6.71-2.68 12.35-3.83 16.92-3.46 12.67 1.07 22.84 5.99 30.51 14.77-11.08 6.73-16.51 16.14-16.29 28.23.21 9.47 3.84 17.5 10.88 24.08 7.04 6.58 15.35 10.36 24.93 11.35-2.28 7.06-5.11 14.25-8.49 21.57zM119.22 31.85c0-7.39 2.68-14.39 8.04-21 5.36-6.61 11.92-10.85 19.68-12.72.65 1.74.98 3.59.98 5.54 0 7.39-2.79 14.54-8.37 21.45-5.58 6.91-12.21 11.13-19.89 12.66-.22-1.95-.44-3.93-.44-5.93z"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Apple Finance</h1>
+          <p>Liquid Glass 2.0</p>
+        </div>
+      </div>
+
+      <!-- Tab Navigator -->
+      <nav class="nav-tabs">
+        <button class="tab-pill active" data-tab="dashboard">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          Overview
+        </button>
+        <button class="tab-pill" data-tab="accounts">
+          <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+          Accounts
+        </button>
+        <button class="tab-pill" data-tab="transactions">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          Transactions
+        </button>
+        <button class="tab-pill" data-tab="savings">
+          <svg viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+          Savings
+        </button>
+        <button class="tab-pill" data-tab="analytics">
+          <svg viewBox="0 0 24 24"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+          Insights
+        </button>
+      </nav>
+
+      <!-- Action buttons -->
+      <div class="nav-actions">
+        <button class="btn-liquid btn-primary-liquid" id="btn-quick-new-tx">
+          <svg style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>New Entry</span>
+        </button>
+        <button class="btn-liquid icon-btn" id="btn-toggle-theme" title="Toggle Glass Appearance">
+          <svg id="theme-icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </button>
+      </div>
+    </header>
+
+
+    <!-- ====================================================================
+         VIEW 1: OVERVIEW DASHBOARD
+         ==================================================================== -->
+    <main id="view-dashboard" class="view-content active">
+      
+      <!-- HERO METRICS -->
+      <section class="hero-metrics-grid">
+        <div class="liquid-glass liquid-card metric-card-primary interactive-card" data-tab="accounts">
+          <div class="metric-top">
+            <span class="metric-title">
+              <svg style="width:15px;height:15px;stroke:var(--apple-blue);fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              Total Net Worth
+            </span>
+            <span class="metric-badge green" id="metric-trend-badge">+4.8% mo</span>
+          </div>
+          <div class="metric-amount" id="dash-networth">$0.00</div>
+          <div class="metric-sub">
+            <span id="dash-account-count">4 accounts</span> linked across liquid assets
+          </div>
+        </div>
+
+        <div class="liquid-glass liquid-card interactive-card" data-tab="transactions">
+          <div class="metric-top">
+            <span class="metric-title">Monthly Income</span>
+            <span class="metric-badge green">Inflow</span>
+          </div>
+          <div class="metric-amount" id="dash-income" style="color:var(--apple-green)">$0.00</div>
+          <div class="metric-sub">This calendar month</div>
+        </div>
+
+        <div class="liquid-glass liquid-card interactive-card" data-tab="transactions">
+          <div class="metric-top">
+            <span class="metric-title">Monthly Expenses</span>
+            <span class="metric-badge red">Outflow</span>
+          </div>
+          <div class="metric-amount" id="dash-expenses" style="color:var(--apple-red)">$0.00</div>
+          <div class="metric-sub">Total payments recorded</div>
+        </div>
+
+        <div class="liquid-glass liquid-card interactive-card" data-tab="savings">
+          <div class="metric-top">
+            <span class="metric-title">Savings Vault</span>
+            <span class="metric-badge blue" id="dash-savings-rate">0%</span>
+          </div>
+          <div class="metric-amount" id="dash-savings-total">$0.00</div>
+          <div class="metric-sub">Allocated to active goals</div>
+        </div>
+      </section>
+
+      <!-- CHARTS SPLIT ROW -->
+      <section class="split-layout-2col">
+        <!-- Monthly Cashflow Trend -->
+        <div class="liquid-glass liquid-card">
+          <div class="card-header-bar">
+            <h2 class="card-header-title">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+              Cashflow Trajectory
+            </h2>
+            <span style="font-size:12px;color:var(--text-tertiary)">Last 6 Months</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="cashflowChart"></canvas>
+            <div id="chart-custom-tooltip"></div>
+          </div>
+        </div>
+
+        <!-- Category Allocation Donut -->
+        <div class="liquid-glass liquid-card">
+          <div class="card-header-bar">
+            <h2 class="card-header-title">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 10 10h-10z"></path></svg>
+              Spending Allocation
+            </h2>
+            <span style="font-size:12px;color:var(--text-tertiary)">Categories</span>
+          </div>
+          <div class="donut-layout">
+            <div class="donut-canvas-wrap">
+              <canvas id="categoryDonutChart"></canvas>
+              <div class="donut-center-metric">
+                <div class="lbl">Top Expense</div>
+                <div class="val" id="donut-top-cat">—</div>
+              </div>
+            </div>
+            <div class="donut-legend-wrap" id="donut-legend-list">
+              <!-- Dynamically Populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RECENT ACTIVITY SNIPPET -->
+      <section class="liquid-glass liquid-card">
+        <div class="card-header-bar" style="margin-bottom:14px">
+          <h2 class="card-header-title">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            Recent Activity
+          </h2>
+          <button class="btn-liquid" style="padding:6px 14px;font-size:12px;" data-tab="transactions">
+            View All Transactions →
+          </button>
+        </div>
+        <div class="transactions-list" id="dashboard-recent-txs">
+          <!-- Dynamically inserted -->
+        </div>
+      </section>
+
+    </main>
+
+
+    <!-- ====================================================================
+         VIEW 2: ACCOUNTS MANAGEMENT (APPLE WALLET)
+         ==================================================================== -->
+    <main id="view-accounts" class="view-content">
+      <div class="accounts-header-row">
+        <div>
+          <h2 style="font-size:24px;font-weight:700;letter-spacing:-0.03em;">Liquid Accounts</h2>
+          <p style="font-size:13.5px;color:var(--text-secondary);margin-top:2px;">
+            Manage card balances, liquidity, and inter-account transfers.
+          </p>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn-liquid" id="btn-open-transfer">
+            <svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"></path></svg>
+            <span>Transfer Funds</span>
+          </button>
+          <button class="btn-liquid btn-primary-liquid" id="btn-add-account">
+            <svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>Add Account</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Wallet Deck Grid -->
+      <div class="accounts-wallet-grid" id="accounts-wallet-container">
+        <!-- Rendered dynamically -->
+      </div>
+    </main>
+
+
+    <!-- ====================================================================
+         VIEW 3: TRANSACTIONS (EXPENSES & INCOMES)
+         ==================================================================== -->
+    <main id="view-transactions" class="view-content">
+      <div class="accounts-header-row">
+        <div>
+          <h2 style="font-size:24px;font-weight:700;letter-spacing:-0.03em;">Ledger & Flow</h2>
+          <p style="font-size:13.5px;color:var(--text-secondary);margin-top:2px;">
+            Audited history of expenses, incoming revenue, and settlements.
+          </p>
+        </div>
+        <button class="btn-liquid btn-primary-liquid" id="btn-open-tx-modal">
+          <svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Record Transaction</span>
+        </button>
+      </div>
+
+      <!-- Filters & Search Toolbar -->
+      <div class="liquid-glass transactions-toolbar" style="padding:14px 20px;">
+        <div class="search-input-wrap">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" class="glass-input" id="tx-search-input" placeholder="Search merchant, notes...">
+        </div>
+
+        <div class="filters-cluster">
+          <select class="glass-select" id="filter-type">
+            <option value="all">All Types</option>
+            <option value="expense">Expenses Only</option>
+            <option value="income">Income Only</option>
+            <option value="transfer">Transfers</option>
+          </select>
+
+          <select class="glass-select" id="filter-account">
+            <option value="all">All Accounts</option>
+            <!-- Injected -->
+          </select>
+
+          <select class="glass-select" id="filter-category">
+            <option value="all">All Categories</option>
+            <!-- Injected with predetermined categories -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Transaction List Table Card -->
+      <div class="liquid-glass transactions-table-card">
+        <div class="transactions-list" id="full-transactions-container">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </main>
+
+
+    <!-- ====================================================================
+         VIEW 4: SAVINGS GOALS
+         ==================================================================== -->
+    <main id="view-savings" class="view-content">
+      <div class="accounts-header-row">
+        <div>
+          <h2 style="font-size:24px;font-weight:700;letter-spacing:-0.03em;">Savings Targets</h2>
+          <p style="font-size:13.5px;color:var(--text-secondary);margin-top:2px;">
+            Target milestones backed by fluid allocation from your accounts.
+          </p>
+        </div>
+        <button class="btn-liquid btn-primary-liquid" id="btn-create-savings-goal">
+          <svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>New Savings Goal</span>
+        </button>
+      </div>
+
+      <div class="savings-grid" id="savings-goals-container">
+        <!-- Rendered dynamically -->
+      </div>
+    </main>
+
+
+    <!-- ====================================================================
+         VIEW 5: ANALYTICS & INSIGHTS
+         ==================================================================== -->
+    <main id="view-analytics" class="view-content">
+      <div class="accounts-header-row">
+        <div>
+          <h2 style="font-size:24px;font-weight:700;letter-spacing:-0.03em;">Financial Intelligence</h2>
+          <p style="font-size:13.5px;color:var(--text-secondary);margin-top:2px;">
+            Apple-grade statistical diagnostics and cash velocity.
+          </p>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn-liquid" id="btn-export-data">Export JSON</button>
+          <button class="btn-liquid" id="btn-import-data">Import Data</button>
+          <input type="file" id="file-import-input" style="display:none" accept=".json">
+        </div>
+      </div>
+
+      <div class="hero-metrics-grid">
+        <div class="liquid-glass liquid-card">
+          <div class="metric-top">
+            <span class="metric-title">Savings Rate</span>
+            <span class="metric-badge blue">Efficiency</span>
+          </div>
+          <div class="metric-amount" id="insights-savings-rate">0%</div>
+          <div class="metric-sub">Portion of revenue retained</div>
+        </div>
+
+        <div class="liquid-glass liquid-card">
+          <div class="metric-top">
+            <span class="metric-title">Daily Run Rate</span>
+            <span class="metric-badge red">Velocity</span>
+          </div>
+          <div class="metric-amount" id="insights-daily-burn">$0.00</div>
+          <div class="metric-sub">Average expense per day</div>
+        </div>
+
+        <div class="liquid-glass liquid-card">
+          <div class="metric-top">
+            <span class="metric-title">Largest Outflow</span>
+            <span class="metric-badge orange">Peak</span>
+          </div>
+          <div class="metric-amount" id="insights-largest-expense">$0.00</div>
+          <div class="metric-sub" id="insights-largest-label">—</div>
+        </div>
+
+        <div class="liquid-glass liquid-card">
+          <div class="metric-top">
+            <span class="metric-title">Active Goals</span>
+            <span class="metric-badge green">Progress</span>
+          </div>
+          <div class="metric-amount" id="insights-goals-count">0</div>
+          <div class="metric-sub" id="insights-goals-completion">0% overall completion</div>
+        </div>
+      </div>
+
+      <!-- Predetermined Category Reference Guide -->
+      <div class="liquid-glass liquid-card">
+        <div class="card-header-bar" style="margin-bottom:12px;">
+          <h2 class="card-header-title">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"></path></svg>
+            Predetermined Categories Taxonomy
+          </h2>
+          <span style="font-size:12px;color:var(--text-tertiary);display:flex;align-items:center;gap:4px;">
+            <svg style="width:13px;height:13px;stroke:currentColor;fill:none;" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Immutable System Taxonomy
+          </span>
+        </div>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+          Built according to Apple Human Interface Guidelines with strictly predetermined, balanced categories for expenses and incomes.
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--apple-red);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+              <span>●</span> Predetermined Expense Categories (12)
+            </div>
+            <div id="tax-expense-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:8px;"></div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--apple-green);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+              <span>●</span> Predetermined Income Categories (6)
+            </div>
+            <div id="tax-income-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:8px;"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div> <!-- /#app-container -->
+
+
+  <!-- ======================================================================
+       MODAL: NEW TRANSACTION (EXPENSE / INCOME)
+       ====================================================================== -->
+  <div class="modal-backdrop" id="modal-transaction">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-tx-title">Record Transaction</h2>
+        <button class="modal-close-btn" data-close="modal-transaction">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="form-transaction" class="form-grid">
+        <!-- Type Pill Selector: Expense vs Income -->
+        <div class="type-switcher">
+          <button type="button" class="type-pill active expense" id="pill-type-expense" data-val="expense">Expense</button>
+          <button type="button" class="type-pill" id="pill-type-income" data-val="income">Income</button>
+        </div>
+        <input type="hidden" id="tx-input-type" value="expense">
+
+        <!-- Amount -->
+        <div class="form-group">
+          <label for="tx-input-amount">Amount ($)</label>
+          <input type="number" step="0.01" min="0.01" class="form-input" id="tx-input-amount" placeholder="0.00" required autofocus>
+          <div class="quick-amount-row">
+            <button type="button" class="quick-amt-btn" data-add="10">+$10</button>
+            <button type="button" class="quick-amt-btn" data-add="25">+$25</button>
+            <button type="button" class="quick-amt-btn" data-add="50">+$50</button>
+            <button type="button" class="quick-amt-btn" data-add="100">+$100</button>
+            <button type="button" class="quick-amt-btn" data-add="500">+$500</button>
+          </div>
+        </div>
+
+        <!-- Account Selector -->
+        <div class="form-group">
+          <label for="tx-input-account">Account</label>
+          <select class="form-select" id="tx-input-account" required>
+            <!-- Injected -->
+          </select>
+        </div>
+
+        <!-- Predetermined Category Selector -->
+        <div class="form-group">
+          <label for="tx-input-category">Predetermined Category</label>
+          <select class="form-select" id="tx-input-category" required>
+            <!-- Injected based on Expense vs Income -->
+          </select>
+          <div class="category-lock-note">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Categories are predetermined and standardized.
+          </div>
+        </div>
+
+        <!-- Merchant / Description -->
+        <div class="form-group">
+          <label for="tx-input-payee">Payee / Merchant</label>
+          <input type="text" class="form-input" id="tx-input-payee" placeholder="e.g. Apple Store, Whole Foods, Salary" required>
+        </div>
+
+        <!-- Date -->
+        <div class="form-group">
+          <label for="tx-input-date">Date</label>
+          <input type="date" class="form-input" id="tx-input-date" required>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-liquid" data-close="modal-transaction">Cancel</button>
+          <button type="submit" class="btn-liquid btn-primary-liquid">Save Entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ======================================================================
+       MODAL: ADD NEW ACCOUNT
+       ====================================================================== -->
+  <div class="modal-backdrop" id="modal-account">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Add Account</h2>
+        <button class="modal-close-btn" data-close="modal-account">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="form-account" class="form-grid">
+        <div class="form-group">
+          <label for="acc-input-name">Account Name</label>
+          <input type="text" class="form-input" id="acc-input-name" placeholder="e.g. Chase Sapphire, Apple Card, High Yield" required>
+        </div>
+
+        <div class="form-group">
+          <label for="acc-input-type">Account Type</label>
+          <select class="form-select" id="acc-input-type" required>
+            <option value="Checking">Checking Account</option>
+            <option value="Savings">Savings Account</option>
+            <option value="Credit">Credit Card</option>
+            <option value="Investment">Investment Portfolio</option>
+            <option value="Cash">Cash Reserve</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="acc-input-balance">Starting Balance ($)</label>
+          <input type="number" step="0.01" class="form-input" id="acc-input-balance" placeholder="0.00" required>
+        </div>
+
+        <div class="form-group">
+          <label>Glass Finish Tint</label>
+          <div class="hue-selector-row">
+            <div class="hue-circle-choice card-hue-pacific selected" data-hue="pacific" title="Pacific Blue"></div>
+            <div class="hue-circle-choice card-hue-titanium" data-hue="titanium" title="Titanium Gray"></div>
+            <div class="hue-circle-choice card-hue-midnight" data-hue="midnight" title="Midnight Black"></div>
+            <div class="hue-circle-choice card-hue-emerald" data-hue="emerald" title="Alpine Emerald"></div>
+            <div class="hue-circle-choice card-hue-iris" data-hue="iris" title="Royal Iris"></div>
+            <div class="hue-circle-choice card-hue-amber" data-hue="amber" title="Sunset Amber"></div>
+          </div>
+          <input type="hidden" id="acc-input-hue" value="pacific">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-liquid" data-close="modal-account">Cancel</button>
+          <button type="submit" class="btn-liquid btn-primary-liquid">Create Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ======================================================================
+       MODAL: TRANSFER BETWEEN ACCOUNTS
+       ====================================================================== -->
+  <div class="modal-backdrop" id="modal-transfer">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Transfer Funds</h2>
+        <button class="modal-close-btn" data-close="modal-transfer">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="form-transfer" class="form-grid">
+        <div class="form-group">
+          <label for="trf-from-account">From Account</label>
+          <select class="form-select" id="trf-from-account" required></select>
+        </div>
+
+        <div class="form-group">
+          <label for="trf-to-account">To Account</label>
+          <select class="form-select" id="trf-to-account" required></select>
+        </div>
+
+        <div class="form-group">
+          <label for="trf-amount">Transfer Amount ($)</label>
+          <input type="number" step="0.01" min="0.01" class="form-input" id="trf-amount" placeholder="0.00" required>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-liquid" data-close="modal-transfer">Cancel</button>
+          <button type="submit" class="btn-liquid btn-primary-liquid">Authorize Transfer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ======================================================================
+       MODAL: SAVINGS GOAL (NEW / DEPOSIT / WITHDRAW)
+       ====================================================================== -->
+  <div class="modal-backdrop" id="modal-savings">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-savings-title">New Savings Target</h2>
+        <button class="modal-close-btn" data-close="modal-savings">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="form-savings" class="form-grid">
+        <div class="form-group">
+          <label for="sav-input-title">Goal Title</label>
+          <input type="text" class="form-input" id="sav-input-title" placeholder="e.g. Vision Pro, Tokyo Vacation, Rainy Day" required>
+        </div>
+
+        <div class="form-group">
+          <label for="sav-input-emoji">Icon</label>
+          <select class="form-select" id="sav-input-emoji">
+            <option value="🥽">🥽 Apple Vision Pro / Tech</option>
+            <option value="✈️">✈️ Travel / Vacation</option>
+            <option value="🚗">🚗 Vehicle / Auto</option>
+            <option value="🏡">🏡 Real Estate / Home</option>
+            <option value="🛡️">🛡️ Emergency Reserve</option>
+            <option value="💍">💍 Milestone / Wedding</option>
+            <option value="🎓">🎓 Education / Tuition</option>
+            <option value="💎">💎 Investment Goal</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sav-input-target">Target Amount ($)</label>
+          <input type="number" step="0.01" min="1" class="form-input" id="sav-input-target" placeholder="5000.00" required>
+        </div>
+
+        <div class="form-group">
+          <label for="sav-input-initial">Initial Allocation ($)</label>
+          <input type="number" step="0.01" min="0" class="form-input" id="sav-input-initial" placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+          <label for="sav-input-date">Target Completion Date</label>
+          <input type="date" class="form-input" id="sav-input-date" required>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-liquid" data-close="modal-savings">Cancel</button>
+          <button type="submit" class="btn-liquid btn-primary-liquid">Establish Target</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ======================================================================
+       MODAL: DEPOSIT / WITHDRAW TO SAVINGS GOAL
+       ====================================================================== -->
+  <div class="modal-backdrop" id="modal-savings-action">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-savact-title">Deposit to Savings Goal</h2>
+        <button class="modal-close-btn" data-close="modal-savings-action">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="form-savings-action" class="form-grid">
+        <input type="hidden" id="savact-goal-id">
+        <input type="hidden" id="savact-mode" value="deposit">
+
+        <div class="form-group">
+          <label for="savact-account-select">Select Funding Account</label>
+          <select class="form-select" id="savact-account-select" required></select>
+        </div>
+
+        <div class="form-group">
+          <label for="savact-amount" id="savact-amount-label">Amount ($)</label>
+          <input type="number" step="0.01" min="0.01" class="form-input" id="savact-amount" placeholder="0.00" required autofocus>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-liquid" data-close="modal-savings-action">Cancel</button>
+          <button type="submit" class="btn-liquid btn-primary-liquid" id="savact-submit-btn">Complete Deposit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ======================================================================
+       MODAL: EDIT ACCOUNT BALANCE
+       ====================================================================== -->
+  <div class="modal-backdrop" id="modal-edit-account">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Edit Account</h2>
+        <button class="modal-close-btn" data-close="modal-edit-account">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="form-edit-account" class="form-grid">
+        <input type="hidden" id="editacc-id">
+
+        <div class="form-group">
+          <label for="editacc-name">Account Name</label>
+          <input type="text" class="form-input" id="editacc-name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="editacc-balance">Adjust Balance ($)</label>
+          <input type="number" step="0.01" class="form-input" id="editacc-balance" required>
+        </div>
+
+        <div class="modal-footer" style="justify-content:space-between">
+          <button type="button" class="btn-liquid" id="btn-delete-account-confirm" style="color:var(--apple-red);border-color:rgba(255,69,58,0.4)">Delete</button>
+          <div style="display:flex;gap:10px">
+            <button type="button" class="btn-liquid" data-close="modal-edit-account">Cancel</button>
+            <button type="submit" class="btn-liquid btn-primary-liquid">Update</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ==========================================================================
+       JAVASCRIPT ENGINE: LIQUID GLASS LOGIC & CHARTS
+       ========================================================================== -->
+  <script>
+    /* ==========================================================================
+       1. PREDETERMINED CATEGORIES (IMMUTABLE AS DIRECTED)
+       ========================================================================== */
+    const PREDETERMINED_CATEGORIES = {
+      expense: [
+        { id: "housing", name: "Housing & Rent", icon: "🏠", color: "#FF453A" },
+        { id: "groceries", name: "Groceries & Market", icon: "🛒", color: "#30D158" },
+        { id: "dining", name: "Dining & Cafes", icon: "☕", color: "#FF9F0A" },
+        { id: "transport", name: "Transportation & Fuel", icon: "🚗", color: "#0A84FF" },
+        { id: "entertainment", name: "Entertainment & Arts", icon: "🎬", color: "#BF5AF2" },
+        { id: "utilities", name: "Utilities & Bills", icon: "⚡", color: "#FFD60A" },
+        { id: "health", name: "Health & Fitness", icon: "🏋️", color: "#64D2FF" },
+        { id: "shopping", name: "Shopping & Retail", icon: "🛍️", color: "#FF375F" },
+        { id: "tech_subs", name: "Tech & Subscriptions", icon: "📱", color: "#5E5CE6" },
+        { id: "education", name: "Education & Tuition", icon: "🎓", color: "#AC8E68" },
+        { id: "travel", name: "Travel & Vacations", icon: "✈️", color: "#32D74B" },
+        { id: "insurance", name: "Insurance & Taxes", icon: "🛡️", color: "#98989D" }
+      ],
+      income: [
+        { id: "salary", name: "Salary & Wages", icon: "💼", color: "#30D158" },
+        { id: "freelance", name: "Freelance & Consulting", icon: "💻", color: "#0A84FF" },
+        { id: "investments", name: "Dividends & Capital Gains", icon: "📈", color: "#BF5AF2" },
+        { id: "gifts", name: "Gifts & Grants", icon: "🎁", color: "#FF375F" },
+        { id: "rental", name: "Rental Income", icon: "🏢", color: "#FF9F0A" },
+        { id: "other_income", name: "Other Inflow", icon: "💵", color: "#64D2FF" }
+      ]
+    };
+
+    /* ==========================================================================
+       2. INITIAL STATE & SEED DATA
+       ========================================================================== */
+    const STORAGE_KEY = 'apple_liquid_finance_v2';
+
+    const DEFAULT_DATA = {
+      accounts: [
+        { id: "acc-1", name: "Apple Titanium Card", type: "Credit", balance: 2450.80, hue: "titanium", mask: "4092" },
+        { id: "acc-2", name: "Goldman Sachs High-Yield", type: "Savings", balance: 18450.00, hue: "pacific", mask: "8821" },
+        { id: "acc-3", name: "Checking Primary", type: "Checking", balance: 6840.25, hue: "midnight", mask: "1104" },
+        { id: "acc-4", name: "Vanguard Tech Portfolio", type: "Investment", balance: 34200.50, hue: "emerald", mask: "9533" }
+      ],
+      savingsGoals: [
+        { id: "sav-1", title: "Apple Vision Pro 2", emoji: "🥽", targetAmount: 3500, currentAmount: 2800, targetDate: "2026-12-25" },
+        { id: "sav-2", title: "Tokyo Autumn Expedition", emoji: "✈️", targetAmount: 6000, currentAmount: 3450, targetDate: "2027-04-10" },
+        { id: "sav-3", title: "Emergency Liquidity Reserve", emoji: "🛡️", targetAmount: 20000, currentAmount: 18450, targetDate: "2026-11-30" }
+      ],
+      transactions: [
+        { id: "tx-1", type: "income", amount: 6200.00, accountId: "acc-3", categoryId: "salary", payee: "Apple Corporate Payroll", date: "2026-10-01" },
+        { id: "tx-2", type: "expense", amount: 2100.00, accountId: "acc-3", categoryId: "housing", payee: "Skyline Residences Rent", date: "2026-10-02" },
+        { id: "tx-3", type: "expense", amount: 184.50, accountId: "acc-1", categoryId: "groceries", payee: "Erewhon Organic Market", date: "2026-10-04" },
+        { id: "tx-4", type: "expense", amount: 89.20, accountId: "acc-1", categoryId: "dining", payee: "Blue Bottle Coffee", date: "2026-10-06" },
+        { id: "tx-5", type: "expense", amount: 65.00, accountId: "acc-1", categoryId: "transport", payee: "Tesla Supercharger Station", date: "2026-10-07" },
+        { id: "tx-6", type: "expense", amount: 32.99, accountId: "acc-1", categoryId: "tech_subs", payee: "Apple One Premier & iCloud", date: "2026-10-08" },
+        { id: "tx-7", type: "income", amount: 950.00, accountId: "acc-3", categoryId: "freelance", payee: "UI Architecture Advisory", date: "2026-10-09" },
+        { id: "tx-8", type: "expense", amount: 145.00, accountId: "acc-1", categoryId: "health", payee: "Equinox Sports Club", date: "2026-10-10" },
+        { id: "tx-9", type: "expense", amount: 249.00, accountId: "acc-1", categoryId: "shopping", payee: "Apple Park Visitor Center", date: "2026-10-11" },
+        { id: "tx-10", type: "income", amount: 480.00, accountId: "acc-4", categoryId: "investments", payee: "Vanguard Dividend Payout", date: "2026-10-12" }
+      ]
+    };
+
+    let appState = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.accounts && parsed.transactions) return parsed;
+        }
+      } catch (e) {
+        console.error("Failed to load local state", e);
+      }
+      return JSON.parse(JSON.stringify(DEFAULT_DATA));
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    }
+
+    /* ==========================================================================
+       3. DYNAMIC ISLAND & SOUND EFFECTS (HAPTIC AUDIO)
+       ========================================================================== */
+    const audioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
+
+    function playAppleClick() {
+      if (!audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(680, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(320, audioCtx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.05);
+      } catch (err) {}
+    }
+
+    let bannerTimeout = null;
+    function showDynamicBanner(message, iconSvg = null) {
+      playAppleClick();
+      const banner = document.getElementById('dynamic-island-banner');
+      const msgEl = document.getElementById('island-msg');
+      const iconEl = document.getElementById('island-icon');
+
+      msgEl.textContent = message;
+      if (iconSvg) {
+        iconEl.innerHTML = iconSvg;
+      } else {
+        iconEl.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      }
+
+      banner.classList.add('show');
+      clearTimeout(bannerTimeout);
+      bannerTimeout = setTimeout(() => {
+        banner.classList.remove('show');
+      }, 3200);
+    }
+
+    /* ==========================================================================
+       4. HELPERS
+       ========================================================================== */
+    function formatCurrency(num) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2
+      }).format(num);
+    }
+
+    function getCategoryObj(categoryId, type) {
+      const list = type === 'income' ? PREDETERMINED_CATEGORIES.income : PREDETERMINED_CATEGORIES.expense;
+      const found = list.find(c => c.id === categoryId);
+      if (found) return found;
+      // Fallback search both
+      const alt = [...PREDETERMINED_CATEGORIES.expense, ...PREDETERMINED_CATEGORIES.income].find(c => c.id === categoryId);
+      return alt || { id: categoryId, name: categoryId, icon: "🏷️", color: "#0A84FF" };
+    }
+
+    function getAccountObj(accountId) {
+      return appState.accounts.find(a => a.id === accountId) || { name: "Unknown Account", mask: "0000" };
+    }
+
+    /* ==========================================================================
+       5. TAB NAVIGATION CONTROLLER
+       ========================================================================== */
+    const navButtons = document.querySelectorAll('.tab-pill');
+    const views = document.querySelectorAll('.view-content');
+
+    function switchTab(tabId) {
+      playAppleClick();
+      navButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabId);
+      });
+      views.forEach(view => {
+        view.classList.toggle('active', view.id === `view-${tabId}`);
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Refresh specific charts on view enter
+      if (tabId === 'dashboard' || tabId === 'analytics') {
+        renderCharts();
+      }
+    }
+
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    // Interactive card links to tabs
+    document.querySelectorAll('[data-tab]').forEach(el => {
+      if (!el.classList.contains('tab-pill')) {
+        el.addEventListener('click', () => switchTab(el.dataset.tab));
+      }
+    });
+
+    /* ==========================================================================
+       6. THEME TOGGLER (DARK / LIGHT LIQUID GLASS)
+       ========================================================================== */
+    const themeBtn = document.getElementById('btn-toggle-theme');
+    themeBtn.addEventListener('click', () => {
+      playAppleClick();
+      const current = document.body.getAttribute('data-theme') || 'dark';
+      const target = current === 'dark' ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', target);
+      renderCharts();
+      showDynamicBanner(`Appearance set to ${target === 'dark' ? 'Dark Vision' : 'Light Crystal'}`);
+    });
+
+    /* ==========================================================================
+       7. RENDER ACCOUNTS (APPLE WALLET DECK)
+       ========================================================================== */
+    const walletContainer = document.getElementById('accounts-wallet-container');
+
+    function renderAccounts() {
+      walletContainer.innerHTML = '';
+      appState.accounts.forEach(acc => {
+        const card = document.createElement('div');
+        card.className = `wallet-card card-hue-${acc.hue || 'pacific'}`;
+        card.innerHTML = `
+          <div class="wallet-card-top">
+            <div class="card-chip"></div>
+            <div class="card-network-badge">
+              <span>${acc.type}</span>
+            </div>
+          </div>
+          <div class="wallet-card-mid">
+            <div class="card-name-label">${escapeHtml(acc.name)}</div>
+            <div class="card-balance-display">${formatCurrency(acc.balance)}</div>
+          </div>
+          <div class="wallet-card-bottom">
+            <div class="card-masked-num">•••• •••• •••• ${acc.mask || '4021'}</div>
+            <div class="card-actions-quick">
+              <button class="card-mini-btn btn-edit-acc" data-id="${acc.id}" title="Edit balance / name">
+                <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              </button>
+            </div>
+          </div>
+        `;
+
+        card.querySelector('.btn-edit-acc').addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditAccountModal(acc.id);
+        });
+
+        card.addEventListener('click', () => {
+          openEditAccountModal(acc.id);
+        });
+
+        walletContainer.appendChild(card);
+      });
+
+      // Update dropdowns
+      updateAccountDropdowns();
+    }
+
+    function updateAccountDropdowns() {
+      const txAccountSelect = document.getElementById('tx-input-account');
+      const trfFrom = document.getElementById('trf-from-account');
+      const trfTo = document.getElementById('trf-to-account');
+      const filterAccount = document.getElementById('filter-account');
+      const savactAcc = document.getElementById('savact-account-select');
+
+      const optionsHtml = appState.accounts.map(a => 
+        `<option value="${a.id}">${escapeHtml(a.name)} (${formatCurrency(a.balance)})</option>`
+      ).join('');
+
+      txAccountSelect.innerHTML = optionsHtml;
+      trfFrom.innerHTML = optionsHtml;
+      trfTo.innerHTML = optionsHtml;
+      savactAcc.innerHTML = optionsHtml;
+
+      if (appState.accounts.length > 1) {
+        trfTo.selectedIndex = 1;
+      }
+
+      filterAccount.innerHTML = `<option value="all">All Accounts</option>` + appState.accounts.map(a => 
+        `<option value="${a.id}">${escapeHtml(a.name)}</option>`
+      ).join('');
+    }
+
+    /* ==========================================================================
+       8. RENDER SAVINGS GOALS
+       ========================================================================== */
+    const savingsContainer = document.getElementById('savings-goals-container');
+
+    function renderSavingsGoals() {
+      savingsContainer.innerHTML = '';
+      let totalSaved = 0;
+
+      appState.savingsGoals.forEach(goal => {
+        totalSaved += goal.currentAmount;
+        const pct = Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100));
+
+        const card = document.createElement('div');
+        card.className = 'liquid-glass savings-card';
+        card.innerHTML = `
+          <div class="savings-top">
+            <div class="savings-icon-title">
+              <div class="savings-emoji-badge">${goal.emoji || '🎯'}</div>
+              <div class="savings-details">
+                <h3>${escapeHtml(goal.title)}</h3>
+                <p>Target: ${goal.targetDate || 'No deadline'}</p>
+              </div>
+            </div>
+            <button class="card-mini-btn btn-delete-goal" data-id="${goal.id}" title="Remove Goal" style="border:none;background:transparent;color:var(--text-tertiary)">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </div>
+
+          <div class="liquid-progress-track">
+            <div class="liquid-progress-fill" style="width: ${pct}%"></div>
+          </div>
+
+          <div class="savings-stats-row">
+            <div>
+              <div class="savings-cur-amt">${formatCurrency(goal.currentAmount)}</div>
+              <div class="savings-target-amt">Goal: ${formatCurrency(goal.targetAmount)} (${pct}%)</div>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:${pct >= 100 ? 'var(--apple-green)' : 'var(--apple-blue)'}">
+              ${pct >= 100 ? 'Goal Achieved! 🎉' : `${formatCurrency(goal.targetAmount - goal.currentAmount)} left`}
+            </div>
+          </div>
+
+          <div class="savings-actions">
+            <button class="btn-liquid btn-savings-action btn-deposit" data-id="${goal.id}">
+              + Deposit
+            </button>
+            <button class="btn-liquid btn-savings-action btn-withdraw" data-id="${goal.id}">
+              - Withdraw
+            </button>
+          </div>
+        `;
+
+        card.querySelector('.btn-deposit').addEventListener('click', () => openSavingsActionModal(goal.id, 'deposit'));
+        card.querySelector('.btn-withdraw').addEventListener('click', () => openSavingsActionModal(goal.id, 'withdraw'));
+        card.querySelector('.btn-delete-goal').addEventListener('click', () => deleteSavingsGoal(goal.id));
+
+        savingsContainer.appendChild(card);
+      });
+
+      document.getElementById('dash-savings-total').textContent = formatCurrency(totalSaved);
+    }
+
+    function deleteSavingsGoal(goalId) {
+      if (confirm('Delete this savings target?')) {
+        appState.savingsGoals = appState.savingsGoals.filter(g => g.id !== goalId);
+        saveState();
+        renderAll();
+        showDynamicBanner('Savings goal removed');
+      }
+    }
+
+    /* ==========================================================================
+       9. RENDER TRANSACTIONS (EXPENSES & INCOMES)
+       ========================================================================== */
+    const fullTxContainer = document.getElementById('full-transactions-container');
+    const dashTxContainer = document.getElementById('dashboard-recent-txs');
+
+    function renderTransactions() {
+      const searchTerm = document.getElementById('tx-search-input').value.toLowerCase().trim();
+      const typeFilter = document.getElementById('filter-type').value;
+      const accountFilter = document.getElementById('filter-account').value;
+      const categoryFilter = document.getElementById('filter-category').value;
+
+      // Filter
+      let filtered = appState.transactions.filter(tx => {
+        if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
+        if (accountFilter !== 'all' && tx.accountId !== accountFilter) return false;
+        if (categoryFilter !== 'all' && tx.categoryId !== categoryFilter) return false;
+        if (searchTerm) {
+          const cat = getCategoryObj(tx.categoryId, tx.type);
+          const payeeMatch = (tx.payee || '').toLowerCase().includes(searchTerm);
+          const catMatch = (cat.name || '').toLowerCase().includes(searchTerm);
+          if (!payeeMatch && !catMatch) return false;
+        }
+        return true;
+      });
+
+      // Sort newest first
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      // Render Full List
+      if (filtered.length === 0) {
+        fullTxContainer.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            <p>No matching transactions found.</p>
+          </div>
+        `;
+      } else {
+        fullTxContainer.innerHTML = filtered.map(tx => createTxRowHtml(tx)).join('');
+        attachTxDeleteListeners(fullTxContainer);
+      }
+
+      // Render Dashboard Recent (Top 5)
+      const recent = [...appState.transactions]
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5);
+
+      dashTxContainer.innerHTML = recent.map(tx => createTxRowHtml(tx)).join('');
+      attachTxDeleteListeners(dashTxContainer);
+    }
+
+    function createTxRowHtml(tx) {
+      const cat = getCategoryObj(tx.categoryId, tx.type);
+      const acc = getAccountObj(tx.accountId);
+      const sign = tx.type === 'expense' ? '-' : (tx.type === 'income' ? '+' : '');
+      const amtClass = tx.type;
+
+      return `
+        <div class="transaction-row" data-id="${tx.id}">
+          <div class="tx-icon-pill" style="border-color:${cat.color}40">${cat.icon || '🏷️'}</div>
+          <div class="tx-main-info">
+            <div class="tx-merchant">${escapeHtml(tx.payee || cat.name)}</div>
+            <div class="tx-category-badge">
+              <span style="color:${cat.color}">●</span> ${cat.name}
+            </div>
+          </div>
+          <div class="tx-date col-date-cell">${tx.date}</div>
+          <div class="tx-account-name col-account-cell">${escapeHtml(acc.name)}</div>
+          <div class="tx-amount ${amtClass}">${sign}${formatCurrency(tx.amount)}</div>
+          <button class="tx-delete-btn" data-delete-id="${tx.id}" title="Delete Record">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </button>
+        </div>
+      `;
+    }
+
+    function attachTxDeleteListeners(container) {
+      container.querySelectorAll('.tx-delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteTransaction(btn.dataset.deleteId);
+        });
+      });
+    }
+
+    function deleteTransaction(txId) {
+      const tx = appState.transactions.find(t => t.id === txId);
+      if (!tx) return;
+
+      // Revert account balance
+      const acc = appState.accounts.find(a => a.id === tx.accountId);
+      if (acc) {
+        if (tx.type === 'expense') {
+          acc.balance += tx.amount;
+        } else if (tx.type === 'income') {
+          acc.balance -= tx.amount;
+        }
+      }
+
+      appState.transactions = appState.transactions.filter(t => t.id !== txId);
+      saveState();
+      renderAll();
+      showDynamicBanner('Transaction removed & balance adjusted');
+    }
+
+    /* ==========================================================================
+       10. TAXONOMY & CATEGORY SELECTION CONTROLLERS (PREDETERMINED ONLY)
+       ========================================================================== */
+    function populatePredeterminedCategorySelectors() {
+      const txCatSelect = document.getElementById('tx-input-category');
+      const filterCatSelect = document.getElementById('filter-category');
+      const currentTxType = document.getElementById('tx-input-type').value;
+
+      // Modal options based on type
+      const activeList = currentTxType === 'income' ? PREDETERMINED_CATEGORIES.income : PREDETERMINED_CATEGORIES.expense;
+      txCatSelect.innerHTML = activeList.map(c => 
+        `<option value="${c.id}">${c.icon} ${c.name}</option>`
+      ).join('');
+
+      // Filter options (combined)
+      const allPredetermined = [
+        ...PREDETERMINED_CATEGORIES.expense.map(c => ({ ...c, grp: "Expenses" })),
+        ...PREDETERMINED_CATEGORIES.income.map(c => ({ ...c, grp: "Income" }))
+      ];
+
+      filterCatSelect.innerHTML = `<option value="all">All Categories</option>` +
+        allPredetermined.map(c => `<option value="${c.id}">${c.icon} ${c.name} (${c.grp})</option>`).join('');
+
+      // Render taxonomy preview cards in insights tab
+      renderTaxonomyReference();
+    }
+
+    function renderTaxonomyReference() {
+      const expBox = document.getElementById('tax-expense-grid');
+      const incBox = document.getElementById('tax-income-grid');
+
+      expBox.innerHTML = PREDETERMINED_CATEGORIES.expense.map(c => `
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:8px 12px;border-radius:12px;display:flex;align-items:center;gap:8px;font-size:12.5px;">
+          <span>${c.icon}</span>
+          <span>${c.name}</span>
+        </div>
+      `).join('');
+
+      incBox.innerHTML = PREDETERMINED_CATEGORIES.income.map(c => `
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:8px 12px;border-radius:12px;display:flex;align-items:center;gap:8px;font-size:12.5px;">
+          <span>${c.icon}</span>
+          <span>${c.name}</span>
+        </div>
+      `).join('');
+    }
+
+    /* ==========================================================================
+       11. CHARTS & ANALYTICS RENDERING (CUSTOM HIGH-DPI CANVAS)
+       ========================================================================== */
+    function renderCharts() {
+      renderCashflowBarChart();
+      renderCategoryDonutChart();
+      updateMetricCounters();
+    }
+
+    function updateMetricCounters() {
+      // Net Worth = sum of all account balances
+      let totalNetWorth = appState.accounts.reduce((acc, a) => acc + (a.balance || 0), 0);
+      document.getElementById('dash-networth').textContent = formatCurrency(totalNetWorth);
+      document.getElementById('dash-account-count').textContent = `${appState.accounts.length} accounts`;
+
+      // Monthly Income & Expenses (based on current month in dataset)
+      let monthlyIncome = 0;
+      let monthlyExpenses = 0;
+      let largestExpense = 0;
+      let largestPayee = "None";
+
+      const now = new Date();
+      const currentYear = 2026; // dataset year
+      const currentMonth = 9;   // October (0-indexed)
+
+      appState.transactions.forEach(t => {
+        const d = new Date(t.date);
+        if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+          if (t.type === 'income') {
+            monthlyIncome += t.amount;
+          } else if (t.type === 'expense') {
+            monthlyExpenses += t.amount;
+            if (t.amount > largestExpense) {
+              largestExpense = t.amount;
+              largestPayee = t.payee;
+            }
+          }
+        }
+      });
+
+      document.getElementById('dash-income').textContent = formatCurrency(monthlyIncome);
+      document.getElementById('dash-expenses').textContent = formatCurrency(monthlyExpenses);
+
+      // Savings rate
+      const netSavings = monthlyIncome - monthlyExpenses;
+      const rate = monthlyIncome > 0 ? Math.max(0, Math.round((netSavings / monthlyIncome) * 100)) : 0;
+      document.getElementById('dash-savings-rate').textContent = `${rate}% savings`;
+      document.getElementById('insights-savings-rate').textContent = `${rate}%`;
+
+      // Insights
+      document.getElementById('insights-largest-expense').textContent = formatCurrency(largestExpense);
+      document.getElementById('insights-largest-label').textContent = largestPayee;
+
+      const dailyAverage = monthlyExpenses / 12; // 12 days in current month
+      document.getElementById('insights-daily-burn').textContent = formatCurrency(dailyAverage);
+
+      // Goals count
+      document.getElementById('insights-goals-count').textContent = appState.savingsGoals.length;
+      let totalGoalTarget = appState.savingsGoals.reduce((s, g) => s + g.targetAmount, 0);
+      let totalGoalSaved = appState.savingsGoals.reduce((s, g) => s + g.currentAmount, 0);
+      let completionOverall = totalGoalTarget > 0 ? Math.round((totalGoalSaved / totalGoalTarget) * 100) : 0;
+      document.getElementById('insights-goals-completion').textContent = `${completionOverall}% overall completion`;
+    }
+
+    /* --- Cashflow 6-Month Bar Chart --- */
+    function renderCashflowBarChart() {
+      const canvas = document.getElementById('cashflowChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      const months = ["May", "Jun", "Jul", "Aug", "Sep", "Oct"];
+      const dataIncome = [5200, 5800, 6100, 5900, 7100, 7630];
+      const dataExpense = [3100, 3600, 4200, 3400, 3900, 2785];
+
+      const maxVal = Math.max(...dataIncome, ...dataExpense) * 1.15;
+      const chartHeight = rect.height - 40;
+      const chartWidth = rect.width - 40;
+      const barGroupWidth = chartWidth / months.length;
+      const barWidth = Math.min(22, barGroupWidth * 0.28);
+
+      // Gridlines
+      ctx.strokeStyle = document.body.dataset.theme === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = 15 + (chartHeight / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(35, y);
+        ctx.lineTo(rect.width - 15, y);
+        ctx.stroke();
+      }
+
+      // Draw Bars
+      months.forEach((m, idx) => {
+        const centerX = 40 + idx * barGroupWidth + barGroupWidth / 2;
+        const incHeight = (dataIncome[idx] / maxVal) * chartHeight;
+        const expHeight = (dataExpense[idx] / maxVal) * chartHeight;
+
+        // Income Bar (Apple Green with liquid specular glow)
+        const incX = centerX - barWidth - 3;
+        const incY = chartHeight - incHeight + 15;
+        const incGrad = ctx.createLinearGradient(0, incY, 0, chartHeight + 15);
+        incGrad.addColorStop(0, '#30D158');
+        incGrad.addColorStop(1, 'rgba(48, 209, 88, 0.25)');
+        ctx.fillStyle = incGrad;
+        drawRoundedBar(ctx, incX, incY, barWidth, incHeight, 6);
+
+        // Expense Bar (Apple Red)
+        const expX = centerX + 3;
+        const expY = chartHeight - expHeight + 15;
+        const expGrad = ctx.createLinearGradient(0, expY, 0, chartHeight + 15);
+        expGrad.addColorStop(0, '#FF453A');
+        expGrad.addColorStop(1, 'rgba(255, 69, 58, 0.25)');
+        ctx.fillStyle = expGrad;
+        drawRoundedBar(ctx, expX, expY, barWidth, expHeight, 6);
+
+        // Month Label
+        ctx.fillStyle = document.body.dataset.theme === 'light' ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.45)';
+        ctx.font = '11px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(m, centerX, rect.height - 10);
+      });
+    }
+
+    function drawRoundedBar(ctx, x, y, width, height, radius) {
+      if (height <= 0) return;
+      const r = Math.min(radius, height / 2, width / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + width - r, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+      ctx.lineTo(x + width, y + height);
+      ctx.lineTo(x, y + height);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    /* --- Category Allocation Donut Chart --- */
+    function renderCategoryDonutChart() {
+      const canvas = document.getElementById('categoryDonutChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      // Aggregate expenses by predetermined categories
+      const totals = {};
+      let grandExpenseTotal = 0;
+
+      appState.transactions.filter(t => t.type === 'expense').forEach(t => {
+        totals[t.categoryId] = (totals[t.categoryId] || 0) + t.amount;
+        grandExpenseTotal += t.amount;
+      });
+
+      const sortedCategories = Object.keys(totals)
+        .map(cid => ({
+          cat: getCategoryObj(cid, 'expense'),
+          amount: totals[cid],
+          pct: grandExpenseTotal > 0 ? Math.round((totals[cid] / grandExpenseTotal) * 100) : 0
+        }))
+        .sort((a, b) => b.amount - a.amount);
+
+      // Donut center label
+      const topCatEl = document.getElementById('donut-top-cat');
+      if (sortedCategories.length > 0) {
+        topCatEl.textContent = sortedCategories[0].cat.name.split(' ')[0];
+      }
+
+      // Render Donut Segments
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const outerRadius = Math.min(centerX, centerY) - 12;
+      const innerRadius = outerRadius * 0.68;
+
+      let currentAngle = -Math.PI / 2;
+
+      sortedCategories.forEach(item => {
+        const sliceAngle = grandExpenseTotal > 0 ? (item.amount / grandExpenseTotal) * 2 * Math.PI : 0;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, outerRadius, currentAngle, currentAngle + sliceAngle);
+        ctx.arc(centerX, centerY, innerRadius, currentAngle + sliceAngle, currentAngle, true);
+        ctx.closePath();
+        ctx.fillStyle = item.cat.color;
+        ctx.shadowColor = item.cat.color + '40';
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        currentAngle += sliceAngle;
+      });
+
+      // Update Donut Legend
+      const legendList = document.getElementById('donut-legend-list');
+      legendList.innerHTML = sortedCategories.map(item => `
+        <div class="donut-legend-item">
+          <div class="donut-legend-left">
+            <span class="legend-color-dot" style="background:${item.cat.color};color:${item.cat.color}"></span>
+            <span>${item.cat.icon} ${item.cat.name}</span>
+          </div>
+          <div>
+            <span style="font-weight:600">${formatCurrency(item.amount)}</span>
+            <span class="donut-legend-pct">(${item.pct}%)</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    /* ==========================================================================
+       12. MODAL CONTROLLERS & FORM SUBMISSIONS
+       ========================================================================== */
+    function openModal(modalId) {
+      playAppleClick();
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.add('open');
+      }
+    }
+
+    function closeModal(modalId) {
+      playAppleClick();
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.remove('open');
+      }
+    }
+
+    // Modal Close buttons
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => closeModal(btn.dataset.close));
+    });
+
+    // Close on backdrop click
+    document.querySelectorAll('.modal-backdrop').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal(modal.id);
+      });
+    });
+
+    /* --- Form: New Transaction --- */
+    const formTx = document.getElementById('form-transaction');
+    const pillExpense = document.getElementById('pill-type-expense');
+    const pillIncome = document.getElementById('pill-type-income');
+    const inputTxType = document.getElementById('tx-input-type');
+
+    document.getElementById('btn-quick-new-tx').addEventListener('click', () => {
+      document.getElementById('modal-tx-title').textContent = "Record Transaction";
+      formTx.reset();
+      document.getElementById('tx-input-date').value = new Date().toISOString().split('T')[0];
+      setTxTypeMode('expense');
+      openModal('modal-transaction');
+    });
+
+    document.getElementById('btn-open-tx-modal').addEventListener('click', () => {
+      document.getElementById('btn-quick-new-tx').click();
+    });
+
+    function setTxTypeMode(mode) {
+      inputTxType.value = mode;
+      pillExpense.classList.toggle('active', mode === 'expense');
+      pillIncome.classList.toggle('active', mode === 'income');
+      populatePredeterminedCategorySelectors();
+    }
+
+    pillExpense.addEventListener('click', () => setTxTypeMode('expense'));
+    pillIncome.addEventListener('click', () => setTxTypeMode('income'));
+
+    // Quick add amount buttons
+    document.querySelectorAll('.quick-amt-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        const amtInput = document.getElementById('tx-input-amount');
+        const current = parseFloat(amtInput.value) || 0;
+        const add = parseFloat(b.dataset.add);
+        amtInput.value = (current + add).toFixed(2);
+      });
+    });
+
+    formTx.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const type = inputTxType.value;
+      const amount = parseFloat(document.getElementById('tx-input-amount').value);
+      const accountId = document.getElementById('tx-input-account').value;
+      const categoryId = document.getElementById('tx-input-category').value;
+      const payee = document.getElementById('tx-input-payee').value.trim();
+      const date = document.getElementById('tx-input-date').value;
+
+      if (!amount || amount <= 0) return;
+
+      const newTx = {
+        id: 'tx-' + Date.now(),
+        type,
+        amount,
+        accountId,
+        categoryId,
+        payee,
+        date
+      };
+
+      // Update account balance
+      const acc = appState.accounts.find(a => a.id === accountId);
+      if (acc) {
+        if (type === 'expense') {
+          acc.balance -= amount;
+        } else {
+          acc.balance += amount;
+        }
+      }
+
+      appState.transactions.unshift(newTx);
+      saveState();
+      renderAll();
+      closeModal('modal-transaction');
+      showDynamicBanner(`${type === 'expense' ? 'Expense' : 'Income'} of ${formatCurrency(amount)} recorded`);
+    });
+
+    /* --- Form: New Account --- */
+    document.getElementById('btn-add-account').addEventListener('click', () => {
+      document.getElementById('form-account').reset();
+      openModal('modal-account');
+    });
+
+    // Hue Picker
+    document.querySelectorAll('.hue-circle-choice').forEach(circle => {
+      circle.addEventListener('click', () => {
+        document.querySelectorAll('.hue-circle-choice').forEach(c => c.classList.remove('selected'));
+        circle.classList.add('selected');
+        document.getElementById('acc-input-hue').value = circle.dataset.hue;
+      });
+    });
+
+    document.getElementById('form-account').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('acc-input-name').value.trim();
+      const type = document.getElementById('acc-input-type').value;
+      const balance = parseFloat(document.getElementById('acc-input-balance').value) || 0;
+      const hue = document.getElementById('acc-input-hue').value;
+      const mask = Math.floor(1000 + Math.random() * 9000).toString();
+
+      const newAcc = {
+        id: 'acc-' + Date.now(),
+        name,
+        type,
+        balance,
+        hue,
+        mask
+      };
+
+      appState.accounts.push(newAcc);
+      saveState();
+      renderAll();
+      closeModal('modal-account');
+      showDynamicBanner(`Account "${name}" initialized`);
+    });
+
+    /* --- Form: Edit Account --- */
+    function openEditAccountModal(accId) {
+      const acc = appState.accounts.find(a => a.id === accId);
+      if (!acc) return;
+      document.getElementById('editacc-id').value = acc.id;
+      document.getElementById('editacc-name').value = acc.name;
+      document.getElementById('editacc-balance').value = acc.balance;
+      openModal('modal-edit-account');
+    }
+
+    document.getElementById('form-edit-account').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editacc-id').value;
+      const name = document.getElementById('editacc-name').value.trim();
+      const balance = parseFloat(document.getElementById('editacc-balance').value) || 0;
+
+      const acc = appState.accounts.find(a => a.id === id);
+      if (acc) {
+        acc.name = name;
+        acc.balance = balance;
+        saveState();
+        renderAll();
+        closeModal('modal-edit-account');
+        showDynamicBanner(`Account "${name}" updated`);
+      }
+    });
+
+    document.getElementById('btn-delete-account-confirm').addEventListener('click', () => {
+      const id = document.getElementById('editacc-id').value;
+      if (appState.accounts.length <= 1) {
+        alert("You must keep at least one account.");
+        return;
+      }
+      if (confirm("Delete this account and unlink it?")) {
+        appState.accounts = appState.accounts.filter(a => a.id !== id);
+        saveState();
+        renderAll();
+        closeModal('modal-edit-account');
+        showDynamicBanner('Account deleted');
+      }
+    });
+
+    /* --- Form: Inter-Account Transfer --- */
+    document.getElementById('btn-open-transfer').addEventListener('click', () => {
+      document.getElementById('form-transfer').reset();
+      updateAccountDropdowns();
+      openModal('modal-transfer');
+    });
+
+    document.getElementById('form-transfer').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fromId = document.getElementById('trf-from-account').value;
+      const toId = document.getElementById('trf-to-account').value;
+      const amount = parseFloat(document.getElementById('trf-amount').value);
+
+      if (fromId === toId) {
+        alert("Source and Destination accounts must be different.");
+        return;
+      }
+      if (!amount || amount <= 0) return;
+
+      const fromAcc = appState.accounts.find(a => a.id === fromId);
+      const toAcc = appState.accounts.find(a => a.id === toId);
+
+      if (!fromAcc || !toAcc) return;
+
+      fromAcc.balance -= amount;
+      toAcc.balance += amount;
+
+      // Add audit transfer record
+      appState.transactions.unshift({
+        id: 'tx-' + Date.now(),
+        type: 'transfer',
+        amount,
+        accountId: fromAcc.id,
+        categoryId: 'other_income',
+        payee: `Transfer to ${toAcc.name}`,
+        date: new Date().toISOString().split('T')[0]
+      });
+
+      saveState();
+      renderAll();
+      closeModal('modal-transfer');
+      showDynamicBanner(`Transferred ${formatCurrency(amount)}`);
+    });
+
+    /* --- Form: New Savings Goal --- */
+    document.getElementById('btn-create-savings-goal').addEventListener('click', () => {
+      document.getElementById('form-savings').reset();
+      document.getElementById('sav-input-date').value = new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0];
+      openModal('modal-savings');
+    });
+
+    document.getElementById('form-savings').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = document.getElementById('sav-input-title').value.trim();
+      const emoji = document.getElementById('sav-input-emoji').value;
+      const targetAmount = parseFloat(document.getElementById('sav-input-target').value);
+      const currentAmount = parseFloat(document.getElementById('sav-input-initial').value) || 0;
+      const targetDate = document.getElementById('sav-input-date').value;
+
+      const newGoal = {
+        id: 'sav-' + Date.now(),
+        title,
+        emoji,
+        targetAmount,
+        currentAmount,
+        targetDate
+      };
+
+      appState.savingsGoals.push(newGoal);
+      saveState();
+      renderAll();
+      closeModal('modal-savings');
+      showDynamicBanner(`Goal "${title}" created`);
+    });
+
+    /* --- Form: Deposit / Withdraw from Goal --- */
+    function openSavingsActionModal(goalId, mode) {
+      const goal = appState.savingsGoals.find(g => g.id === goalId);
+      if (!goal) return;
+
+      document.getElementById('savact-goal-id').value = goal.id;
+      document.getElementById('savact-mode').value = mode;
+      document.getElementById('modal-savact-title').textContent = mode === 'deposit' 
+        ? `Deposit to ${goal.title}` 
+        : `Withdraw from ${goal.title}`;
+      document.getElementById('savact-submit-btn').textContent = mode === 'deposit' ? 'Complete Deposit' : 'Complete Withdrawal';
+      document.getElementById('savact-amount').value = '';
+      updateAccountDropdowns();
+      openModal('modal-savings-action');
+    }
+
+    document.getElementById('form-savings-action').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const goalId = document.getElementById('savact-goal-id').value;
+      const mode = document.getElementById('savact-mode').value;
+      const accountId = document.getElementById('savact-account-select').value;
+      const amount = parseFloat(document.getElementById('savact-amount').value);
+
+      const goal = appState.savingsGoals.find(g => g.id === goalId);
+      const acc = appState.accounts.find(a => a.id === accountId);
+
+      if (!goal || !acc || !amount || amount <= 0) return;
+
+      if (mode === 'deposit') {
+        acc.balance -= amount;
+        goal.currentAmount += amount;
+      } else {
+        if (goal.currentAmount < amount) {
+          alert("Withdrawal exceeds goal's current saved balance.");
+          return;
+        }
+        goal.currentAmount -= amount;
+        acc.balance += amount;
+      }
+
+      saveState();
+      renderAll();
+      closeModal('modal-savings-action');
+      showDynamicBanner(`${mode === 'deposit' ? 'Saved' : 'Withdrew'} ${formatCurrency(amount)}`);
+    });
+
+    /* ==========================================================================
+       13. DATA IMPORT / EXPORT (BACKUP ENGINE)
+       ========================================================================== */
+    document.getElementById('btn-export-data').addEventListener('click', () => {
+      playAppleClick();
+      const json = JSON.stringify(appState, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `apple_finance_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showDynamicBanner('Backup JSON exported');
+    });
+
+    document.getElementById('btn-import-data').addEventListener('click', () => {
+      document.getElementById('file-import-input').click();
+    });
+
+    document.getElementById('file-import-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (parsed && parsed.accounts && parsed.transactions) {
+            appState = parsed;
+            saveState();
+            renderAll();
+            showDynamicBanner('Finance data imported successfully');
+          } else {
+            alert('Invalid backup format.');
+          }
+        } catch (err) {
+          alert('Could not parse JSON file.');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    /* ==========================================================================
+       14. FILTERS & SEARCH LISTENERS
+       ========================================================================== */
+    document.getElementById('tx-search-input').addEventListener('input', renderTransactions);
+    document.getElementById('filter-type').addEventListener('change', renderTransactions);
+    document.getElementById('filter-account').addEventListener('change', renderTransactions);
+    document.getElementById('filter-category').addEventListener('change', renderTransactions);
+
+    // Escape helper
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    /* ==========================================================================
+       15. MASTER RENDER CYCLE
+       ========================================================================== */
+    function renderAll() {
+      renderAccounts();
+      renderSavingsGoals();
+      renderTransactions();
+      renderCharts();
+    }
+
+    // Window resize chart re-renderer
+    window.addEventListener('resize', () => {
+      renderCharts();
+    });
+
+    // Initial boot
+    populatePredeterminedCategorySelectors();
+    renderAll();
+  </script>
+</body>
+</html>

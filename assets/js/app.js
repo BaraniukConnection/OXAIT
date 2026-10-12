@@ -8,6 +8,7 @@
     uk: {
       tagline: "Народний бенчмарк",
       leaderboard: "Таблиця лідерів",
+      roster: "Учасники",
       colRank: "#", colModel: "Учасник", colScore: "Бали",
       participants: n => `${n} учасників`,
       updated: d => `Оновлено ${d}`,
@@ -42,6 +43,7 @@
     en: {
       tagline: "The people's benchmark",
       leaderboard: "Leaderboard",
+      roster: "Participants",
       colRank: "#", colModel: "Participant", colScore: "Score",
       participants: n => `${n} participants`,
       updated: d => `Updated ${d}`,
@@ -91,7 +93,10 @@
     const r = D.results[key] || {};
     const order = (r.order || []).filter(id => byId[id]);
     D.participants.forEach(p => order.includes(p.id) || order.push(p.id));
-    const groups = r.groups || D.groups;
+    // Кількість груп по 3 таблетки — stages у раунді (за замовчуванням 3, 0 — раунд без балів)
+    const [sid, rid] = key.split("/");
+    const n = stageOf(sid)?.rounds.find(x => x.id === rid)?.stages ?? 3;
+    const groups = Array.from({ length: n }, (_, i) => r.groups?.[i] || D.groups[i] || { uk: `Етап ${i + 1}`, en: `Stage ${i + 1}` });
     // Етап проєкту: перша група, чий match підходить до файлу чи назви; інакше — група без match
     const byStage = groups.some(g => g.match);
     const stageOfProject = o => {
@@ -100,7 +105,7 @@
     };
     const entries = order.map(id => {
       const e = (r.entries || {})[id] || {};
-      const pills = [0, 1, 2].map(g => [0, 1, 2].map(i => e.pills?.[g]?.[i] ?? null));
+      const pills = groups.map((_, g) => [0, 1, 2].map(i => e.pills?.[g]?.[i] ?? null));
       const nums = pills.flat().map(v => v === true ? 1 : v).filter(v => typeof v === "number");
       // Проєкти: з entries/manifest.js (tools/sync_entries.py) + вручну з data.js
       const projects = [...(M[key]?.[id] || []), ...(e.outputs || []), ...(e.output ? [e.output] : [])]
@@ -115,7 +120,7 @@
       const prev = entries[i - 1];
       e.rank = e.out ? null : (prev && !prev.out && e.total !== null && prev.total === e.total ? prev.rank : i + 1);
     });
-    return { entries, groups, live: entries.some(e => e.total !== null || e.out) };
+    return { entries, groups, scored: n > 0, live: entries.some(e => e.total !== null || e.out) };
   }
 
   /* ───── Маршрут ───── */
@@ -273,25 +278,27 @@
 
   function pillsHTML(pills, delayIndex) {
     let p = 0;
-    return `<div class="pills">${pills.map(g => `<span class="pill-group">${g.map(v => {
+    return `<div class="pills" style="--g:${pills.length}">${pills.map(g => `<span class="pill-group">${g.map(v => {
       const filled = v !== null && v !== "" && v !== false;
       return `<span class="pill${filled ? " is-filled" : v === false ? " is-miss" : ""}" style="--p:${p++};--i:${delayIndex}">${filled && v !== true ? `<i>${esc(v)}</i>` : ""}</span>`;
     }).join("")}</span>`).join("")}</div>`;
   }
 
   function renderBoard() {
-    const { entries, groups } = roundData();
-    $("#board-cols").innerHTML = `<span>${t.colRank}</span><span>${t.colModel}</span><span>${t.colScore}</span>`;
+    const { entries, groups, scored } = roundData();
+    $(".board").classList.toggle("is-unscored", !scored);
+    $("#board-title").textContent = scored ? t.leaderboard : t.roster;
+    $("#board-cols").innerHTML = `<span>${t.colRank}</span><span>${t.colModel}</span><span>${scored ? t.colScore : ""}</span>`;
     $("#board").innerHTML = entries.map((e, i) => `
       <li>
-        <button class="row ox-focus${e.rank === 1 ? " top-1" : ""}${e.out ? " is-out" : ""}" data-pick="${e.p.id}" aria-selected="${e.p.id === state.pick}" style="--c:${tint(e)};--i:${i}"
+        <button class="row ox-focus${scored && e.rank === 1 ? " top-1" : ""}${e.out ? " is-out" : ""}" data-pick="${e.p.id}" aria-selected="${e.p.id === state.pick}" style="--c:${tint(e)};--i:${i}"
           title="${esc(groups.map(L).join(" · "))}">
-          <span class="row-rank">${e.out ? "✕" : String(e.rank).padStart(2, "0")}</span>
+          <span class="row-rank">${e.out ? "✕" : scored ? String(e.rank).padStart(2, "0") : "·"}</span>
           ${avatar(e.p)}
           <span class="row-name"><b>${esc(e.p.name)}</b><small>${esc(e.p.vendor)}${e.projects.length ? ` · <span class="proj-count">${t.projects(e.projects.length)}</span>` : ""}</small></span>
           ${e.out ? `<span class="row-score"><span class="badge-out">${t.out}</span></span>`
-            : `<span class="row-score${e.total === null ? " is-empty" : ""}"${e.total !== null ? ` data-v="${e.total}"` : ""}>${e.total ?? "—"}</span>`}
-          ${pillsHTML(e.pills, i)}
+            : !scored ? "" : `<span class="row-score${e.total === null ? " is-empty" : ""}"${e.total !== null ? ` data-v="${e.total}"` : ""}>${e.total ?? "—"}</span>`}
+          ${scored ? pillsHTML(e.pills, i) : ""}
         </button>
       </li>`).join("");
     countUp(document.querySelectorAll("#board [data-v]"));
@@ -335,7 +342,7 @@
 
   function renderPreview() {
     const pv = $("#preview"), s = stageOf(state.stage), r = roundOf();
-    const { entries, groups } = roundData();
+    const { entries, groups, scored } = roundData();
     const e = entries.find(x => x.p.id === state.pick);
 
     pv.style.setProperty("--hud", e ? tint(e) : "var(--cyan)");
@@ -363,16 +370,16 @@
         <div class="pv-head">
           ${avatar(e.p)}
           <div class="pv-title"><h2>${esc(e.p.name)}</h2>
-            <p>${e.out ? `<span class="tag tag-out">${t.out}</span>` : `<span class="tag">${t.rank(e.rank)}</span>`}<span class="tag tag-accent">${esc(r.code)}</span>${esc(e.p.vendor)}</p></div>
+            <p>${e.out ? `<span class="tag tag-out">${t.out}</span>` : scored ? `<span class="tag">${t.rank(e.rank)}</span>` : ""}<span class="tag tag-accent">${esc(r.code)}</span>${esc(e.p.vendor)}</p></div>
           <div class="pv-actions" id="pv-actions"></div>
           <button class="icon-btn ox-focus" data-act="close" title="${t.close}" aria-label="${t.close}"><span class="ox-icon">close</span></button>
         </div>
         <div class="variants" id="pv-variants"></div>
         <div class="pv-stage" id="pv-stage"></div>
-        <div class="pv-score">
+        ${!scored ? "" : `<div class="pv-score" style="--g:${groups.length}">
           ${e.pills.map((g, gi) => `<div class="score-group"><span class="micro">${esc(L(groups[gi]))}</span>${pillsHTML([g], 0)}</div>`).join("")}
           <div class="score-total"><span class="micro">${t.total}</span><b>${e.total ?? "—"}</b></div>
-        </div>
+        </div>`}
         ${e.note ? `<p class="pv-note">${esc(L(e.note))}</p>` : ""}
       </div>`;
     renderStage();

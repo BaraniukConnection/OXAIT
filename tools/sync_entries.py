@@ -70,8 +70,12 @@ def find_server(folder):
     return None
 
 
+BUILDS = ("dist", "build", "out")
+
+
 def find_entry(folder):
-    for rel in ("index.html", "static/index.html", "public/index.html", "web/index.html"):
+    # зібраний фронтенд (Vite/React тощо) важливіший за сирцевий index.html, який без dev-сервера не працює
+    for rel in [f"{b}/index.html" for b in BUILDS] + ["index.html", "static/index.html", "public/index.html", "web/index.html"]:
         if (folder / rel).exists():
             return folder / rel
     # будь-яка підпапка першого рівня з index.html (наприклад game/), крім бібліотек
@@ -83,9 +87,8 @@ def rel(target, start):
     return Path(os.path.relpath(target, start)).as_posix()
 
 
-def prepare_python(entry, server):
-    """Копія для GitHub Pages: шляхи від кореня сервера → відносні, плюс pybridge першим скриптом."""
-    root = entry.parent
+def relativize(root):
+    """Шляхи від кореня сервера (/assets/x.js) → відносні, щоб сайт працював у підпапці GitHub Pages."""
     for f in list(root.rglob("*.html")) + list(root.rglob("*.css")):
         prefix = rel(root, f.parent)
         prefix = "" if prefix == "." else prefix + "/"
@@ -93,6 +96,12 @@ def prepare_python(entry, server):
         text = re.sub(r'((?:src|href)=["\'])/(?!/)', lambda m: m.group(1) + prefix, text)
         text = re.sub(r'(url\(\s*["\']?)/(?!/)', lambda m: m.group(1) + prefix, text)
         f.write_text(text)
+
+
+def prepare_python(entry, server):
+    """Копія для GitHub Pages: відносні шляхи плюс pybridge першим скриптом."""
+    root = entry.parent
+    relativize(root)
     tag = f'<script src="{rel(ROOT / "assets/js/pybridge.js", root)}" data-server="{rel(server, root)}"></script>'
     text = entry.read_text(errors="ignore")
     text, n = re.subn(r"(<head[^>]*>)", lambda m: m.group(1) + "\n" + tag, text, count=1, flags=re.I)
@@ -129,6 +138,8 @@ def main():
                     if server:
                         prepare_python(entry, server)
                         rec["python"] = True
+                    elif entry.parent.name in BUILDS:
+                        relativize(entry.parent)
                     items.append(rec)
                 elif item.is_file() and item.suffix.lower() in TYPES:
                     kind = TYPES[item.suffix.lower()]

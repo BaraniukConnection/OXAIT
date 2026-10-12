@@ -383,8 +383,12 @@ img { display: block; max-width: 100%; }
   color: #fff; background: var(--danger); text-shadow: none;
 }
 
+/* Раунд без балів (лише перегляд) */
+.board.is-unscored .row { grid-template-areas: "rank av name score"; }
+.board.is-unscored .row-rank { color: var(--ink-muted); opacity: .5; }
+
 /* Таблетки — енергетичні сегменти, три групи по три */
-.pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.pills { display: grid; grid-template-columns: repeat(var(--g, 3), 1fr); gap: var(--space-3); }
 .pill-group { display: flex; gap: 5px; padding: 0 4px; }
 .pill {
   flex: 1; height: 10px; min-width: 0; border-radius: 2px; transform: skewX(-20deg);
@@ -535,7 +539,7 @@ img { display: block; max-width: 100%; }
 .reader p { margin: 0 0 var(--space-4); }
 
 /* Розбивка балів */
-.pv-score { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: var(--space-3); padding: var(--space-4) var(--space-4) var(--space-5); align-items: stretch; }
+.pv-score { display: grid; grid-template-columns: repeat(var(--g, 3), 1fr) auto; gap: var(--space-3); padding: var(--space-4) var(--space-4) var(--space-5); align-items: stretch; }
 .score-group { padding: var(--space-3); border-radius: 4px; background: rgba(255, 255, 255, .025); box-shadow: inset 0 0 0 1px var(--line); animation: rise 360ms var(--ease) both; }
 .score-group:nth-child(2) { animation-delay: 60ms; }
 .score-group:nth-child(3) { animation-delay: 120ms; }
@@ -745,7 +749,7 @@ img { display: block; max-width: 100%; }
   .pv-head .avatar { width: 42px; height: 42px; font-size: 16px; }
   .pv-title h2 { font-size: 19px; line-height: 24px; }
   .pv-stage { margin: 0 var(--space-2); aspect-ratio: 3 / 4; }
-  .pv-score { grid-template-columns: 1fr 1fr 1fr; padding: var(--space-3) var(--space-2) var(--space-4); gap: var(--space-2); }
+  .pv-score { grid-template-columns: repeat(var(--g, 3), 1fr); padding: var(--space-3) var(--space-2) var(--space-4); gap: var(--space-2); }
   .score-group { padding: var(--space-2); }
   .score-total { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; }
   .cover { padding: var(--space-4); }

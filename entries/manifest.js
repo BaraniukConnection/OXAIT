@@ -96,6 +96,53 @@ window.OXAIT_ENTRIES = {
       }
     ]
   },
+  "software/q2": {
+    "chatgpt": [
+      {
+        "type": "iframe",
+        "title": "Clarity · Finance",
+        "src": "entries/software/q2/chatgpt/finance-manager.html",
+        "size": 72858,
+        "id": "financemanager"
+      }
+    ],
+    "claude": [
+      {
+        "type": "iframe",
+        "title": "Finance",
+        "src": "entries/software/q2/claude/finance.html",
+        "size": 106137,
+        "id": "finance"
+      }
+    ],
+    "gemini": [
+      {
+        "type": "iframe",
+        "title": "Apple Finance — Liquid Glass",
+        "src": "entries/software/q2/gemini/finance-manager/index.html",
+        "size": 118259,
+        "id": "financemanager"
+      }
+    ],
+    "qwen": [
+      {
+        "type": "iframe",
+        "title": "Finance — Liquid Glass",
+        "src": "entries/software/q2/qwen/Finance%20Manager/dist/index.html",
+        "size": 363457,
+        "id": "financemanager"
+      }
+    ],
+    "glm": [
+      {
+        "type": "iframe",
+        "title": "Tally — Finance",
+        "src": "entries/software/q2/glm/Finance%20manager.html",
+        "size": 78187,
+        "id": "financemanager"
+      }
+    ]
+  },
   "gamedev/sec1": {
     "claude": [
       {

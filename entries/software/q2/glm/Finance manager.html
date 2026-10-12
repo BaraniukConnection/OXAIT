@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tally — Finance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  color-scheme:dark;
+  --txt:#f5f5f7; --txt2:rgba(235,235,245,.62); --txt3:rgba(235,235,245,.38);
+  --hair:rgba(255,255,255,.1);
+  --blue:#0a84ff; --green:#30d158; --red:#ff453a; --orange:#ff9f0a;
+  --spring:cubic-bezier(.34,1.3,.4,1);
+  --sheet:cubic-bezier(.32,.72,0,1);
+  --ease:cubic-bezier(.25,.8,.25,1);
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Geist","Helvetica Neue",sans-serif;
+  background:#070a16;color:var(--txt);min-height:100vh;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden;
+}
+::selection{background:rgba(10,132,255,.4)}
+::-webkit-scrollbar{width:10px;height:8px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-track{background:transparent}
+button{font-family:inherit}
+:focus-visible{outline:2px solid rgba(130,185,255,.7);outline-offset:2px;border-radius:8px}
+
+/* ---------- Wallpaper (the substrate glass refracts) ---------- */
+.wallpaper{position:fixed;inset:0;z-index:-1;overflow:hidden;
+  background:radial-gradient(140% 100% at 50% 0%, #0b1230 0%, #070a16 55%, #05060f 100%)}
+#blobLayer{position:absolute;inset:-8vmax;transform:scale(1.06);will-change:transform}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;will-change:transform}
+.b1{width:62vmax;height:62vmax;left:-16vmax;top:-24vmax;background:radial-gradient(circle,#1c3f8f,transparent 70%);animation:drift1 38s ease-in-out infinite}
+.b2{width:50vmax;height:50vmax;right:-14vmax;top:-8vmax;background:radial-gradient(circle,#0c6b5c,transparent 70%);animation:drift2 44s ease-in-out infinite}
+.b3{width:56vmax;height:56vmax;left:-12vmax;bottom:-26vmax;background:radial-gradient(circle,#7c2d5e,transparent 70%);animation:drift3 40s ease-in-out infinite}
+.b4{width:36vmax;height:36vmax;right:-6vmax;bottom:-12vmax;background:radial-gradient(circle,#b9792f,transparent 70%);opacity:.26;animation:drift1 50s ease-in-out infinite reverse}
+.b5{width:30vmax;height:30vmax;left:38%;top:32%;background:radial-gradient(circle,#1573a6,transparent 70%);opacity:.32;animation:drift2 34s ease-in-out infinite reverse}
+@keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6vmax,4vmax) scale(1.15)}}
+@keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-5vmax,6vmax) scale(1.1)}}
+@keyframes drift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(5vmax,-5vmax) scale(1.18)}}
+.grain{position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>")}
+.wallpaper::after{content:"";position:absolute;inset:0;background:radial-gradient(130% 90% at 50% 118%, rgba(0,0,0,.55), transparent 55%)}
+
+/* ---------- Liquid glass ---------- */
+.glass{position:relative;border-radius:28px;
+  background:linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.055) 45%, rgba(255,255,255,.035));
+  -webkit-backdrop-filter:blur(30px) saturate(1.7);backdrop-filter:blur(30px) saturate(1.7);
+  box-shadow:0 16px 40px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.16)}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:linear-gradient(160deg, rgba(255,255,255,.55), rgba(255,255,255,.08) 32%, rgba(255,255,255,.03) 58%, rgba(255,255,255,.2));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);mask-composite:exclude;
+  pointer-events:none}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;
+  background:radial-gradient(130% 70% at 12% -5%, rgba(255,255,255,.12), transparent 55%);pointer-events:none}
+.iglass{background:rgba(255,255,255,.1);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12), inset 0 1.5px 0 rgba(255,255,255,.16), 0 4px 14px rgba(0,0,0,.2)}
+.pressable{transition:transform .3s var(--spring)}
+.pressable:active{transform:scale(.96)}
+
+/* ---------- Top bar ---------- */
+.topbar{max-width:1080px;margin:0 auto;padding:22px 24px 0;display:flex;justify-content:space-between;align-items:center}
+.brand{display:flex;align-items:center;gap:11px}
+.brand-mark{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff}
+.brand-name{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.icon-btn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--txt);border:none;cursor:pointer}
+.icon-btn.ghost{background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;color:var(--txt2)}
+.icon-btn.ghost:hover{color:var(--txt)}
+
+/* ---------- Layout ---------- */
+#viewRoot{max-width:1080px;margin:0 auto;padding:10px 24px 150px}
+.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--txt2);font-weight:600}
+.lg-title{font-size:31px;font-weight:700;letter-spacing:-.022em;margin-top:3px}
+.title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:16px 0 20px;flex-wrap:wrap}
+.tr-btns{display:flex;gap:9px;flex-wrap:wrap}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 20px;border-radius:999px;
+  font-size:14px;font-weight:600;color:var(--txt);border:none;cursor:pointer;
+  transition:transform .3s var(--spring), background .2s, box-shadow .2s}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:var(--blue);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.3), inset 0 0 0 .5px rgba(255,255,255,.18), 0 8px 20px rgba(0,0,0,.3)}
+.btn-primary:hover{background:#2492ff}
+.btn-glass{background:rgba(255,255,255,.11);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13), inset 0 1.5px 0 rgba(255,255,255,.16), 0 4px 12px rgba(0,0,0,.18)}
+.btn-glass:hover{background:rgba(255,255,255,.16)}
+.btn-text{background:transparent;color:var(--red);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.btn-sm{padding:8px 14px;font-size:13px}
+.link-btn{background:none;border:none;color:#64d2ff;font-size:13px;font-weight:600;cursor:pointer}
+.link-btn:hover{text-decoration:underline}
+
+/* ---------- Segmented control ---------- */
+.seg{display:inline-flex;position:relative;background:rgba(0,0,0,.26);border-radius:20px;padding:3px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.seg-thumb{position:absolute;top:3px;bottom:3px;left:3px;width:80px;border-radius:17px;background:rgba(255,255,255,.16);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14), inset 0 1px 0 rgba(255,255,255,.2), 0 3px 8px rgba(0,0,0,.2);
+  transition:left .4s var(--spring), width .4s var(--spring)}
+.seg button{position:relative;z-index:1;padding:7px 16px;border:none;background:none;color:var(--txt2);
+  font-size:13px;font-weight:600;cursor:pointer;border-radius:17px;transition:color .25s}
+.seg button.active{color:#fff}
+
+/* ---------- Cards & content ---------- */
+.fade-up{opacity:0;animation:fadeUp .6s var(--ease) forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+.card-h{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 6px}
+.card-h h3{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+.card-h .cap{font-size:12.5px;color:var(--txt2);font-weight:500}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--txt2);font-weight:500}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+
+.hero{padding:24px 24px 20px}
+.hero-amt{font-size:clamp(38px,6vw,54px);font-weight:700;letter-spacing:-.035em;line-height:1.05;margin-top:8px;font-variant-numeric:tabular-nums}
+.hero-sub{font-size:13px;color:var(--txt2);margin-top:8px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--hair)}
+.hstat .l{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);font-weight:600}
+.hstat .l svg{width:13px;height:13px}
+.hstat .l.pos svg{color:var(--green)}.hstat .l.neg svg{color:var(--red)}.hstat .l.cyan svg{color:#64d2ff}
+.hstat .v{font-size:18px;font-weight:700;margin-top:4px;letter-spacing:-.015em;font-variant-numeric:tabular-nums}
+
+.ov-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-top:16px}
+.chart-wrap{padding:8px 12px 12px}
+.bar{transition:y .85s var(--ease), height .85s var(--ease)}
+.ring-fill{transition:stroke-dashoffset 1.2s cubic-bezier(.3,.8,.3,1)}
+
+.cat-row{display:flex;align-items:center;gap:12px;padding:8px 20px}
+.cr-mid{flex:1;min-width:0}
+.cr-top{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;font-weight:600}
+.cr-top .amt{font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
+.bar-track{height:4px;background:rgba(255,255,255,.1);border-radius:99px;margin-top:7px;overflow:hidden}
+.bk-fill{height:100%;border-radius:99px;width:0;transition:width .9s var(--ease)}
+
+.cat-ic{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25), inset 0 0 0 .5px rgba(255,255,255,.14)}
+
+.list-card{padding:3px 4px 5px}
+.row{width:100%;display:flex;align-items:center;gap:13px;padding:11px 14px;background:none;border:none;
+  color:inherit;text-align:left;cursor:pointer;min-height:60px;transition:transform .3s var(--spring)}
+.row:hover{background:rgba(255,255,255,.04)}
+.row + .row, .g-head + .row, .row + .g-head{border-top:0}
+.row + .row{box-shadow:inset 0 .5px 0 var(--hair)}
+.row-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.row-t{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-s{font-size:12px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-amt{font-size:14.5px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap}
+.pos{color:var(--green)}.neu{color:var(--txt2)}
+.g-head{display:flex;justify-content:space-between;align-items:center;padding:15px 16px 7px;font-size:12.5px;font-weight:700;letter-spacing:.02em}
+.list-card > .g-head:first-child{padding-top:9px}
+.g-sum{color:var(--txt2);font-weight:600;font-variant-numeric:tabular-nums}
+.mt16{margin-top:16px}
+
+.empty{padding:44px 20px;text-align:center;color:var(--txt2)}
+.empty svg{opacity:.5}
+.empty .e-t{font-weight:700;color:var(--txt);margin-top:10px;font-size:16px}
+.empty .e-s{font-size:13px;margin-top:4px}
+.empty .btn{margin-top:14px}
+
+/* Accounts */
+.acct-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.acct-card{padding:20px;cursor:pointer;text-align:left;border:none;color:inherit;width:100%}
+.acct-top{display:flex;align-items:center;gap:12px}
+.acct-name{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+.acct-type{font-size:12px;color:var(--txt2);margin-top:1px}
+.acct-bal{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-top:16px;font-variant-numeric:tabular-nums}
+.acct-bal.neg{color:var(--red)}
+.acct-flow{font-size:12.5px;color:var(--txt2);margin-top:5px;font-variant-numeric:tabular-nums}
+
+/* Savings */
+.sav-hero{display:flex;align-items:center;gap:24px;padding:22px 24px;flex-wrap:wrap}
+.sav-amt{font-size:34px;font-weight:700;letter-spacing:-.03em;margin-top:6px;font-variant-numeric:tabular-nums}
+.sav-sub{font-size:13px;color:var(--txt2);margin-top:4px}
+.goal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:16px}
+.goal-card{padding:18px}
+.goal-top{display:flex;align-items:center;gap:16px}
+.goal-name{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.goal-amt{font-size:13.5px;margin-top:3px;font-weight:600;font-variant-numeric:tabular-nums}
+.goal-amt span{color:var(--txt2);font-weight:500}
+.goal-dl{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--txt2);margin-top:7px;background:rgba(255,255,255,.07);padding:4px 9px;border-radius:99px}
+.goal-btns{display:flex;gap:8px;margin-top:16px}
+.goal-btns .btn{flex:1}
+.ring text{font-variant-numeric:tabular-nums}
+
+/* Activity controls */
+.act-controls{margin-bottom:14px}
+.act-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sel-field{width:auto;padding:9px 34px 9px 14px;font-size:13.5px;font-weight:600}
+.search{display:flex;align-items:center;gap:9px;border-radius:16px;padding:11px 14px;margin-top:10px;color:var(--txt2)}
+.search input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:14.5px;font-family:inherit;min-width:0}
+.search input::placeholder{color:var(--txt3)}
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip-row.scrollx{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chip-row.scrollx::-webkit-scrollbar{display:none}
+.a-chip{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:99px;font-size:13px;font-weight:600;
+  color:var(--txt2);cursor:pointer;border:none;white-space:nowrap;background:rgba(255,255,255,.07);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);transition:all .25s var(--spring)}
+.a-chip.sel{background:rgba(255,255,255,.17);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28), inset 0 1px 0 rgba(255,255,255,.2)}
+.a-chip.dis{opacity:.32;pointer-events:none}
+.a-chip svg{width:14px;height:14px}
+
+/* ---------- Tab bar ---------- */
+.tabbar{display:flex;align-items:center;gap:2px;padding:8px;border-radius:34px;
+  position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:60}
+.lens{position:absolute;top:6px;bottom:6px;left:8px;width:78px;border-radius:26px;background:rgba(255,255,255,.16);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16), inset 0 1.5px 0 rgba(255,255,255,.22), 0 4px 14px rgba(0,0,0,.18);
+  transition:left .55s var(--spring), width .55s var(--spring);pointer-events:none}
+.tab{position:relative;z-index:1;width:78px;padding:9px 0 7px;border:none;background:none;color:var(--txt2);
+  display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:color .25s, transform .3s var(--spring)}
+.tab span{font-size:10.5px;font-weight:600;letter-spacing:.02em}
+.tab.active{color:var(--txt)}
+.tab:active{transform:scale(.93)}
+.compose{position:relative;z-index:2;width:54px;height:54px;border-radius:50%;margin:0 8px;border:none;background:var(--blue);
+  color:#fff;display:grid;place-items:center;cursor:pointer;
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.35), inset 0 0 0 .5px rgba(255,255,255,.2), 0 10px 24px rgba(0,0,0,.4);
+  transition:transform .3s var(--spring)}
+.compose:active{transform:scale(.9)}
+
+/* ---------- Sheets ---------- */
+#layer{position:fixed;inset:0;z-index:100;pointer-events:none}
+#layer .backdrop{position:absolute;inset:0;background:rgba(4,6,14,.44);
+  -webkit-backdrop-filter:blur(10px) saturate(1.2);backdrop-filter:blur(10px) saturate(1.2);
+  opacity:0;transition:opacity .38s var(--ease);pointer-events:auto}
+#layer.open .backdrop{opacity:1}
+#layer .sheet{position:absolute;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));
+  transform:translate(-50%,28px) scale(.96);opacity:0;width:min(440px,calc(100vw - 20px));
+  max-height:min(88vh,760px);display:flex;flex-direction:column;
+  transition:transform .5s var(--sheet), opacity .35s var(--ease);pointer-events:auto;overscroll-behavior:contain}
+#layer.open .sheet{transform:translate(-50%,0) scale(1);opacity:1}
+.grabber{width:38px;height:5px;border-radius:99px;background:rgba(255,255,255,.28);margin:10px auto 2px;flex:none}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:10px 20px 4px}
+.sheet-head h2{font-size:19px;font-weight:700;letter-spacing:-.015em}
+.sheet-head .seg{margin-top:2px}
+.sheet-body{padding:6px 20px 6px;overflow-y:auto;min-height:0}
+.sheet-foot{padding:12px 20px 16px;display:flex;flex-direction:column;gap:4px}
+.sheet-foot .btn{width:100%}
+.f-label{font-size:12.5px;font-weight:600;color:var(--txt2);margin:14px 2px 8px;letter-spacing:.02em}
+.f-grid2{display:grid;grid-template-columns:1fr 1.2fr;gap:10px;margin-top:14px}
+.field{width:100%;background:rgba(0,0,0,.26);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1), inset 0 1.5px 3px rgba(0,0,0,.3);
+  border:none;border-radius:14px;padding:12px 14px;color:var(--txt);font-size:15px;font-family:inherit;outline:none;transition:box-shadow .2s}
+.field:focus{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35), inset 0 1.5px 3px rgba(0,0,0,.3)}
+select.field{appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(235,235,245,.6)' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.hint{font-size:12px;color:var(--txt2);margin-top:8px;line-height:1.45}
+.amount-wrap{display:flex;align-items:center;justify-content:center;gap:6px;padding:16px 0 2px}
+.amount-wrap .cur{font-size:28px;color:var(--txt2);font-weight:600}
+.num-input{background:transparent;border:none;outline:none;color:var(--txt);font-size:42px;font-weight:700;
+  letter-spacing:-.03em;width:100%;text-align:center;font-variant-numeric:tabular-nums;min-width:0}
+.num-input::placeholder{color:var(--txt3)}
+.f-err{color:var(--red);font-size:12.5px;font-weight:600;min-height:17px;text-align:center;margin-top:2px}
+.shake{animation:shake .45s}
+@keyframes shake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-3px)}40%,60%{transform:translateX(3px)}}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.cat-chip{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 2px 8px;border-radius:16px;cursor:pointer;
+  border:none;background:none;color:inherit;transition:all .25s var(--spring)}
+.cat-chip span{font-size:10px;color:var(--txt2);font-weight:600;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cat-chip.sel{background:rgba(255,255,255,.15);box-shadow:inset 0 0 0 1px rgba(255,255,255,.26), inset 0 1px 0 rgba(255,255,255,.2)}
+.cat-chip.sel span{color:#fff}
+.cat-chip .cat-ic{width:40px;height:40px;border-radius:13px}
+.icon-grid{display:flex;flex-wrap:wrap;gap:8px}
+.g-ic-chip{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:var(--txt2);cursor:pointer;border:none;
+  background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);transition:all .25s var(--spring)}
+.g-ic-chip.sel{background:rgba(255,255,255,.17);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3), inset 0 1px 0 rgba(255,255,255,.2)}
+.dot-row{display:flex;gap:10px;flex-wrap:wrap}
+.g-dot{width:27px;height:27px;border-radius:50%;border:none;cursor:pointer;transition:transform .25s var(--spring)}
+.g-dot.sel{box-shadow:0 0 0 2.5px rgba(7,10,22,.9), 0 0 0 4.5px rgba(255,255,255,.9);transform:scale(1.05)}
+
+/* Action sheet */
+.as-group{margin:8px 12px 12px;border-radius:20px;overflow:hidden;background:rgba(255,255,255,.05);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
+.as-btn{width:100%;display:flex;align-items:center;gap:13px;padding:13px 14px;background:none;border:none;color:var(--txt);
+  cursor:pointer;text-align:left;transition:background .2s}
+.as-btn:hover{background:rgba(255,255,255,.05)}
+.as-btn + .as-btn{box-shadow:inset 0 .5px 0 var(--hair)}
+.as-ic{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#fff;flex:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.as-btn b{display:block;font-size:15px;font-weight:650;letter-spacing:-.01em}
+.as-btn small{font-size:12px;color:var(--txt2)}
+.as-cancel{margin:0 12px 14px;width:calc(100% - 24px)}
+
+/* Toast / alert / tooltip */
+#toastRoot{position:fixed;top:calc(12px + env(safe-area-inset-top));left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:120;pointer-events:none}
+.toast{display:flex;align-items:center;gap:9px;padding:11px 16px;border-radius:99px;font-size:13.5px;font-weight:600;
+  transform:translateY(-130%);opacity:0;transition:transform .5s var(--spring), opacity .3s;pointer-events:auto;max-width:min(92vw,480px)}
+.toast.show{transform:none;opacity:1}
+.toast svg{color:var(--green);flex:none}
+.toast.warn svg{color:var(--orange)}
+.t-act{background:none;border:none;color:#64d2ff;font-weight:700;font-size:13.5px;cursor:pointer;margin-left:4px}
+#alertRoot{position:fixed;inset:0;z-index:130;pointer-events:none}
+#alertRoot .backdrop{position:absolute;inset:0;background:rgba(4,6,14,.44);opacity:0;transition:opacity .3s;pointer-events:auto;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#alertRoot.open .backdrop{opacity:1}
+.alert{position:absolute;left:50%;top:50%;transform:translate(-50%,-46%) scale(.94);opacity:0;width:min(300px,84vw);
+  border-radius:26px;padding:22px 20px 14px;text-align:center;transition:transform .4s var(--spring), opacity .3s;pointer-events:auto}
+#alertRoot.open .alert{transform:translate(-50%,-50%) scale(1);opacity:1}
+.alert h3{font-size:16.5px;font-weight:700}
+.alert p{font-size:13px;color:var(--txt2);margin-top:7px;line-height:1.5}
+.alert-btns{display:flex;gap:8px;margin-top:18px}
+.alert-btns button{flex:1;padding:10px;border-radius:99px;font-size:14px;font-weight:600;cursor:pointer;border:none}
+.ab-cancel{background:rgba(255,255,255,.12);color:var(--txt)}
+.ab-confirm{background:var(--red);color:#fff}
+.chart-tip{position:fixed;z-index:80;pointer-events:none;padding:10px 13px;border-radius:16px;font-size:12px;opacity:0;
+  transition:opacity .18s;display:flex;flex-direction:column;gap:4px;transform:translate(-50%,calc(-100% - 12px))}
+.chart-tip.on{opacity:1}
+.chart-tip b{font-size:12.5px}
+.chart-tip .tt{display:flex;justify-content:space-between;gap:14px;color:var(--txt2)}
+.chart-tip .tt b{font-weight:650;font-variant-numeric:tabular-nums}
+
+@media(max-width:900px){.ov-grid{grid-template-columns:1fr}}
+@media(max-width:560px){
+  #viewRoot{padding:8px 16px 140px}
+  .topbar{padding:18px 16px 0}
+  .tab{width:58px}.tab span{font-size:9.5px}
+  .compose{width:50px;height:50px}
+  .lg-title{font-size:27px}
+  .hero{padding:20px 18px 16px}
+  .f-grid2{grid-template-columns:1fr}
+  .cat-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.fade-up{opacity:1}}
+</style>
+</head>
+<body>
+
+<div class="wallpaper" aria-hidden="true">
+  <div id="blobLayer">
+    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+    <div class="blob b4"></div><div class="blob b5"></div>
+  </div>
+  <div class="grain"></div>
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark iglass" id="brandMark"></span>
+    <span class="brand-name">Tally</span>
+  </div>
+  <button class="icon-btn iglass pressable" data-action="settings" aria-label="Settings" id="settingsBtn"></button>
+</header>
+
+<main id="viewRoot"></main>
+
+<nav class="tabbar glass" id="tabbar" aria-label="Main">
+  <div class="lens" id="lens"></div>
+  <button class="tab active" data-action="tab" data-tab="overview"><span class="t-ic" data-ic="grid"></span><span>Overview</span></button>
+  <button class="tab" data-action="tab" data-tab="accounts"><span class="t-ic" data-ic="wallet"></span><span>Accounts</span></button>
+  <button class="compose pressable" data-action="compose" aria-label="Add transaction" id="composeBtn"></button>
+  <button class="tab" data-action="tab" data-tab="savings"><span class="t-ic" data-ic="vault"></span><span>Savings</span></button>
+  <button class="tab" data-action="tab" data-tab="activity"><span class="t-ic" data-ic="list"></span><span>Activity</span></button>
+</nav>
+
+<div id="layer"></div>
+<div id="toastRoot"></div>
+<div id="alertRoot"></div>
+<div id="chartTip" class="chart-tip glass"></div>
+
+<script>
+'use strict';
+/* ================= Icons (hand-drawn, SF-Symbols spirit) ================= */
+const ICONS={
+grid:'<rect x="4" y="4" width="7" height="7" rx="2.2"/><rect x="13" y="4" width="7" height="7" rx="2.2"/><rect x="4" y="13" width="7" height="7" rx="2.2"/><rect x="13" y="13" width="7" height="7" rx="2.2"/>',
+wallet:'<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"/><path d="M15 12.5h5"/>',
+card:'<rect x="3" y="5.5" width="18" height="13" rx="3"/><path d="M3 10h18"/><path d="M6.5 14.5h4"/>',
+bank:'<path d="M3.5 9.8L12 4.5l8.5 5.3"/><path d="M5.5 10.5V18M10 10.5V18M14 10.5V18M18.5 10.5V18"/><path d="M3.5 20.5h17"/>',
+cash:'<rect x="2.5" y="7" width="19" height="10" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6 12h.01M18 12h.01"/>',
+vault:'<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="12" cy="12" r="4.2"/><path d="M12 5.8v1.2M12 17v1.2M5.8 12H7M17 12h1.2"/>',
+list:'<path d="M9 6h12M9 12h12M9 18h12"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" stroke-width="2.6"/>',
+plus:'<path d="M12 5v14M5 12h14"/>',
+x:'<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+check:'<path d="M4.5 12.5l5 5 10-11"/>',
+pencil:'<path d="M17 3.3a2.6 2.6 0 0 1 3.7 3.7L8 19.7 3.5 21l1.3-4.5z"/>',
+trash:'<path d="M4.5 7h15"/><path d="M9.5 7V5.2a1.7 1.7 0 0 1 1.7-1.7h1.6a1.7 1.7 0 0 1 1.7 1.7V7"/><path d="M6.5 7l.9 12.1A2 2 0 0 0 9.4 21h5.2a2 2 0 0 0 2-1.9L17.5 7"/><path d="M10 11v6M14 11v6"/>',
+upright:'<path d="M7 17L17 7M9 7h8v8"/>',
+downleft:'<path d="M17 7L7 17M15 17H7V9"/>',
+swap:'<path d="M7.5 3.5L4 7l3.5 3.5"/><path d="M4 7h13"/><path d="M16.5 13.5L20 17l-3.5 3.5"/><path d="M20 17H7"/>',
+briefcase:'<rect x="3" y="7.5" width="18" height="13" rx="3"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5"/><path d="M3 12.5h18"/>',
+pen:'<path d="M12 20h9"/><path d="M16.8 3.7a2.1 2.1 0 0 1 3 3L8 18.5 4 19.5l1-4z"/>',
+trend:'<path d="M3.5 17l5.5-5.5 3.5 3.5L20 7.5"/><path d="M14.5 7.5H20V13"/>',
+gift:'<rect x="3.5" y="8" width="17" height="4" rx="1.2"/><path d="M5.5 12v6.5a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V12"/><path d="M12 8v12.5"/><path d="M12 8a2.8 2.8 0 1 1 2.8-2.8C14.8 7 13.6 8 12 8z"/><path d="M12 8a2.8 2.8 0 1 0-2.8-2.8C9.2 7 10.4 8 12 8z"/>',
+food:'<path d="M5 3.5v6a2.6 2.6 0 0 0 5.2 0v-6"/><path d="M7.6 3.5V21"/><path d="M17.5 3.5c-1.8 1.7-2.5 3.8-2.5 6 0 2 .9 3.2 2.5 3.2V21"/>',
+cart:'<circle cx="9.5" cy="19.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="16.5" cy="19.5" r="1.4" fill="currentColor" stroke="none"/><path d="M3 4.5h2.2l2.3 10.5h9.8l2.2-7.5H6.1"/>',
+car:'<path d="M5.5 12.5l1.4-4A2 2 0 0 1 8.8 7h6.4a2 2 0 0 1 1.9 1.5l1.4 4"/><rect x="3.5" y="12.5" width="17" height="5.5" rx="2"/><path d="M7 18v1.5M17 18v1.5"/>',
+house:'<path d="M4 10.5L12 4l8 6.5"/><path d="M5.5 9.2V19a1.8 1.8 0 0 0 1.8 1.8h9.4A1.8 1.8 0 0 0 18.5 19V9.2"/><path d="M9.8 20.8v-6.3h4.4v6.3"/>',
+bolt:'<path d="M13 2.5L4.5 13.5H11L10 21.5l8.5-11H13z"/>',
+pulse:'<path d="M12 20.5s-8-4.9-9.7-9.4A5.3 5.3 0 0 1 12 6.9a5.3 5.3 0 0 1 9.7 4.2C20 15.6 12 20.5 12 20.5z"/><path d="M6.5 12h2.6l1.4-2.6 2.6 5 1.4-2.4h3"/>',
+bag:'<path d="M6.2 8h11.6l1 11.2a1.9 1.9 0 0 1-1.9 2.1H7.1a1.9 1.9 0 0 1-1.9-2.1z"/><path d="M9 10.5V7a3 3 0 0 1 6 0v3.5"/>',
+film:'<rect x="3" y="9.5" width="18" height="10.5" rx="2.5"/><path d="M3.5 9.5L5.5 4l14.5 2.5-.9 3"/><path d="M8.3 4.7L7 8.5M12.5 5.4l-1.3 3.8M16.7 6.1l-1.3 3.7"/>',
+grad:'<path d="M2.5 9.3L12 4.8l9.5 4.5L12 13.8z"/><path d="M6.5 11.5v4.6c0 1.3 2.5 2.6 5.5 2.6s5.5-1.3 5.5-2.6v-4.6"/><path d="M21.5 9.3v5"/>',
+plane:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+repeat:'<path d="M17 2.5l3.5 3.5L17 9.5"/><path d="M3.5 11.5V10a4 4 0 0 1 4-4H20"/><path d="M7 21.5l-3.5-3.5L7 14.5"/><path d="M20.5 12.5V14a4 4 0 0 1-4 4H4"/>',
+dots:'<circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/>',
+tag:'<path d="M3.5 11V4.5a1 1 0 0 1 1-1H11l9 9a1.5 1.5 0 0 1 0 2.1l-5.4 5.4a1.5 1.5 0 0 1-2.1 0z"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/>',
+flag:'<path d="M5.5 21V4"/><path d="M5.5 4.5h11.5l-2.4 3.75L17 12H5.5"/>',
+laptop:'<rect x="4.5" y="5" width="15" height="10" rx="2"/><path d="M2.5 19h19"/>',
+star:'<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.7l5.9-.9z"/>',
+shield:'<path d="M12 3l7.5 3.2v5.3c0 4.9-3.2 8.3-7.5 9.9-4.3-1.6-7.5-5-7.5-9.9V6.2z"/>',
+heart:'<path d="M12 20.5s-8-4.9-9.7-9.4A5.3 5.3 0 0 1 12 6.9a5.3 5.3 0 0 1 9.7 4.2C20 15.6 12 20.5 12 20.5z"/>',
+sliders:'<path d="M5 21v-6.5M5 10.5V3M12 21v-9M12 8V3M19 21v-4.5M19 12.5V3"/><circle cx="5" cy="12.5" r="2"/><circle cx="12" cy="10" r="2"/><circle cx="19" cy="14.5" r="2"/>',
+search:'<circle cx="11" cy="11" r="6.5"/><path d="M20.5 20.5L16 16"/>',
+calendar:'<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>',
+warn:'<circle cx="12" cy="12" r="8.5"/><path d="M12 8v4.5M12 15.8h.01" stroke-width="2.2"/>',
+mark:'<path d="M6.5 17.5v-5M12 17.5v-11M17.5 17.5v-7" stroke-width="2.6"/>'
+};
+const ic=(n,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||''}</svg>`;
+
+/* ================= Helpers ================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const round2=n=>Math.round(n*100)/100;
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const TODAY=new Date(), todayStr=iso(TODAY), curMK=todayStr.slice(0,7);
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ================= Predetermined categories & types ================= */
+const CATS={
+ income:[
+  {id:'salary',name:'Salary',icon:'briefcase',color:'#30d158'},
+  {id:'freelance',name:'Freelance',icon:'pen',color:'#64d2ff'},
+  {id:'investments',name:'Investments',icon:'trend',color:'#bf5af2'},
+  {id:'gifts',name:'Gifts',icon:'gift',color:'#ff375f'},
+  {id:'other-income',name:'Other Income',icon:'dots',color:'#98989d'}
+ ],
+ expense:[
+  {id:'food',name:'Food & Dining',icon:'food',color:'#ff9f0a'},
+  {id:'groceries',name:'Groceries',icon:'cart',color:'#ffd60a'},
+  {id:'transport',name:'Transport',icon:'car',color:'#64d2ff'},
+  {id:'housing',name:'Housing',icon:'house',color:'#0a84ff'},
+  {id:'utilities',name:'Utilities',icon:'bolt',color:'#5e5ce6'},
+  {id:'health',name:'Health',icon:'pulse',color:'#ff453a'},
+  {id:'shopping',name:'Shopping',icon:'bag',color:'#bf5af2'},
+  {id:'entertainment',name:'Entertainment',icon:'film',color:'#ff375f'},
+  {id:'education',name:'Education',icon:'grad',color:'#66d4cf'},
+  {id:'travel',name:'Travel',icon:'plane',color:'#40c8e0'},
+  {id:'subscriptions',name:'Subscriptions',icon:'repeat',color:'#ff2d55'},
+  {id:'other',name:'Other',icon:'tag',color:'#98989d'}
+ ]
+};
+const ALL_CATS=[...CATS.income,...CATS.expense];
+const catOf=id=>ALL_CATS.find(c=>c.id===id)||{name:'Uncategorized',icon:'tag',color:'#98989d'};
+const ACC_TYPES={
+ bank:{label:'Bank Account',icon:'bank',color:'#0a84ff'},
+ card:{label:'Credit Card',icon:'card',color:'#bf5af2'},
+ cash:{label:'Cash',icon:'cash',color:'#ff9f0a'}
+};
+const GOAL_ICONS=['flag','plane','house','laptop','car','heart','star','shield','gift','grad'];
+const GOAL_COLORS=['#30d158','#64d2ff','#bf5af2','#ff375f','#ff9f0a','#ffd60a','#66d4cf','#0a84ff'];
+const CURRS=['USD','EUR','GBP','JPY','CAD','AUD','CHF','CNY','INR','BRL'];
+
+/* ================= State ================= */
+const KEY='tally-finance-v1';
+function seedData(){
+  const R=mulberry32(20251109);
+  const pick=a=>a[Math.floor(R()*a.length)];
+  const pad=n=>String(n).padStart(2,'0');
+  const D=(m,day)=>{const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-m,day);return d>TODAY?null:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+  let n=1; const uidS=()=>'s'+(n++);
+  const accounts=[
+    {id:'a1',name:'Everyday Checking',type:'bank',initial:3200},
+    {id:'a2',name:'Aurora Card',type:'card',initial:0},
+    {id:'a3',name:'Cash',type:'cash',initial:160},
+    {id:'a4',name:'High-Yield Savings',type:'bank',initial:11400}
+  ];
+  const transactions=[],transfers=[];
+  const add=(type,acc,cat,amt,date,note)=>{if(date)transactions.push({id:uidS(),type,accountId:acc,categoryId:cat,amount:round2(amt),date,note})};
+  for(let m=5;m>=0;m--){
+    add('income','a1','salary',5240,D(m,1),'Monthly salary');
+    if(m<=4&&R()>.4)add('income','a1','freelance',320+R()*560,D(m,12+Math.floor(R()*10)),'Design freelance');
+    add('expense','a1','housing',1650,D(m,3),'Rent');
+    add('expense','a1','utilities',78+R()*54,D(m,5),'Electricity & internet');
+    add('expense','a2','subscriptions',27.98,D(m,8),'Streaming');
+    add('expense','a2','subscriptions',11.99,D(m,9),'Cloud storage');
+    const nG=2+Math.floor(R()*2);
+    for(let k=0;k<nG;k++)add('expense',R()>.5?'a1':'a2','groceries',42+R()*95,D(m,4+Math.floor(R()*24)),'Groceries');
+    const nF=2+Math.floor(R()*3);
+    for(let k=0;k<nF;k++)add('expense',R()>.4?'a2':'a3','food',11+R()*46,D(m,2+Math.floor(R()*26)),pick(['Coffee','Lunch','Dinner out','Bakery']));
+    add('expense','a1','transport',18+R()*40,D(m,6+Math.floor(R()*18)),'Metro card');
+    if(R()>.35)add('expense','a2','shopping',34+R()*150,D(m,8+Math.floor(R()*18)),pick(['Home supplies','Clothing','Bookstore']));
+    if(R()>.45)add('expense','a3','entertainment',12+R()*30,D(m,10+Math.floor(R()*16)),'Cinema');
+    if(R()>.6)add('expense','a1','health',25+R()*80,D(m,7+Math.floor(R()*20)),'Pharmacy');
+    if(m===2)add('expense','a2','travel',612.4,D(2,17),'Weekend getaway · hotel & train');
+    if(m===4)add('income','a1','investments',148.2,D(4,21),'Dividend');
+    if(m===1)add('income','a1','gifts',200,D(1,14),'Birthday gift');
+    const pd=D(m,2);if(pd)transfers.push({id:uidS(),fromId:'a1',toId:'a2',amount:250,date:pd,note:'Card payment'});
+    const sd=D(m,15);if(sd)transfers.push({id:uidS(),fromId:'a1',toId:'a4',amount:400,date:sd,note:'Auto-save'});
+  }
+  const goals=[
+    {id:'g1',name:'Emergency Fund',target:15000,icon:'shield',color:'#30d158',deadline:null},
+    {id:'g2',name:'Japan Trip',target:6500,icon:'plane',color:'#64d2ff',deadline:(()=>{const d=new Date(TODAY.getFullYear(),TODAY.getMonth()+10,1);return `${d.getFullYear()}-${pad(d.getMonth()+1)}-01`})()},
+    {id:'g3',name:'MacBook Pro',target:3200,icon:'laptop',color:'#bf5af2',deadline:null}
+  ];
+  const moves=[];
+  const mv=(g,dir,acc,amt,date,note)=>{if(date)moves.push({id:uidS(),goalId:g,dir,accountId:acc,amount:amt,date,note})};
+  for(let m=5;m>=0;m--){
+    mv('g1','in','a1',300,D(m,4),'Monthly');
+    mv('g2','in','a1',250,D(m,5),'Monthly');
+    if(m<4)mv('g3','in','a1',150,D(m,6),'Monthly');
+  }
+  mv('g2','in','a1',800,D(3,20),'Bonus');
+  return {v:1,accounts,transactions,transfers,moves,goals,settings:{currency:'USD'}};
+}
+let state;
+try{state=JSON.parse(localStorage.getItem(KEY))||seedData()}catch(e){state=seedData()}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
+save();
+
+/* ================= Computed values ================= */
+const accOf=id=>state.accounts.find(a=>a.id===id)||{name:'Unknown',type:'bank'};
+const goalOf=id=>state.goals.find(g=>g.id===id)||{name:'Goal',icon:'vault',color:'#98989d'};
+function accountBalance(id){
+  const a=accOf(id);let b=+a.initial||0;
+  state.transactions.forEach(t=>{if(t.accountId===id)b+=t.type==='income'?t.amount:-t.amount});
+  state.transfers.forEach(t=>{if(t.fromId===id)b-=t.amount;if(t.toId===id)b+=t.amount});
+  state.moves.forEach(m=>{if(m.accountId===id)b+=m.dir==='in'?-m.amount:m.amount});
+  return round2(b);
+}
+const totalBalance=()=>round2(state.accounts.reduce((s,a)=>s+accountBalance(a.id),0));
+const goalSaved=g=>round2(state.moves.filter(m=>m.goalId===g.id).reduce((s,m)=>s+(m.dir==='in'?m.amount:-m.amount),0));
+function monthInOut(accId){
+  let inc=0,exp=0;
+  state.transactions.forEach(t=>{if(t.accountId===accId&&t.date.slice(0,7)===curMK){t.type==='income'?inc+=t.amount:exp+=t.amount}});
+  return{inc:round2(inc),exp:round2(exp)};
+}
+function sym(){try{const p=new Intl.NumberFormat('en-US',{style:'currency',currency:state.settings.currency}).formatToParts(1);return(p.find(x=>x.type==='currency')||{}).value||'$'}catch(e){return'$'}}
+function fmt(n){try{return new Intl.NumberFormat('en-US',{style:'currency',currency:state.settings.currency}).format(n)}catch(e){return'$'+n.toFixed(2)}}
+const fmtSigned=n=>(n>=0?'+':'−')+fmt(Math.abs(n));
+function fmtShort(n){const s=sym(),a=Math.abs(n);const v=a>=1000?(a/1000).toFixed(a>=10000?0:1)+'k':String(Math.round(a));return(n<0?'−':'')+s+v}
+function dateLabel(d){
+  if(d===todayStr)return'Today';
+  const y=new Date(TODAY);y.setDate(y.getDate()-1);
+  if(d===iso(y))return'Yesterday';
+  const dt=new Date(d+'T12:00:00');
+  const o={month:'short',day:'numeric'};if(dt.getFullYear()!==TODAY.getFullYear())o.year='numeric';
+  return dt.toLocaleDateString('en-US',o);
+}
+const monthNameOf=mk=>{const[y,m]=mk.split('-');return new Date(+y,+m-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'})};
+function greeting(){const h=TODAY.getHours();return h<12?'Good morning':h<18?'Good afternoon':'Good evening'}
+
+/* ================= UI state ================= */
+let currentTab='overview', lastTotal=0, CHART=null, S=null;
+let UIF={seg:'all',q:'',acct:'all',month:'all'};
+
+/* ================= Shared components ================= */
+function segHTML(id,opts,active,act){
+  return `<div class="seg" id="${id}"><div class="seg-thumb"></div>${opts.map(o=>
+    `<button data-action="${act}" data-v="${o.v}" class="${o.v===active?'active':''}">${o.label}</button>`).join('')}</div>`;
+}
+function moveSeg(seg){const b=seg.querySelector('button.active'),t=seg.querySelector('.seg-thumb');if(!b)return;t.style.left=b.offsetLeft+'px';t.style.width=b.offsetWidth+'px'}
+const moveAllSegs=()=>$$('.seg').forEach(moveSeg);
+function ring(pct,color,size=84,sw=9){
+  const r=(size-sw)/2,C=2*Math.PI*r,off=C*(1-Math.min(Math.max(pct,0),1));
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="${sw}"/>
+    <circle class="ring-fill" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round"
+      stroke-dasharray="${C}" stroke-dashoffset="${C}" data-off="${off}" transform="rotate(-90 ${size/2} ${size/2})"/>
+    <text x="50%" y="50%" dy=".09em" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="${size*.2}" font-weight="700" letter-spacing="-.5">${Math.round(pct*100)}%</text>
+  </svg>`;
+}
+function rowHTML(it){
+  if(it.kind==='tx'){
+    const t=it.t,c=catOf(t.categoryId),a=accOf(t.accountId);
+    return `<button class="row pressable" data-action="tx-open" data-id="${t.id}">
+      <span class="cat-ic" style="background:${c.color}">${ic(c.icon,19)}</span>
+      <span class="row-mid"><span class="row-t">${esc(t.note||c.name)}</span>
+      <span class="row-s">${esc(t.note?c.name+' · ':'')}${esc(a.name)}</span></span>
+      <span class="row-amt ${t.type==='income'?'pos':''}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</span></button>`;
+  }
+  if(it.kind==='tr'){
+    const t=it.tr,f=accOf(t.fromId),to=accOf(t.toId);
+    return `<button class="row pressable" data-action="tr-open" data-id="${t.id}">
+      <span class="cat-ic" style="background:#0a84ff">${ic('swap',19)}</span>
+      <span class="row-mid"><span class="row-t">${esc(t.note||'Transfer')}</span>
+      <span class="row-s">${esc(f.name)} → ${esc(to.name)}</span></span>
+      <span class="row-amt neu">${fmt(t.amount)}</span></button>`;
+  }
+  const m=it.m,g=goalOf(m.goalId),a=accOf(m.accountId);
+  return `<button class="row pressable" data-action="mv-open" data-id="${m.id}">
+    <span class="cat-ic" style="background:${g.color}">${ic('vault',19)}</span>
+    <span class="row-mid"><span class="row-t">${m.dir==='in'?'To':'From'} ${esc(g.name)}</span>
+    <span class="row-s">${esc(a.name)} · Savings</span></span>
+    <span class="row-amt ${m.dir==='in'?'':'pos'}">${m.dir==='in'?'−':'+'}${fmt(m.amount)}</span></button>`;
+}
+function itemsAll(){
+  const items=[];
+  state.transactions.forEach((t,i)=>items.push({kind:'tx',date:t.date,seq:i,t}));
+  state.transfers.forEach((t,i)=>items.push({kind:'tr',date:t.date,seq:i,tr:t}));
+  state.moves.forEach((m,i)=>items.push({kind:'mv',date:m.date,seq:i,m}));
+  return items.sort((a,b)=>b.date.localeCompare(a.date)||b.seq-a.seq);
+}
+const emptyState=(icon,title,sub,btn='')=>`<div class="empty">${ic(icon,36)}<div class="e-t">${title}</div><div class="e-s">${sub}</div>${btn}</div>`;
+
+/* ================= Views ================= */
+function chartSVG(){
+  const now=new Date(),data=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    let inc=0,exp=0;
+    state.transactions.forEach(t=>{if(t.date.slice(0,7)===key){t.type==='income'?inc+=t.amount:exp+=t.amount}});
+    data.push({label:d.toLocaleDateString('en-US',{month:'short'}),full:d.toLocaleDateString('en-US',{month:'long',year:'numeric'}),inc:round2(inc),exp:round2(exp)});
+  }
+  const W=560,H=232,padT=16,padB=30,base=H-padB;
+  const max=Math.max(100,...data.map(d=>Math.max(d.inc,d.exp)))*1.12;
+  const gw=(W-16)/6,bw=15,gap=7;
+  CHART={data,max,W,H,padB,padT};
+  let bars='',labels='',hits='',grid='';
+  for(let g=1;g<=3;g++){const gy=padT+(base-padT)*(1-g/3);grid+=`<line x1="4" x2="${W-4}" y1="${gy}" y2="${gy}" stroke="rgba(255,255,255,.07)"/>`}
+  data.forEach((d,i)=>{
+    const cx0=8+i*gw+gw/2,hi=d.inc/max*(base-padT),he=d.exp/max*(base-padT);
+    bars+=`<rect class="bar" data-y="${(base-hi).toFixed(1)}" data-h="${hi.toFixed(1)}" x="${(cx0-bw-gap/2).toFixed(1)}" y="${base}" width="${bw}" height="0" rx="6.5" fill="#30d158" style="transition-delay:${i*55}ms"/>
+           <rect class="bar" data-y="${(base-he).toFixed(1)}" data-h="${he.toFixed(1)}" x="${(cx0+gap/2).toFixed(1)}" y="${base}" width="${bw}" height="0" rx="6.5" fill="#ff453a" style="transition-delay:${i*55+70}ms"/>`;
+    labels+=`<text x="${cx0}" y="${H-9}" text-anchor="middle" fill="rgba(235,235,245,.5)" font-size="11.5" font-weight="600">${d.label}</text>`;
+    hits+=`<rect class="cf-hit" data-i="${i}" x="${8+i*gw}" y="0" width="${gw}" height="${H}" fill="transparent"/>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">${grid}${bars}${labels}${hits}</svg>`;
+}
+function bindChart(){
+  const tip=$('#chartTip');if(!CHART)return;
+  $$('.cf-hit').forEach(h=>{
+    h.addEventListener('mouseenter',()=>{
+      const d=CHART.data[+h.dataset.i];
+      tip.innerHTML=`<b>${esc(d.full)}</b>
+        <div class="tt"><span>Income</span><b style="color:var(--green)">${fmt(d.inc)}</b></div>
+        <div class="tt"><span>Expenses</span><b style="color:var(--red)">${fmt(d.exp)}</b></div>`;
+      const r=h.getBoundingClientRect(),sc=r.height/CHART.H;
+      const topY=r.top+(CHART.H-CHART.padB-Math.max(d.inc,d.exp)/CHART.max*(CHART.H-CHART.padB-CHART.padT))*sc;
+      tip.style.left=Math.min(window.innerWidth-90,Math.max(90,r.left+r.width/2))+'px';
+      tip.style.top=topY+'px';
+      tip.classList.add('on');
+    });
+    h.addEventListener('mouseleave',()=>tip.classList.remove('on'));
+  });
+}
+function topCats(mk){
+  const map={};
+  state.transactions.forEach(t=>{if(t.type==='expense'&&t.date.slice(0,7)===mk)map[t.categoryId]=(map[t.categoryId]||0)+t.amount});
+  return Object.entries(map).map(([id,v])=>({c:catOf(id),v:round2(v)})).sort((a,b)=>b.v-a.v);
+}
+function vOverview(){
+  const total=totalBalance();
+  let inc=0,exp=0;
+  state.transactions.forEach(t=>{if(t.date.slice(0,7)===curMK){t.type==='income'?inc+=t.amount:exp+=t.amount}});
+  const savedM=round2(state.moves.filter(m=>m.dir==='in'&&m.date.slice(0,7)===curMK).reduce((s,m)=>s+m.amount,0));
+  const cats=topCats(curMK),maxCat=cats.length?cats[0].v:1;
+  const recent=itemsAll().slice(0,5);
+  return `
+  <div class="title-row"><div><div class="eyebrow">${TODAY.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
+  <h1 class="lg-title">${greeting()}</h1></div></div>
+
+  <section class="glass hero fade-up">
+    <div class="eyebrow">Total Balance</div>
+    <div class="hero-amt" id="totalNum" data-to="${total}">${fmt(0)}</div>
+    <div class="hero-sub">Across ${state.accounts.length} account${state.accounts.length===1?'':'s'} · ${monthNameOf(curMK)}</div>
+    <div class="hero-stats">
+      <div class="hstat"><div class="l pos">${ic('upright',13)}Income</div><div class="v" style="color:var(--green)">${fmt(inc)}</div></div>
+      <div class="hstat"><div class="l neg">${ic('downleft',13)}Expenses</div><div class="v">${fmt(exp)}</div></div>
+      <div class="hstat"><div class="l cyan">${ic('vault',13)}Saved</div><div class="v" style="color:#64d2ff">${fmt(savedM)}</div></div>
+    </div>
+  </section>
+
+  <div class="ov-grid">
+    <section class="glass fade-up" style="animation-delay:.08s">
+      <div class="card-h"><h3>Cash Flow</h3>
+        <div class="legend"><span><i style="background:#30d158"></i>Income</span><span><i style="background:#ff453a"></i>Expenses</span></div></div>
+      <div class="chart-wrap">${chartSVG()}</div>
+    </section>
+    <section class="glass fade-up" style="animation-delay:.14s">
+      <div class="card-h"><h3>Top Categories</h3><span class="cap">This month</span></div>
+      ${cats.length?cats.slice(0,6).map(({c,v})=>`
+        <div class="cat-row">
+          <span class="cat-ic" style="background:${c.color};width:34px;height:34px;border-radius:11px">${ic(c.icon,17)}</span>
+          <div class="cr-mid">
+            <div class="cr-top"><span>${esc(c.name)}</span><span class="amt">${fmt(v)}</span></div>
+            <div class="bar-track"><div class="bk-fill" data-w="${(v/maxCat*100).toFixed(1)}" style="background:${c.color}"></div></div>
+          </div>
+        </div>`).join(''):
+        `<div class="empty" style="padding:26px 20px">${ic('tag',30)}<div class="e-s" style="margin-top:8px">No expenses yet this month</div></div>`}
+      <div style="height:14px"></div>
+    </section>
+  </div>
+
+  <section class="glass mt16 fade-up" style="animation-delay:.2s">
+    <div class="card-h"><h3>Recent Activity</h3><button class="link-btn" data-action="see-all">See All</button></div>
+    <div class="list-card" style="padding-top:0">
+      ${recent.length?recent.map(rowHTML).join(''):emptyState('list','No activity yet','Add your first transaction with the + button')}
+    </div>
+  </section>`;
+}
+function vAccounts(){
+  const total=totalBalance();
+  return `
+  <div class="title-row">
+    <div><div class="eyebrow">${fmt(total)} total · ${state.accounts.length} account${state.accounts.length===1?'':'s'}</div><h1 class="lg-title">Accounts</h1></div>
+    <div class="tr-btns">
+      <button class="btn btn-glass" data-action="new-transfer">${ic('swap',16)}Transfer</button>
+      <button class="btn btn-primary" data-action="acct-new">${ic('plus',16)}New Account</button>
+    </div>
+  </div>
+  <div class="acct-grid">
+    ${state.accounts.map((a,i)=>{
+      const ty=ACC_TYPES[a.type],bal=accountBalance(a.id),f=monthInOut(a.id);
+      return `<button class="glass acct-card pressable fade-up" style="animation-delay:${Math.min(i*60,240)}ms" data-action="acct-edit" data-id="${a.id}">
+        <div class="acct-top">
+          <span class="cat-ic" style="background:${ty.color}">${ic(ty.icon,19)}</span>
+          <div><div class="acct-name">${esc(a.name)}</div><div class="acct-type">${ty.label}</div></div>
+        </div>
+        <div class="acct-bal ${bal<0?'neg':''}">${fmt(bal)}</div>
+        <div class="acct-flow">In ${fmt(f.inc)} · Out ${fmt(f.exp)} this month</div>
+      </button>`}).join('')}
+  </div>
+  ${state.accounts.length?'':`<div class="glass mt16">${emptyState('wallet','No accounts yet','Create an account to start tracking','<button class="btn btn-glass btn-sm" data-action="acct-new">Create Account</button>')}</div>`}`;
+}
+function vSavings(){
+  const saved=round2(state.goals.reduce((s,g)=>s+goalSaved(g),0));
+  const target=round2(state.goals.reduce((s,g)=>s+g.target,0));
+  const pct=target?saved/target:0;
+  return `
+  <div class="title-row">
+    <div><div class="eyebrow">${state.goals.length} goal${state.goals.length===1?'':'s'}</div><h1 class="lg-title">Savings</h1></div>
+    <button class="btn btn-primary" data-action="goal-new">${ic('plus',16)}New Goal</button>
+  </div>
+  <section class="glass sav-hero fade-up">
+    ${ring(pct,'#f5f5f7',116,11)}
+    <div>
+      <div class="eyebrow">Total Saved</div>
+      <div class="sav-amt">${fmt(saved)}</div>
+      <div class="sav-sub">of ${fmt(target)} across ${state.goals.length} goal${state.goals.length===1?'':'s'}</div>
+    </div>
+  </section>
+  ${state.goals.length?`<div class="goal-grid">${state.goals.map((g,i)=>{
+    const sv=goalSaved(g),p=g.target?sv/g.target:0;
+    return `<div class="glass goal-card fade-up" style="animation-delay:${Math.min(80+i*60,300)}ms">
+      <div class="goal-top">
+        ${ring(p,g.color,80,8)}
+        <div style="min-width:0">
+          <div class="goal-name">${esc(g.name)}</div>
+          <div class="goal-amt">${fmt(sv)} <span>of ${fmt(g.target)}</span></div>
+          ${g.deadline?`<div class="goal-dl">${ic('calendar',11)} by ${new Date(g.deadline+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'})}</div>`:''}
+        </div>
+        <button class="icon-btn ghost" style="margin-left:auto;align-self:flex-start" data-action="goal-edit" data-id="${g.id}" aria-label="Edit goal">${ic('pencil',15)}</button>
+      </div>
+      <div class="goal-btns">
+        <button class="btn btn-glass btn-sm" data-action="goal-fund" data-id="${g.id}" data-dir="in">${ic('plus',14)}Add Funds</button>
+        <button class="btn btn-glass btn-sm" data-action="goal-fund" data-id="${g.id}" data-dir="out">${ic('downleft',14)}Withdraw</button>
+      </div>
+    </div>`}).join('')}</div>`:
+  `<div class="glass mt16">${emptyState('vault','No savings goals yet','Set a target and watch the ring fill up','<button class="btn btn-glass btn-sm" data-action="goal-new">Create a Goal</button>')}</div>`}`;
+}
+function filteredItems(){
+  const q=UIF.q.trim().toLowerCase();
+  const hay=it=>{
+    if(it.kind==='tx'){const c=catOf(it.t.categoryId),a=accOf(it.t.accountId);return`${it.t.note||''} ${c.name} ${a.name}`}
+    if(it.kind==='tr')return`${it.tr.note||''} transfer ${accOf(it.tr.fromId).name} ${accOf(it.tr.toId).name}`;
+    return`${goalOf(it.m.goalId).name} ${accOf(it.m.accountId).name} savings`;
+  };
+  return itemsAll().filter(it=>{
+    if(UIF.seg!=='all'&&(it.kind!=='tx'||it.t.type!==UIF.seg))return false;
+    if(UIF.acct!=='all'){
+      if(it.kind==='tx'&&it.t.accountId!==UIF.acct)return false;
+      if(it.kind==='tr'&&it.tr.fromId!==UIF.acct&&it.tr.toId!==UIF.acct)return false;
+      if(it.kind==='mv'&&it.m.accountId!==UIF.acct)return false;
+    }
+    if(UIF.month!=='all'&&it.date.slice(0,7)!==UIF.month)return false;
+    if(q&&!hay(it).toLowerCase().includes(q))return false;
+    return true;
+  });
+}
+function activityListHTML(){
+  const items=filteredItems();
+  if(!items.length)return`<div class="glass">${emptyState('search','Nothing found','Try different filters or add a new transaction')}</div>`;
+  const groups={};items.forEach(it=>{(groups[it.date]=groups[it.date]||[]).push(it)});
+  return`<div class="glass list-card">${Object.keys(groups).sort().reverse().map(d=>{
+    let net=0;groups[d].forEach(it=>{if(it.kind==='tx')net+=it.t.type==='income'?it.t.amount:-it.t.amount});
+    return`<div class="g-head"><span>${dateLabel(d)}</span><span class="g-sum ${net>0?'pos':''}">${fmtSigned(round2(net))}</span></div>${groups[d].map(rowHTML).join('')}`;
+  }).join('')}</div>`;
+}
+function vActivity(){
+  const months=[...new Set(itemsAll().map(i=>i.date.slice(0,7)))].sort().reverse();
+  return `
+  <div class="title-row"><div><div class="eyebrow">History</div><h1 class="lg-title">Activity</h1></div></div>
+  <div class="act-controls fade-up">
+    <div class="act-row">
+      ${segHTML('actSeg',[{v:'all',label:'All'},{v:'income',label:'Income'},{v:'expense',label:'Expenses'}],UIF.seg,'seg-act')}
+      <select id="monthSel" class="field sel-field">
+        <option value="all">All months</option>
+        ${months.map(m=>`<option value="${m}" ${UIF.month===m?'selected':''}>${monthNameOf(m)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="search iglass">${ic('search',17)}<input id="actSearch" placeholder="Search transactions" value="${esc(UIF.q)}"></div>
+    <div class="chip-row scrollx">
+      <button class="a-chip ${UIF.acct==='all'?'sel':''}" data-action="acct-chip" data-v="all">All Accounts</button>
+      ${state.accounts.map(a=>`<button class="a-chip ${UIF.acct===a.id?'sel':''}" data-action="acct-chip" data-v="${a.id}">${ic(ACC_TYPES[a.type].icon,14)}${esc(a.name)}</button>`).join('')}
+    </div>
+  </div>
+  <div id="actList" class="fade-up" style="animation-delay:.08s">${activityListHTML()}</div>`;
+}
+const VIEWS={overview:vOverview,accounts:vAccounts,savings:vSavings,activity:vActivity};
+function renderTab(){
+  $('#viewRoot').innerHTML=VIEWS[currentTab]();
+  postRenderFX();
+  if(currentTab==='overview')bindChart();
+  if(currentTab==='activity'){
+    const si=$('#actSearch');
+    si.addEventListener('input',()=>{UIF.q=si.value;$('#actList').innerHTML=activityListHTML()});
+  }
+}
+function postRenderFX(){
+  moveAllSegs();
+  $$('.ring-fill').forEach(el=>{const off=el.dataset.off;setTimeout(()=>{el.style.strokeDashoffset=off},40)});
+  $$('.bar').forEach(el=>requestAnimationFrame(()=>{el.style.y=el.dataset.y+'px';el.style.height=el.dataset.h+'px'}));
+  $$('.bk-fill').forEach(el=>requestAnimationFrame(()=>{el.style.width=el.dataset.w+'%'}));
+  const tn=$('#totalNum');
+  if(tn){const to=+tn.dataset.to;animateNumber(tn,lastTotal,to);lastTotal=to}
+}
+function animateNumber(el,from,to,dur=850){
+  const start=performance.now();
+  (function tick(now){
+    let p=Math.min(1,(now-start)/dur);p=1-Math.pow(1-p,3);
+    el.textContent=fmt(round2(from+(to-from)*p));
+    if(p<1)requestAnimationFrame(tick);
+  })(start);
+}
+function setTab(t){
+  currentTab=t;
+  $$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  moveLens();renderTab();
+}
+function moveLens(){
+  const a=$('.tab.active'),l=$('#lens');if(!a)return;
+  l.style.left=a.offsetLeft+'px';l.style.width=a.offsetWidth+'px';
+}
+
+/* ================= Sheets ================= */
+let sheetTimer=null;
+function openSheet(html){
+  clearTimeout(sheetTimer);
+  const root=$('#layer');
+  root.classList.remove('open');
+  root.innerHTML=`<div class="backdrop" data-action="sheet-close"></div><div class="sheet glass">${html}</div>`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{root.classList.add('open');moveAllSegs()}));
+}
+function closeSheet(){
+  const root=$('#layer');
+  if(!root.innerHTML)return;
+  root.classList.remove('open');
+  sheetTimer=setTimeout(()=>{root.innerHTML=''},460);
+}
+function fieldErr(sel,inputSel,msg){
+  const e=$(sel);if(e)e.textContent=msg;
+  if(inputSel){const i=$(inputSel);i.classList.remove('shake');void i.offsetWidth;i.classList.add('shake')}
+}
+const parseAmount=v=>parseFloat(String(v).replace(/[^\d.]/g,''));
+function accountChips(sel,action,excludeId){
+  return state.accounts.map(a=>`<button class="a-chip ${sel===a.id?'sel':''} ${a.id===excludeId?'dis':''}" data-action="${action}" data-v="${a.id}">
+    <span class="cat-ic" style="background:${ACC_TYPES[a.type].color};width:26px;height:26px;border-radius:8px">${ic(ACC_TYPES[a.type].icon,14)}</span>${esc(a.name)}</button>`).join('');
+}
+function requireAccounts(){
+  if(state.accounts.length)return true;
+  toast('Add an account first','warn');return false;
+}
+
+/* --- Transaction sheet --- */
+function openTxSheet(existing){
+  if(!requireAccounts())return;
+  S={type:existing?existing.type:'expense',cat:existing?existing.categoryId:null,acct:existing?existing.accountId:null,existing};
+  openSheet(`
+    <div class="grabber"></div>
+    <div class="sheet-head"><h2 id="txTitle">${existing?'Edit Transaction':'New Transaction'}</h2>
+      <button class="icon-btn ghost" data-action="sheet-close" aria-label="Close">${ic('x',17)}</button></div>
+    <div style="padding:8px 20px 0">${segHTML('txSeg',[{v:'expense',label:'Expense'},{v:'income',label:'Income'}],S.type,'tx-seg')}</div>
+    <div class="sheet-body">
+      <div class="amount-wrap"><span class="cur">${sym()}</span><input id="txAmount" class="num-input" inputmode="decimal" placeholder="0.00" value="${existing?existing.amount:''}"></div>
+      <div class="f-err" id="txErr"></div>
+      <div class="f-label">Category</div><div class="cat-grid" id="txCats"></div>
+      <div class="f-label">Account</div><div class="chip-row" id="txAccts"></div>
+      <div class="f-grid2">
+        <div><div class="f-label">Date</div><input type="date" id="txDate" class="field" value="${existing?existing.date:todayStr}"></div>
+        <div><div class="f-label">Note</div><input id="txNote" class="field" placeholder="Optional" maxlength="60" value="${existing?esc(existing.note||''):''}"></div>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary" data-action="tx-save" id="txSaveBtn">${existing?'Save Changes':'Add Expense'}</button>
+      ${existing?`<button class="btn btn-text" data-action="tx-del">Delete Transaction</button>`:''}
+    </div>`);
+  renderTxPickers();
+}
+function renderTxPickers(){
+  $('#txCats').innerHTML=CATS[S.type].map(c=>`
+    <button class="cat-chip ${S.cat===c.id?'sel':''}" data-action="tx-pick-cat" data-v="${c.id}">
+      <span class="cat-ic" style="background:${c.color}">${ic(c.icon,19)}</span><span>${esc(c.name)}</span></button>`).join('');
+  $('#txAccts').innerHTML=accountChips(S.acct,'tx-pick-acct');
+  moveSeg($('#txSeg'));
+  if(!S.existing)$('#txSaveBtn').textContent=S.type==='expense'?'Add Expense':'Add Income';
+}
+
+/* --- Transfer sheet --- */
+function openTransferSheet(existing){
+  if(!requireAccounts())return;
+  if(state.accounts.length<2){toast('You need two accounts to transfer','warn');return}
+  S={from:existing?existing.fromId:null,to:existing?existing.toId:null,existing};
+  openSheet(`
+    <div class="grabber"></div>
+    <div class="sheet-head"><h2>${existing?'Edit Transfer':'Transfer'}</h2>
+      <button class="icon-btn ghost" data-action="sheet-close" aria-label="Close">${ic('x',17)}</button></div>
+    <div class="sheet-body">
+      <div class="amount-wrap"><span class="cur">${sym()}</span><input id="trAmount" class="num-input" inputmode="decimal" placeholder="0.00" value="${existing?existing.amount:''}"></div>
+      <div class="f-err" id="trErr"></div>
+      <div class="f-label">From</div><div class="chip-row" id="trFrom"></div>
+      <div class="hint" id="trHint"></div>
+      <div class="f-label">To</div><div class="chip-row" id="trTo"></div>
+      <div class="f-grid2">
+        <div><div class="f-label">Date</div><input type="date" id="trDate" class="field" value="${existing?existing.date:todayStr}"></div>
+        <div><div class="f-label">Note</div><input id="trNote" class="field" placeholder="Optional" maxlength="60" value="${existing?esc(existing.note||''):''}"></div>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary" data-action="tr-save">${existing?'Save Changes':'Transfer'}</button>
+      ${existing?`<button class="btn btn-text" data-action="tr-del">Delete Transfer</button>`:''}
+    </div>`);
+  renderTrPickers();
+}
+function renderTrPickers(){
+  $('#trFrom').innerHTML=accountChips(S.from,'tr-pick-from',S.to);
+  $('#trTo').innerHTML=accountChips(S.to,'tr-pick-to',S.from);
+  const h=$('#trHint');
+  h.textContent=S.from?`Available in ${accOf(S.from).name}: ${fmt(accountBalance(S.from))}`:'';
+}
+
+/* --- Account sheet --- */
+function openAccountSheet(existing){
+  S={type:existing?existing.type:'bank',existing};
+  openSheet(`
+    <div class="grabber"></div>
+    <div class="sheet-head"><h2>${existing?'Edit Account':'New Account'}</h2>
+      <button class="icon-btn ghost" data-action="sheet-close" aria-label="Close">${ic('x',17)}</button></div>
+    <div class="sheet-body">
+      <div class="f-label" style="margin-top:8px">Name</div>
+      <input id="acName" class="field" placeholder="e.g. Everyday Checking" maxlength="30" value="${existing?esc(existing.name):''}">
+      <div class="f-label">Type</div>
+      <div class="chip-row" id="acTypes">${Object.entries(ACC_TYPES).map(([k,t])=>`
+        <button class="a-chip ${S.type===k?'sel':''}" data-action="acct-pick-type" data-v="${k}">
+          <span class="cat-ic" style="background:${t.color};width:26px;height:26px;border-radius:8px">${ic(t.icon,14)}</span>${t.label}</button>`).join('')}</div>
+      <div class="f-label">Opening balance</div>
+      <input id="acInit" class="field" inputmode="decimal" value="${existing?existing.initial:0}">
+      <div class="hint">${existing?'Changing the opening balance updates the current balance.':'The balance this account starts with.'}</div>
+      <div style="height:8px"></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary" data-action="acct-save">${existing?'Save Changes':'Create Account'}</button>
+      ${existing?`<button class="btn btn-text" data-action="acct-del">Delete Account</button>`:''}
+    </div>`);
+}
+
+/* --- Goal sheet --- */
+function openGoalSheet(existing){
+  S={icon:existing?existing.icon:'flag',color:existing?existing.color:GOAL_COLORS[0],existing};
+  openSheet(`
+    <div class="grabber"></div>
+    <div class="sheet-head"><h2>${existing?'Edit Goal':'New Savings Goal'}</h2>
+      <button class="icon-btn ghost" data-action="sheet-close" aria-label="Close">${ic('x',17)}</button></div>
+    <div class="sheet-body">
+      <div class="f-label" style="margin-top:8px">Goal name</div>
+      <input id="gName" class="field" placeholder="e.g. Japan Trip" maxlength="30" value="${existing?esc(existing.name):''}">
+      <div class="f-grid2">
+        <div><div class="f-label">Target amount</div><input id="gTarget" class="field" inputmode="decimal" placeholder="0.00" value="${existing?existing.target:''}"></div>
+        <div><div class="f-label">Deadline (optional)</div><input type="date" id="gDeadline" class="field" value="${existing&&existing.deadline?existing.deadline:''}"></div>
+      </div>
+      <div class="f-label">Icon</div>
+      <div class="icon-grid" id="gIcons">${GOAL_ICONS.map(i=>`
+        <button class="g-ic-chip ${S.icon===i?'sel':''}" data-action="g-pick-icon" data-v="${i}">${ic(i,19)}</button>`).join('')}</div>
+      <div class="f-label">Color</div>
+      <div class="dot-row" id="gDots">${GOAL_COLORS.map(c=>`
+        <button class="g-dot ${S.color===c?'sel':''}" style="background:${c}" data-action="g-pick-color" data-v="${c}" aria-label="Color"></button>`).join('')}</div>
+      <div style="height:8px"></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary" data-action="goal-save">${existing?'Save Changes':'Create Goal'}</button>
+      ${existing?`<button class="btn btn-text" data-action="goal-del">Delete Goal</button>`:''}
+    </div>`);
+}
+
+/* --- Fund / withdraw sheet --- */
+function openFundSheet(goal,dir){
+  if(!requireAccounts())return;
+  const saved=goalSaved(goal);
+  S={acct:null,goal,dir};
+  openSheet(`
+    <div class="grabber"></div>
+    <div class="sheet-head"><h2>${dir==='in'?'Add to':'Withdraw from'} ${esc(goal.name)}</h2>
+      <button class="icon-btn ghost" data-action="sheet-close" aria-label="Close">${ic('x',17)}</button></div>
+    <div class="sheet-body">
+      <div class="hint" style="margin-top:8px">Saved so far: <b style="color:var(--txt)">${fmt(saved)}</b> of ${fmt(goal.target)}</div>
+      <div class="amount-wrap"><span class="cur">${sym()}</span><input id="fdAmount" class="num-input" inputmode="decimal" placeholder="0.00"></div>
+      <div class="f-err" id="fdErr"></div>
+      <div class="f-label">${dir==='in'?'Take from':'Send to'}</div>
+      <div class="chip-row" id="fdAccts">${accountChips(null,'fd-pick-acct')}</div>
+      <div style="height:8px"></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary" data-action="fund-save">${dir==='in'?'Add Funds':'Withdraw'}</button>
+    </div>`);
+}
+
+/* --- Settings & compose --- */
+function openSettings(){
+  openSheet(`
+    <div class="grabber"></div>
+    <div class="sheet-head"><h2>Settings</h2>
+      <button class="icon-btn ghost" data-action="sheet-close" aria-label="Close">${ic('x',17)}</button></div>
+    <div class="sheet-body">
+      <div class="f-label" style="margin-top:8px">Currency</div>
+      <select id="curSel" class="field">${CURRS.map(c=>`<option ${state.settings.currency===c?'selected':''}>${c}</option>`).join('')}</select>
+      <div class="hint">Used everywhere amounts are shown.</div>
+      <div class="f-label">Data</div>
+      <button class="btn btn-glass" style="color:var(--red)" data-action="reset-data">${ic('trash',15)}Restore Demo Data</button>
+      <div class="hint" style="margin-bottom:8px">Tally keeps everything on this device — nothing ever leaves your browser.</div>
+    </div>
+    <div class="sheet-foot"><button class="btn btn-primary" data-action="sheet-close">Done</button></div>`);
+}
+function openCompose(){
+  openSheet(`
+    <div class="grabber"></div>
+    <div class="as-group">
+      <button class="as-btn" data-action="new-expense"><span class="as-ic" style="background:#ff453a">${ic('downleft',19)}</span><div><b>Add Expense</b><small>Log money going out</small></div></button>
+      <button class="as-btn" data-action="new-income"><span class="as-ic" style="background:#30d158">${ic('upright',19)}</span><div><b>Add Income</b><small>Log money coming in</small></div></button>
+      <button class="as-btn" data-action="new-transfer"><span class="as-ic" style="background:#0a84ff">${ic('swap',19)}</span><div><b>Transfer</b><small>Move money between accounts</small></div></button>
+    </div>
+    <button class="btn btn-glass as-cancel" data-action="sheet-close">Cancel</button>`);
+}
+
+/* ================= Toast & confirm ================= */
+function toast(msg,type='ok',action){
+  const root=$('#toastRoot'),el=document.createElement('div');
+  el.className='toast iglass'+(type!=='ok'?' warn':'');
+  el.innerHTML=`${ic(type==='ok'?'check':'warn',16)}<span>${esc(msg)}</span>${action?`<button class="t-act">${esc(action.label)}</button>`:''}`;
+  root.appendChild(el);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));
+  const dismiss=()=>{el.classList.remove('show');setTimeout(()=>el.remove(),450)};
+  if(action)el.querySelector('.t-act').onclick=()=>{action.fn();dismiss()};
+  setTimeout(dismiss,action?5200:3200);
+}
+function confirmDialog(title,message,confirm='Delete'){
+  return new Promise(res=>{
+    const root=$('#alertRoot');
+    root.innerHTML=`<div class="backdrop"></div><div class="alert glass"><h3>${esc(title)}</h3><p>${esc(message)}</p>
+      <div class="alert-btns"><button class="ab-cancel">Cancel</button><button class="ab-confirm">${esc(confirm)}</button></div></div>`;
+    requestAnimationFrame(()=>root.classList.add('open'));
+    const done=v=>{root.classList.remove('open');setTimeout(()=>{root.innerHTML=''},380);res(v)};
+    root.querySelector('.ab-cancel').onclick=()=>done(false);
+    root.querySelector('.ab-confirm').onclick=()=>done(true);
+    root.querySelector('.backdrop').onclick=()=>done(false);
+  });
+}
+function withUndo(list,item,msg){
+  const idx=list.indexOf(item);list.splice(idx,1);save();renderTab();
+  toast(msg,'ok',{label:'Undo',fn(){list.splice(Math.min(idx,list.length),0,item);save();renderTab()}});
+}
+
+/* ================= Global actions ================= */
+document.body.addEventListener('click',e=>{
+  const el=e.target.closest('[data-action]');if(!el)return;
+  const a=el.dataset.action,id=el.dataset.id;
+  switch(a){
+    case'tab':setTab(el.dataset.tab);break;
+    case'see-all':setTab('activity');break;
+    case'compose':openCompose();break;
+    case'sheet-close':closeSheet();break;
+    case'new-expense':openTxSheet();break;
+    case'new-income':openTxSheet();if(S){S.type='income';S.cat=null;openTxSheet();S.type='income';renderTxPickers()}break;
+    case'new-transfer':openTransferSheet();break;
+    case'tx-open':{const t=state.transactions.find(x=>x.id===id);if(t)openTxSheet(t);break}
+    case'tx-seg':S.type=el.dataset.v;if(S.cat&&!CATS[S.type].some(c=>c.id===S.cat))S.cat=null;renderTxPickers();break;
+    case'tx-pick-cat':S.cat=el.dataset.v;$$('#txCats .cat-chip').forEach(b=>b.classList.toggle('sel',b.dataset.v===S.cat));break;
+    case'tx-pick-acct':S.acct=el.dataset.v;$$('#txAccts .a-chip').forEach(b=>b.classList.toggle('sel',b.dataset.v===S.acct));break;
+    case'tx-save':{
+      const amt=parseAmount($('#txAmount').value);
+      if(!(amt>0))return fieldErr('#txErr','#txAmount','Enter an amount');
+      if(!S.cat)return fieldErr('#txErr',null,'Pick a category');
+      if(!S.acct)return fieldErr('#txErr',null,'Pick an account');
+      const data={type:S.type,categoryId:S.cat,accountId:S.acct,amount:round2(amt),date:$('#txDate').value||todayStr,note:$('#txNote').value.trim()};
+      if(S.existing){Object.assign(S.existing,data);toast('Transaction updated')}
+      else{state.transactions.push({id:uid(),...data});toast(cap(S.type)+' added')}
+      save();closeSheet();renderTab();break}
+    case'tx-del':{
+      confirmDialog('Delete Transaction?','This will update the account balance.','Delete').then(ok=>{
+        if(ok&&S.existing)withUndo(state.transactions,S.existing,'Transaction deleted');
+      });break}
+    case'tr-open':{const t=state.transfers.find(x=>x.id===id);if(t)openTransferSheet(t);break}
+    case'tr-pick-from':S.from=el.dataset.v;if(S.to===S.from)S.to=null;renderTrPickers();break;
+    case'tr-pick-to':S.to=el.dataset.v;if(S.to===S.from)S.from=null;renderTrPickers();break;
+    case'tr-save':{
+      const amt=parseAmount($('#trAmount').value);
+      if(!(amt>0))return fieldErr('#trErr','#trAmount','Enter an amount');
+      if(!S.from||!S.to)return fieldErr('#trErr',null,'Pick both accounts');
+      const data={fromId:S.from,toId:S.to,amount:round2(amt),date:$('#trDate').value||todayStr,note:$('#trNote').value.trim()};
+      if(S.existing){Object.assign(S.existing,data);toast('Transfer updated')}
+      else{state.transfers.push({id:uid(),...data});toast('Transfer complete')}
+      save();closeSheet();renderTab();break}
+    case'tr-del':
+      confirmDialog('Delete Transfer?','This will update both account balances.','Delete').then(ok=>{
+        if(ok&&S.existing)withUndo(state.transfers,S.existing,'Transfer deleted');
+      });break;
+    case'acct-new':openAccountSheet();break;
+    case'acct-edit':{const a=state.accounts.find(x=>x.id===id);if(a)openAccountSheet(a);break}
+    case'acct-pick-type':S.type=el.dataset.v;$$('#acTypes .a-chip').forEach(b=>b.classList.toggle('sel',b.dataset.v===S.type));break;
+    case'acct-save':{
+      const name=$('#acName').value.trim();
+      if(!name)return fieldErr(null,'#acName','Give it a name');
+      const init=parseAmount($('#acInit').value)||0;
+      if(S.existing){Object.assign(S.existing,{name,type:S.type,initial:round2(init)});toast('Account updated')}
+      else{state.accounts.push({id:uid(),name,type:S.type,initial:round2(init)});toast('Account created')}
+      save();closeSheet();renderTab();break}
+    case'acct-del':{
+      const acc=S.existing;
+      const used=state.transactions.some(t=>t.accountId===acc.id)||state.transfers.some(t=>t.fromId===acc.id||t.toId===acc.id)||state.moves.some(m=>m.accountId===acc.id);
+      if(used){toast('This account has activity and can\u2019t be deleted','warn');return}
+      confirmDialog(`Delete ${acc.name}?`,'The account will be removed permanently.','Delete').then(ok=>{
+        if(ok){state.accounts.splice(state.accounts.indexOf(acc),1);save();closeSheet();renderTab();toast('Account deleted')}
+      });break}
+    case'goal-new':openGoalSheet();break;
+    case'goal-edit':{const g=state.goals.find(x=>x.id===id);if(g)openGoalSheet(g);break}
+    case'g-pick-icon':S.icon=el.dataset.v;$$('#gIcons .g-ic-chip').forEach(b=>b.classList.toggle('sel',b.dataset.v===S.icon));break;
+    case'g-pick-color':S.color=el.dataset.v;$$('#gDots .g-dot').forEach(b=>b.classList.toggle('sel',b.dataset.v===S.color));break;
+    case'goal-save':{
+      const name=$('#gName').value.trim(),target=parseAmount($('#gTarget').value);
+      if(!name)return fieldErr(null,'#gName','Give it a name');
+      if(!(target>0))return fieldErr(null,'#gTarget','Set a target amount');
+      const data={name,target:round2(target),icon:S.icon,color:S.color,deadline:$('#gDeadline').value||null};
+      if(S.existing){Object.assign(S.existing,data);toast('Goal updated')}
+      else{state.goals.push({id:uid(),...data});toast('Goal created')}
+      save();closeSheet();renderTab();break}
+    case'goal-del':{
+      const g=S.existing;
+      confirmDialog(`Delete ${g.name}?`,'Its saved amount will be returned to the original accounts.','Delete').then(ok=>{
+        if(ok){
+          for(let i=state.moves.length-1;i>=0;i--)if(state.moves[i].goalId===g.id)state.moves.splice(i,1);
+          state.goals.splice(state.goals.indexOf(g),1);
+          save();closeSheet();renderTab();toast('Goal deleted');
+        }
+      });break}
+    case'goal-fund':{const g=state.goals.find(x=>x.id===id);if(g)openFundSheet(g,el.dataset.dir);break}
+    case'fd-pick-acct':S.acct=el.dataset.v;$$('#fdAccts .a-chip').forEach(b=>b.classList.toggle('sel',b.dataset.v===S.acct));break;
+    case'fund-save':{
+      const amt=parseAmount($('#fdAmount').value);
+      if(!(amt>0))return fieldErr('#fdErr','#fdAmount','Enter an amount');
+      if(!S.acct)return fieldErr('#fdErr',null,'Pick an account');
+      if(S.dir==='out'&&amt>goalSaved(S.goal))return fieldErr('#fdErr','#fdAmount',`Only ${fmt(goalSaved(S.goal))} saved so far`);
+      state.moves.push({id:uid(),goalId:S.goal.id,dir:S.dir,accountId:S.acct,amount:round2(amt),date:todayStr,note:S.dir==='in'?'Contribution':'Withdrawal'});
+      toast(S.dir==='in'?`Added to ${S.goal.name}`:`Withdrawn from ${S.goal.name}`);
+      save();closeSheet();renderTab();break}
+    case'mv-open':{
+      const m=state.moves.find(x=>x.id===id);if(!m)break;
+      confirmDialog('Remove savings activity?','Balances will be updated accordingly.','Remove').then(ok=>{
+        if(ok)withUndo(state.moves,m,'Savings activity removed');
+      });break}
+    case'seg-act':{
+      UIF.seg=el.dataset.v;
+      $$('#actSeg button').forEach(b=>b.classList.toggle('active',b.dataset.v===UIF.seg));
+      moveSeg($('#actSeg'));$('#actList').innerHTML=activityListHTML();break}
+    case'acct-chip':{
+      UIF.acct=el.dataset.v;
+      el.parentElement.querySelectorAll('.a-chip').forEach(b=>b.classList.toggle('sel',b.dataset.v===UIF.acct));
+      $('#actList').innerHTML=activityListHTML();break}
+    case'settings':openSettings();break;
+    case'reset-data':
+      confirmDialog('Restore Demo Data?','All your current data will be replaced.','Restore').then(ok=>{
+        if(ok){state=seedData();save();closeSheet();setTab('overview');toast('Demo data restored')}
+      });break;
+  }
+});
+document.body.addEventListener('change',e=>{
+  if(e.target.id==='monthSel'){UIF.month=e.target.value;$('#actList').innerHTML=activityListHTML()}
+  if(e.target.id==='curSel'){state.settings.currency=e.target.value;save();renderTab();toast('Currency updated')}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if($('#alertRoot').innerHTML)return;
+    closeSheet();
+  }
+});
+
+/* ================= Wallpaper parallax ================= */
+const blobLayer=$('#blobLayer');let mx=0,my=0,cx=0,cy=0;
+window.addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5},{passive:true});
+(function loop(){
+  cx+=(mx-cx)*.045;cy+=(my-cy)*.045;
+  blobLayer.style.transform=`translate(${(cx*34).toFixed(1)}px,${(cy*34).toFixed(1)}px) scale(1.06)`;
+  requestAnimationFrame(loop);
+})();
+
+/* ================= Init ================= */
+ $('#brandMark').innerHTML=ic('mark',20);
+ $('#settingsBtn').innerHTML=ic('sliders',18);
+ $('#composeBtn').innerHTML=ic('plus',24);
+ $$('.t-ic').forEach(el=>{el.innerHTML=ic(el.dataset.ic,21)});
+window.addEventListener('resize',()=>{moveLens();moveAllSegs()});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{moveLens();moveAllSegs()});
+renderTab();
+setTimeout(moveLens,350);
+</script>
+</body>
+</html>

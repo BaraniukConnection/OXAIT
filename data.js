@@ -15,7 +15,7 @@
  *         note   — короткий коментар журі (рядок або { uk, en }).
  */
 window.OXAIT = {
-  updated: "2026-10-11",
+  updated: "2026-10-12",
 
   participants: [
     { id: "claude",  name: "Claude Opus 5.5",   vendor: "Anthropic", mono: "C",  color: "#e2805c" },
@@ -62,8 +62,8 @@ window.OXAIT = {
       id: "software", icon: "terminal",
       title: { uk: "Розробка ПЗ", en: "Software Dev" },
       rounds: [
-        { id: "q2",   code: "Q/2",   title: { uk: "Кваліфікаційний раунд", en: "Qualification Round" } },
-        { id: "sec2", code: "sec-2", title: { uk: "Друга секція",          en: "Section Two" } }
+        { id: "q2",   code: "Q/2",   title: { uk: "Кваліфікаційний раунд", en: "Qualification Round" }, stages: 2, cover: "assets/img/poster-q2.webp" },
+        { id: "sec2", code: "sec-2", title: { uk: "Друга секція",          en: "Section Two" }, stages: 1 }
       ]
     },
     {
@@ -78,26 +78,27 @@ window.OXAIT = {
       id: "analysis", icon: "query_stats",
       title: { uk: "Аналітика", en: "Analysis" },
       rounds: [
-        { id: "sec4", code: "sec-4", title: { uk: "Четверта секція", en: "Section Four" } }
+        { id: "sec4", code: "sec-4", title: { uk: "Четверта секція", en: "Section Four" }, stages: 1 }
       ]
     },
     {
       id: "writing", icon: "edit_note",
       title: { uk: "Тексти", en: "Writing" },
       rounds: [
-        { id: "sec5", code: "sec-5", title: { uk: "П'ята секція", en: "Section Five" } }
+        { id: "sec5", code: "sec-5", title: { uk: "П'ята секція", en: "Section Five" }, stages: 1 }
       ]
     },
     {
       id: "imagegen", icon: "palette",
       title: { uk: "Генерація зображень", en: "Image Gen" },
       rounds: [
-        { id: "sec6", code: "sec-6", title: { uk: "Шоста секція", en: "Section Six" } }
+        { id: "sec6", code: "sec-6", title: { uk: "Шоста секція", en: "Section Six" }, stages: 0 }
       ]
     }
   ],
 
-  // Назви трьох груп таблеток (етапи всередині раунду). Можна перевизначити в results[...].groups;
+  // Скільки груп по 3 таблетки в раунді — поле stages у раунді (за замовчуванням 3; 0 — без балів, лише перегляд).
+  // Назви груп таблеток (етапи всередині раунду). Можна перевизначити в results[...].groups;
   // там же поле match (regex) прив'язує проєкти до етапу — вони йдуть у порядку етапів.
   groups: [
     { uk: "Етап I",   en: "Stage I" },
@@ -140,6 +141,27 @@ window.OXAIT = {
         grok:    { status: "out" },
         glm:     { status: "out" }
       }
-    }
+    },
+    "software/q2": {
+      order: ["claude", "chatgpt", "gemini", "glm", "qwen", "grok"],
+      groups: [
+        { uk: "Етап I · Фінансовий менеджер", en: "Stage I · Finance Manager" },
+        { uk: "Етап II", en: "Stage II" }
+      ],
+      entries: {
+        claude:  { pills: [[true, true, true], [null, null, null]] },
+        chatgpt: { pills: [[true, true, true], [null, null, null]] },
+        gemini:  { pills: [[true, true, true], [null, null, null]] },
+        glm:     { pills: [[true, true, true], [null, null, null]] },
+        qwen:    { pills: [[true, true, false], [null, null, null]] },
+        grok:    { status: "out" }
+      }
+    },
+    // Grok вибув з усіх етапів, крім генерації зображень
+    "software/sec2":  { entries: { grok: { status: "out" } } },
+    "modeling/q3":    { entries: { grok: { status: "out" } } },
+    "modeling/sec3":  { entries: { grok: { status: "out" } } },
+    "analysis/sec4":  { entries: { grok: { status: "out" } } },
+    "writing/sec5":   { entries: { grok: { status: "out" } } }
   }
 };
