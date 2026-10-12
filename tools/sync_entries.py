@@ -2,7 +2,7 @@
 """Копіює роботи учасників з робочої папки в entries/ і складає entries/manifest.js.
 
 Структура джерела:  <SOURCE>/<раунд>/<учасник>/<проєкт>
-  раунд     — Q1, SEC1, Q2, SEC2, Q3, SEC3, SEC4, SEC5, SEC6 (регістр і дефіси не важливі)
+  раунд     — Q1, SEC1, Q2 (= sec-2), Q3, SEC3 (регістр і дефіси не важливі)
   учасник   — Claude, ChatGPT, Gemini, Grok, GLM (або ZAI), QWEN
   проєкт    — файл (.html, зображення, відео, .glb/.gltf, .md/.txt) або папка з index.html
               (у корені чи в static/). Якщо поруч лежить server.py з власним HTTP-обробником,
@@ -26,9 +26,8 @@ ENTRIES = ROOT / "entries"
 
 ROUNDS = {
     "q1": "gamedev/q1", "sec1": "gamedev/sec1",
-    "q2": "software/q2", "sec2": "software/sec2",
+    "q2": "software/sec2", "sec2": "software/sec2",  # колишній Q/2 тепер sec-2
     "q3": "modeling/q3", "sec3": "modeling/sec3",
-    "sec4": "analysis/sec4", "sec5": "writing/sec5", "sec6": "imagegen/sec6",
 }
 PARTICIPANTS = {
     "claude": "claude", "chatgpt": "chatgpt", "gpt": "chatgpt", "openai": "chatgpt",

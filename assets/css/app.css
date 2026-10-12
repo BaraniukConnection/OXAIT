@@ -248,7 +248,7 @@ img { display: block; max-width: 100%; }
 /* Етапи */
 .stages {
   --hud: var(--cyan);
-  display: grid; grid-template-columns: repeat(6, minmax(172px, 1fr)); gap: var(--space-2);
+  display: grid; grid-template-columns: repeat(var(--n, 6), minmax(172px, 1fr)); gap: var(--space-2);
   padding: var(--space-2);
   overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity;
 }
@@ -728,7 +728,7 @@ img { display: block; max-width: 100%; }
 
 @media (max-width: 1180px) {
   :root { --board-width: 400px; }
-  .stages { grid-template-columns: repeat(6, minmax(168px, 1fr)); }
+  .stages { grid-template-columns: repeat(var(--n, 6), minmax(168px, 1fr)); }
 }
 @media (max-width: 960px) {
   .arena { grid-template-columns: 1fr; }
@@ -739,7 +739,7 @@ img { display: block; max-width: 100%; }
   .app { padding: 0 var(--space-4) var(--space-4); }
   .topbar { height: 66px; }
   .brand-tag { display: none; }
-  .stages { grid-template-columns: repeat(6, minmax(160px, 1fr)); }
+  .stages { grid-template-columns: repeat(var(--n, 6), minmax(160px, 1fr)); }
   .row { grid-template-columns: 24px 38px 1fr auto; column-gap: var(--space-2); padding: var(--space-3) var(--space-2); }
   .row .avatar { width: 38px; height: 38px; font-size: 14px; }
   .row-score { font-size: 22px; }

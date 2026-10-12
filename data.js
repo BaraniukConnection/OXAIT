@@ -2,7 +2,7 @@
  * OXAIT — дані турніру. Єдиний файл, який треба редагувати, щоб оновити сайт.
  *
  * participants  — шість учасників (порядок тут не важливий).
- * stages        — шість етапів; у кожного свої раунди (Q/N — кваліфікація, sec-N — секція).
+ * stages        — етапи; у кожного свої раунди (Q/N — кваліфікація, sec-N — секція).
  * results       — по ключу "<stage>/<round>":
  *     order     — порядок при рівних балах (таблиця сортується за сумою, вибулі — внизу).
  *     entries   — для кожного учасника:
@@ -62,8 +62,7 @@ window.OXAIT = {
       id: "software", icon: "terminal",
       title: { uk: "Розробка ПЗ", en: "Software Dev" },
       rounds: [
-        { id: "q2",   code: "Q/2",   title: { uk: "Кваліфікаційний раунд", en: "Qualification Round" }, stages: 2, cover: "assets/img/poster-q2.webp" },
-        { id: "sec2", code: "sec-2", title: { uk: "Друга секція",          en: "Section Two" }, stages: 1 }
+        { id: "sec2", code: "sec-2", title: { uk: "Друга секція", en: "Section Two" }, stages: 2, cover: "assets/img/poster-q2.webp" }
       ]
     },
     {
@@ -72,27 +71,6 @@ window.OXAIT = {
       rounds: [
         { id: "q3",   code: "Q/3",   title: { uk: "Кваліфікаційний раунд", en: "Qualification Round" } },
         { id: "sec3", code: "sec-3", title: { uk: "Третя секція",          en: "Section Three" } }
-      ]
-    },
-    {
-      id: "analysis", icon: "query_stats",
-      title: { uk: "Аналітика", en: "Analysis" },
-      rounds: [
-        { id: "sec4", code: "sec-4", title: { uk: "Четверта секція", en: "Section Four" }, stages: 1 }
-      ]
-    },
-    {
-      id: "writing", icon: "edit_note",
-      title: { uk: "Тексти", en: "Writing" },
-      rounds: [
-        { id: "sec5", code: "sec-5", title: { uk: "П'ята секція", en: "Section Five" }, stages: 1 }
-      ]
-    },
-    {
-      id: "imagegen", icon: "palette",
-      title: { uk: "Генерація зображень", en: "Image Gen" },
-      rounds: [
-        { id: "sec6", code: "sec-6", title: { uk: "Шоста секція", en: "Section Six" }, stages: 0 }
       ]
     }
   ],
@@ -142,7 +120,7 @@ window.OXAIT = {
         glm:     { status: "out" }
       }
     },
-    "software/q2": {
+    "software/sec2": {
       order: ["claude", "chatgpt", "gemini", "glm", "qwen", "grok"],
       groups: [
         { uk: "Етап I · Фінансовий менеджер", en: "Stage I · Finance Manager", match: "financ" },
@@ -157,11 +135,8 @@ window.OXAIT = {
         grok:    { status: "out" }
       }
     },
-    // Grok вибув з усіх етапів, крім генерації зображень
-    "software/sec2":  { entries: { grok: { status: "out" }, qwen: { status: "out" } } },
+    // Grok вибув з усіх наступних етапів
     "modeling/q3":    { entries: { grok: { status: "out" } } },
-    "modeling/sec3":  { entries: { grok: { status: "out" } } },
-    "analysis/sec4":  { entries: { grok: { status: "out" } } },
-    "writing/sec5":   { entries: { grok: { status: "out" } } }
+    "modeling/sec3":  { entries: { grok: { status: "out" } } }
   }
 };

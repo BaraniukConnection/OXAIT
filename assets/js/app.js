@@ -19,10 +19,7 @@
       outputWill: {
         gamedev: n => `Тут з'явиться гра від ${n} — її можна буде запустити просто в браузері.`,
         software: n => `Тут з'явиться застосунок від ${n} — з живим демо.`,
-        modeling: n => `Тут з'явиться 3D-модель від ${n}, яку можна крутити.`,
-        analysis: n => `Тут з'явиться аналітичний звіт від ${n}.`,
-        writing: n => `Тут з'явиться текст від ${n}.`,
-        imagegen: n => `Тут з'являться зображення від ${n}.`
+        modeling: n => `Тут з'явиться 3D-модель від ${n}, яку можна крутити.`
       },
       play: { gamedev: "Грати", software: "Запустити", other: "Відкрити" },
       playHint: "Запуститься прямо тут. Повноекранний режим — кнопка вгорі.",
@@ -54,10 +51,7 @@
       outputWill: {
         gamedev: n => `The game built by ${n} will appear here — playable right in your browser.`,
         software: n => `The app built by ${n} will appear here, with a live demo.`,
-        modeling: n => `The 3D model by ${n} will appear here, ready to orbit.`,
-        analysis: n => `The analysis report by ${n} will appear here.`,
-        writing: n => `The text by ${n} will appear here.`,
-        imagegen: n => `The images by ${n} will appear here.`
+        modeling: n => `The 3D model by ${n} will appear here, ready to orbit.`
       },
       play: { gamedev: "Play", software: "Launch", other: "Open" },
       playHint: "Runs right here. Use the button above for full screen.",
@@ -193,6 +187,7 @@
 
   function renderStages() {
     const nav = $("#stages");
+    nav.style.setProperty("--n", D.stages.length);
     nav.innerHTML = `<span class="stage-ind" aria-hidden="true"></span>` + D.stages.map((s, i) => `
       <button class="stage ox-focus" role="tab" data-stage="${s.id}" aria-selected="${s.id === state.stage}" style="animation-delay:${i * 40}ms">
         <span class="ox-icon">${s.icon}</span>
