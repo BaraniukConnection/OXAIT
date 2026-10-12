@@ -145,20 +145,20 @@ window.OXAIT = {
     "software/q2": {
       order: ["claude", "chatgpt", "gemini", "glm", "qwen", "grok"],
       groups: [
-        { uk: "Етап I · Фінансовий менеджер", en: "Stage I · Finance Manager" },
-        { uk: "Етап II", en: "Stage II" }
+        { uk: "Етап I · Фінансовий менеджер", en: "Stage I · Finance Manager", match: "financ" },
+        { uk: "Етап II · Сайт Elatra",        en: "Stage II · Elatra Website" }
       ],
       entries: {
-        claude:  { pills: [[true, true, true], [null, null, null]] },
-        chatgpt: { pills: [[true, true, true], [null, null, null]] },
-        gemini:  { pills: [[true, true, true], [null, null, null]] },
-        glm:     { pills: [[true, true, true], [null, null, null]] },
-        qwen:    { pills: [[true, true, false], [null, null, null]] },
+        claude:  { pills: [[true, true, true], [true, true, true]] },
+        chatgpt: { pills: [[true, true, true], [true, true, false]] },
+        gemini:  { pills: [[true, true, true], [true, false, false]] },
+        glm:     { pills: [[true, true, true], [true, true, true]] },
+        qwen:    { pills: [[true, true, false], [false, false, false]] },
         grok:    { status: "out" }
       }
     },
     // Grok вибув з усіх етапів, крім генерації зображень
-    "software/sec2":  { entries: { grok: { status: "out" } } },
+    "software/sec2":  { entries: { grok: { status: "out" }, qwen: { status: "out" } } },
     "modeling/q3":    { entries: { grok: { status: "out" } } },
     "modeling/sec3":  { entries: { grok: { status: "out" } } },
     "analysis/sec4":  { entries: { grok: { status: "out" } } },

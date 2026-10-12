@@ -100,6 +100,13 @@ window.OXAIT_ENTRIES = {
     "chatgpt": [
       {
         "type": "iframe",
+        "title": "Elatra — Built to become.",
+        "src": "entries/software/q2/chatgpt/elatra-website/elatra/index.html",
+        "size": 1874845,
+        "id": "elatrawebsite"
+      },
+      {
+        "type": "iframe",
         "title": "Clarity · Finance",
         "src": "entries/software/q2/chatgpt/finance-manager.html",
         "size": 72858,
@@ -109,6 +116,13 @@ window.OXAIT_ENTRIES = {
     "claude": [
       {
         "type": "iframe",
+        "title": "Elatra E-Alpha — The modular flagship",
+        "src": "entries/software/q2/claude/elatra/index.html",
+        "size": 1993258,
+        "id": "elatra"
+      },
+      {
+        "type": "iframe",
         "title": "Finance",
         "src": "entries/software/q2/claude/finance.html",
         "size": 106137,
@@ -116,6 +130,13 @@ window.OXAIT_ENTRIES = {
       }
     ],
     "gemini": [
+      {
+        "type": "iframe",
+        "title": "ELATRA E-ALPHA — Infinite Modularity. Zero Compromise.",
+        "src": "entries/software/q2/gemini/elatra_e_alpha.html",
+        "size": 42058,
+        "id": "elatraealpha"
+      },
       {
         "type": "iframe",
         "title": "Apple Finance — Liquid Glass",
@@ -140,6 +161,13 @@ window.OXAIT_ENTRIES = {
         "src": "entries/software/q2/glm/Finance%20manager.html",
         "size": 78187,
         "id": "financemanager"
+      },
+      {
+        "type": "iframe",
+        "title": "ELATRA — E-ALPHA · The modular flagship",
+        "src": "entries/software/q2/glm/webpage.html",
+        "size": 39867,
+        "id": "webpage"
       }
     ]
   },

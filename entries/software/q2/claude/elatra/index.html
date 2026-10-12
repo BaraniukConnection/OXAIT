@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Elatra E-Alpha — The modular flagship</title>
+  <meta name="description" content="Elatra E-Alpha: a flagship modular smartphone. Swap the camera, performance and audio modules in seconds." />
+  <link rel="icon" type="image/png" href="assets/logo-mark.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+  </script>
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="#top" aria-label="Elatra home">
+      <img src="assets/logo-mark.png" alt="" width="26" height="36" />
+      <span>ELATRA</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#story">E-Alpha</a>
+      <a href="#modules">Modules</a>
+      <a href="#specs">Specs</a>
+      <a href="#vision">Vision</a>
+    </nav>
+    <a class="btn btn-sm" href="#preorder">Pre-order</a>
+  </header>
+
+  <main id="top">
+    <!-- ============ 3D scroll story ============ -->
+    <section class="story" id="story">
+      <div class="stage">
+        <canvas id="scene" aria-label="3D model of the Elatra E-Alpha phone"></canvas>
+        <div class="labels" id="labels" aria-hidden="true"></div>
+        <ol class="rail" id="rail" aria-hidden="true">
+          <li>Intro</li><li>Design</li><li>Modular</li><li>Camera</li><li>Performance</li><li>Audio</li><li>Rebuild</li>
+        </ol>
+        <div class="loader" id="loader"><span></span></div>
+      </div>
+
+      <div class="steps">
+        <article class="step step-hero">
+          <div class="panel">
+            <p class="eyebrow">Elatra Technologies presents</p>
+            <h1 class="hero-title"><span class="metal">E-ALPHA</span></h1>
+            <p class="hero-sub">The flagship that evolves with you. One chassis, endless configurations — upgrade the part, never the phone.</p>
+            <div class="cta-row">
+              <a class="btn" href="#preorder">Pre-order now</a>
+              <a class="btn btn-ghost" href="#modules">Explore modules</a>
+            </div>
+            <p class="scroll-cue"><span></span>Scroll to take it apart</p>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="panel">
+            <p class="eyebrow">01 · Design</p>
+            <h2>Precision in every angle.</h2>
+            <p>A 6.7″ flush display wrapped in an aerospace-grade titanium frame. Seamless from the front, revolutionary from the back.</p>
+            <ul class="facts"><li><b>6.7″</b>flush OLED</li><li><b>7.9 mm</b>chassis</li><li><b>Ti</b>frame</li></ul>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="panel">
+            <p class="eyebrow">02 · Modular architecture</p>
+            <h2>Three slots. Zero compromise.</h2>
+            <p>Camera, compute and audio live in independent modules that dock onto a magnetic pogo-pin interface. Pull one out, click another in — the phone recognises it instantly.</p>
+            <ul class="facts"><li><b>3</b>hot-swap slots</li><li><b>36-pin</b>pogo bus</li><li><b>&lt;10 s</b>to swap</li></ul>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="panel">
+            <p class="eyebrow">03 · Swap · Camera</p>
+            <h2>High-Performance Camera Module.</h2>
+            <p>A large-sensor primary lens, a 5× periscope telephoto and an advanced flash in one titanium island. Turn your E-Alpha into a pro camera body.</p>
+            <ul class="facts"><li><b>1″</b>type sensor</li><li><b>5×</b>periscope</li><li><b>200 MP</b>max</li></ul>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="panel">
+            <p class="eyebrow">04 · Swap · Performance</p>
+            <h2>Performance Boost Module.</h2>
+            <p>An overclocked SoC with dedicated active cooling — a whisper-quiet fan and heat-dissipation vents keep peak clocks sustained for gaming and AI workloads.</p>
+            <ul class="facts"><li><b>+28%</b>sustained CPU</li><li><b>+35%</b>GPU</li><li><b>−9 °C</b>surface temp</li></ul>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="panel">
+            <p class="eyebrow">05 · Swap · Audio</p>
+            <h2>Dynamic Audio Speaker Module.</h2>
+            <p>Front-firing stereo drivers with a tuned acoustic chamber. Room-filling sound from a phone that fits in your pocket.</p>
+            <ul class="facts"><li><b>2×</b>large drivers</li><li><b>+9 dB</b>loudness</li><li><b>Hi-Res</b>certified</li></ul>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="panel">
+            <p class="eyebrow">06 · Rebuild</p>
+            <h2>Same phone. Brand-new device.</h2>
+            <p>Reassembled with pro camera, performance and audio modules — your E-Alpha is now a completely different machine. Tomorrow, make it another.</p>
+            <div class="cta-row"><a class="btn" href="#modules">Build your E-Alpha</a></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ Modules ============ -->
+    <section class="section" id="modules">
+      <div class="wrap">
+        <p class="eyebrow">Module library</p>
+        <h2 class="section-title">One chassis. <span class="muted">Endless configurations.</span></h2>
+        <div class="module-grid">
+          <article class="card">
+            <div class="card-media"><img src="assets/mod-camera.jpg" alt="High-Performance Camera Module" loading="lazy" /></div>
+            <h3>High-Performance Camera</h3>
+            <p>Large-sensor primary, periscope telephoto, advanced flash.</p>
+            <span class="tag">Slot A · Camera</span>
+          </article>
+          <article class="card">
+            <div class="card-media"><img src="assets/mod-performance.jpg" alt="Performance Boost Module" loading="lazy" /></div>
+            <h3>Performance Boost</h3>
+            <p>Overclocked SoC with dedicated fan and vapour cooling.</p>
+            <span class="tag">Slot B · Compute</span>
+          </article>
+          <article class="card">
+            <div class="card-media"><img src="assets/mod-audio.jpg" alt="Dynamic Audio Speaker Module" loading="lazy" /></div>
+            <h3>Dynamic Audio</h3>
+            <p>Front-firing stereo speakers with tuned acoustic chamber.</p>
+            <span class="tag">Slot C · Audio</span>
+          </article>
+          <article class="card">
+            <div class="card-media"><img src="assets/mod-storage.jpg" alt="Memory and Storage Expansion Module" loading="lazy" /></div>
+            <h3>Memory / Storage</h3>
+            <p>UFS 4.0 storage upgrade with microSD expansion.</p>
+            <span class="tag">Slot C · Storage</span>
+          </article>
+          <article class="card card-wide">
+            <div class="card-media"><img src="assets/chassis.jpg" alt="E-Alpha chassis with no modules attached" loading="lazy" /></div>
+            <div>
+              <h3>The E-Alpha chassis</h3>
+              <p>The constant at the heart of every configuration: display, frame, and the pogo-pin backbone that powers every module. Designed to last for years while the modules around it keep getting better.</p>
+              <span class="tag">Titanium frame · Pogo-pin interface</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Anatomy ============ -->
+    <section class="section section-tight" id="anatomy">
+      <div class="wrap">
+        <p class="eyebrow">Anatomy</p>
+        <h2 class="section-title">Every part, <span class="muted">accounted for.</span></h2>
+        <figure class="sheet">
+          <img src="assets/e-alpha-sheet.jpg" alt="Elatra E-Alpha design reference sheet: front, side, back, top and exploded views with modules" loading="lazy" />
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============ Specs ============ -->
+    <section class="section" id="specs">
+      <div class="wrap">
+        <p class="eyebrow">Tech specs</p>
+        <h2 class="section-title">Flagship inside. <span class="muted">Modular outside.</span></h2>
+        <dl class="specs">
+          <div><dt>Display</dt><dd>6.7″ flush OLED, 120 Hz LTPO</dd></div>
+          <div><dt>Processor</dt><dd>Snapdragon 8 Gen 3</dd></div>
+          <div><dt>Memory</dt><dd>16 GB RAM</dd></div>
+          <div><dt>Storage</dt><dd>UFS 4.0 · expandable via module</dd></div>
+          <div><dt>Battery</dt><dd>5000 mAh standard module</dd></div>
+          <div><dt>Camera</dt><dd>Triple standard · Pro module optional</dd></div>
+          <div><dt>Interface</dt><dd>Magnetic pogo-pin module bus</dd></div>
+          <div><dt>Ports</dt><dd>USB-C · dual microphones</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ============ Vision ============ -->
+    <section class="section vision" id="vision">
+      <div class="wrap">
+        <img class="vision-logo" src="assets/logo-mark.png" alt="" width="90" height="125" />
+        <h2 class="section-title center">Upgrade the part.<br /><span class="muted">Keep the phone.</span></h2>
+        <div class="stats">
+          <div><b data-count="7">0</b><span>years of OS updates</span></div>
+          <div><b data-count="3">0</b><span>hot-swappable slots</span></div>
+          <div><b data-count="68">0</b><span>% less e-waste per upgrade</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Pre-order ============ -->
+    <section class="section preorder" id="preorder">
+      <div class="wrap preorder-inner">
+        <div>
+          <p class="eyebrow">Pre-order</p>
+          <h2 class="section-title">E-Alpha. <span class="muted">From $899.</span></h2>
+          <p class="lead">Ships with the standard camera, processor/battery and speaker modules. Add pro modules any time.</p>
+        </div>
+        <form class="signup" id="signup">
+          <label class="sr-only" for="email">Email</label>
+          <input id="email" type="email" placeholder="you@example.com" required />
+          <button class="btn" type="submit">Reserve yours</button>
+          <p class="form-note" id="formNote">No payment now. We'll email you when orders open.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <a class="brand" href="#top"><img src="assets/logo-mark.png" alt="" width="26" height="36" /><span>ELATRA <small>TECHNOLOGIES</small></span></a>
+      <p>© 2026 Elatra Technologies. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

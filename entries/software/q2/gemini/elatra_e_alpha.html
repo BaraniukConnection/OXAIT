@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELATRA E-ALPHA — Infinite Modularity. Zero Compromise.</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#090a0f',
+                        titanium: '#1a1d24',
+                        cyanAccent: '#00f0ff',
+                        goldAccent: '#d4af37',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            background-color: #090a0f;
+            color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .glow-cyan {
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+        }
+        .glow-box {
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.15);
+        }
+        .glass-panel {
+            background: rgba(26, 29, 36, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        /* Hide scrollbar for clean aesthetic */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090a0f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1a1d24;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+    </style>
+</head>
+<body class="bg-darkBg text-gray-100 antialiased selection:bg-cyanAccent selection:text-black">
+
+    <!-- Navigation Bar -->
+    <nav class="fixed top-0 left-0 w-full z-50 glass-panel border-b border-white/10 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <!-- Logo & Brand -->
+            <a href="#" class="flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-800 to-black border border-cyanAccent/40 flex items-center justify-center shadow-lg group-hover:border-cyanAccent transition-all">
+                    <!-- Hexagonal E Block SVG Logo -->
+                    <svg class="w-6 h-6 text-cyanAccent" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 3h8v3H6v4h5v3H6v4h5v3H3V3zm10 0h8v18h-8v-3h5V6h-5V3z"/>
+                    </svg>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xl font-extrabold tracking-wider text-white">ELATRA</span>
+                    <span class="text-[10px] text-cyanAccent tracking-widest uppercase font-semibold">Technologies</span>
+                </div>
+            </a>
+
+            <!-- Nav Links -->
+            <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-300">
+                <a href="#hero" class="hover:text-cyanAccent transition-colors">E-Alpha</a>
+                <a href="#modularity" class="hover:text-cyanAccent transition-colors">Modularity</a>
+                <a href="#ecosystem" class="hover:text-cyanAccent transition-colors">Ecosystem</a>
+                <a href="#customizer" class="hover:text-cyanAccent transition-colors">Customizer</a>
+                <a href="#specs" class="hover:text-cyanAccent transition-colors">Specs</a>
+            </div>
+
+            <!-- CTA Button -->
+            <div class="flex items-center space-x-4">
+                <a href="#customizer" class="relative group overflow-hidden rounded-full p-[1px] focus:outline-none">
+                    <span class="absolute inset-0 bg-gradient-to-r from-cyanAccent to-goldAccent rounded-full animate-pulse"></span>
+                    <span class="relative px-6 py-2.5 rounded-full bg-darkBg text-white text-sm font-semibold flex items-center space-x-2 group-hover:bg-opacity-80 transition-all">
+                        <span>Pre-Order</span>
+                        <i class="fa-solid fa-arrow-right text-xs text-cyanAccent"></i>
+                    </span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="hero" class="relative h-screen flex items-center justify-center px-6 pt-20 overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyanAccent/10 via-transparent to-transparent pointer-events-none"></div>
+        <div class="max-w-5xl mx-auto text-center z-10 flex flex-col items-center">
+            <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-titanium border border-cyanAccent/30 mb-6 glow-box">
+                <span class="w-2 h-2 rounded-full bg-cyanAccent animate-ping"></span>
+                <span class="text-xs font-semibold tracking-wider text-cyanAccent uppercase">Flagship Modular Architecture</span>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-6">
+                ELATRA <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyanAccent to-teal-200">E-ALPHA</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-400 max-w-2xl mb-10 font-light">
+                Infinite Modularity. Zero Compromise. The world's first aerospace-grade titanium modular smartphone engineered for eternity.
+            </p>
+            <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                <a href="#modularity" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-cyanAccent text-black font-bold hover:bg-cyan-400 transition-all shadow-lg shadow-cyanAccent/20 flex items-center justify-center space-x-2">
+                    <span>Explore 3D Breakdown</span>
+                    <i class="fa-solid fa-cube"></i>
+                </a>
+                <a href="#customizer" class="w-full sm:w-auto px-8 py-4 rounded-xl glass-panel text-white font-semibold hover:border-cyanAccent/60 transition-all flex items-center justify-center space-x-2">
+                    <span>Build Your E-Alpha</span>
+                    <i class="fa-solid fa-sliders"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center space-y-2 animate-bounce">
+            <span class="text-xs text-gray-400 tracking-widest uppercase">Scroll to Disassemble</span>
+            <i class="fa-solid fa-chevron-down text-cyanAccent text-sm"></i>
+        </div>
+    </header>
+
+    <!-- Sticky 3D Animation & Scroll Storytelling Container -->
+    <section id="modularity" class="relative h-[600vh] bg-darkBg">
+        <!-- Sticky 3D Canvas Container -->
+        <div class="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center pointer-events-none">
+            <div id="canvas-container" class="w-full h-full absolute inset-0 z-10"></div>
+            
+            <!-- Dynamic UI Overlay for 3D Steps -->
+            <div class="absolute inset-0 z-20 pointer-events-none flex items-center justify-between max-w-7xl mx-auto px-10">
+                <div id="step-info" class="max-w-md glass-panel p-8 rounded-2xl opacity-0 transition-opacity duration-500 transform translate-y-4">
+                    <span id="step-tag" class="text-cyanAccent text-xs font-bold tracking-widest uppercase mb-2 block">Phase 01</span>
+                    <h3 id="step-title" class="text-2xl font-bold text-white mb-3">Aerospace Titanium Chassis</h3>
+                    <p id="step-desc" class="text-gray-400 text-sm leading-relaxed">Solid unibody milled from aerospace-grade titanium with high-speed 120Gbps gold-plated pogo pin interfaces for zero-latency module communication.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Trigger Spacers corresponding to 3D Animation phases -->
+        <div class="relative z-30 pointer-events-auto">
+            <!-- Phase 1: Hero & Assembled -->
+            <div class="h-screen flex items-center px-6 md:px-20">
+                <div class="max-w-md glass-panel p-8 rounded-2xl border-l-4 border-cyanAccent">
+                    <span class="text-cyanAccent text-xs font-bold tracking-widest uppercase mb-2 block">01 / The Flagship</span>
+                    <h3 class="text-3xl font-extrabold text-white mb-4">6.7" Flush OLED Display</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">Immersive 144Hz fluid AMOLED display protected by Sapphire Shield glass with ultrasonic in-display fingerprint sensor.</p>
+                </div>
+            </div>
+
+            <!-- Phase 2: Disassembly -->
+            <div class="h-screen flex items-center justify-end px-6 md:px-20">
+                <div class="max-w-md glass-panel p-8 rounded-2xl border-l-4 border-goldAccent">
+                    <span class="text-goldAccent text-xs font-bold tracking-widest uppercase mb-2 block">02 / Internal Core</span>
+                    <h3 class="text-3xl font-extrabold text-white mb-4">Snapdragon 8 Gen 3 & Pogo Pins</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">Powered by the ultimate silicon core with 16GB LPDDR5X RAM, UFS 4.0 storage, and spring-loaded gold pogo pin data rails.</p>
+                </div>
+            </div>
+
+            <!-- Phase 3: Camera Module Swap -->
+            <div class="h-screen flex items-center px-6 md:px-20">
+                <div class="max-w-md glass-panel p-8 rounded-2xl border-l-4 border-cyanAccent">
+                    <span class="text-cyanAccent text-xs font-bold tracking-widest uppercase mb-2 block">03 / Camera Swap</span>
+                    <h3 class="text-3xl font-extrabold text-white mb-4">High-Performance Periscope</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">Easily swap standard optics for the Pro Periscope Module featuring 53.5x hybrid optical zoom and large-sensor primary lens.</p>
+                </div>
+            </div>
+
+            <!-- Phase 4: Performance & Audio Swap -->
+            <div class="h-screen flex items-center justify-end px-6 md:px-20">
+                <div class="max-w-md glass-panel p-8 rounded-2xl border-l-4 border-goldAccent">
+                    <span class="text-goldAccent text-xs font-bold tracking-widest uppercase mb-2 block">04 / Power & Cooling</span>
+                    <h3 class="text-3xl font-extrabold text-white mb-4">Active Cooling & Audio Modules</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">Snap on the Performance Boost module with active micro-cooling fan and overclocked SoC, or the Dynamic Audio Speaker module.</p>
+                </div>
+            </div>
+
+            <!-- Phase 5: Reassembly -->
+            <div class="h-screen flex items-center px-6 md:px-20">
+                <div class="max-w-md glass-panel p-8 rounded-2xl border-l-4 border-cyanAccent">
+                    <span class="text-cyanAccent text-xs font-bold tracking-widest uppercase mb-2 block">05 / Infinite Ecosystem</span>
+                    <h3 class="text-3xl font-extrabold text-white mb-4">Your Phone, Your Rules</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">Fully reassembled and customized to your exact professional lifestyle. Built to last a lifetime with zero planned obsolescence.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ecosystem & Modules Grid Section -->
+    <section id="ecosystem" class="py-32 px-6 bg-gradient-to-b from-darkBg to-titanium relative">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-20">
+                <span class="text-cyanAccent text-xs font-bold tracking-widest uppercase mb-3 block">Modular Ecosystem</span>
+                <h2 class="text-4xl md:text-5xl font-extrabold text-white mb-6">Engineered for Endless Adaptability</h2>
+                <p class="text-gray-400 text-lg">Every module connects instantly via our magnetic pogo-pin locking rail. Upgrade your camera, battery, or audio in seconds.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Module Card 1 -->
+                <div class="glass-panel p-8 rounded-3xl hover:border-cyanAccent/50 transition-all group flex flex-col justify-between">
+                    <div>
+                        <div class="w-16 h-16 rounded-2xl bg-cyanAccent/10 border border-cyanAccent/30 flex items-center justify-center text-cyanAccent text-2xl mb-6 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-camera-retro"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-3">Periscope Pro Camera</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed mb-6">Features a 200MP primary sensor coupled with a 53.5x periscope telephoto lens and dedicated image processing chip.</p>
+                    </div>
+                    <div class="flex items-center justify-between pt-4 border-t border-white/10">
+                        <span class="text-xs text-cyanAccent font-semibold uppercase">Instant Swap</span>
+                        <span class="text-white font-bold">$149</span>
+                    </div>
+                </div>
+
+                <!-- Module Card 2 -->
+                <div class="glass-panel p-8 rounded-3xl hover:border-goldAccent/50 transition-all group flex flex-col justify-between">
+                    <div>
+                        <div class="w-16 h-16 rounded-2xl bg-goldAccent/10 border border-goldAccent/30 flex items-center justify-center text-goldAccent text-2xl mb-6 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-microchip"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-3">Performance Boost & Fan</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed mb-6">Integrated vapor chamber and active micro-cooling fan for sustained peak performance during heavy gaming or 8K rendering.</p>
+                    </div>
+                    <div class="flex items-center justify-between pt-4 border-t border-white/10">
+                        <span class="text-xs text-goldAccent font-semibold uppercase">Instant Swap</span>
+                        <span class="text-white font-bold">$99</span>
+                    </div>
+                </div>
+
+                <!-- Module Card 3 -->
+                <div class="glass-panel p-8 rounded-3xl hover:border-cyanAccent/50 transition-all group flex flex-col justify-between">
+                    <div>
+                        <div class="w-16 h-16 rounded-2xl bg-cyanAccent/10 border border-cyanAccent/30 flex items-center justify-center text-cyanAccent text-2xl mb-6 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-3">Dynamic Audio Speaker</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed mb-6">Dual front-firing stereo drivers with high-excursion sub-bass chambers for studio-quality acoustic playback on the go.</p>
+                    </div>
+                    <div class="flex items-center justify-between pt-4 border-t border-white/10">
+                        <span class="text-xs text-cyanAccent font-semibold uppercase">Instant Swap</span>
+                        <span class="text-white font-bold">$79</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Customizer Section -->
+    <section id="customizer" class="py-32 px-6 bg-darkBg relative">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-cyanAccent text-xs font-bold tracking-widest uppercase mb-3 block">Configurator</span>
+                <h2 class="text-4xl md:text-5xl font-extrabold text-white mb-6">Build Your Elatra E-Alpha</h2>
+                <p class="text-gray-400 text-lg">Select your chassis finish and modules to configure your custom flagship device.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                <!-- Configuration Options -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Step 1: Chassis Finish -->
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center justify-between">
+                            <span>1. Aerospace Chassis Finish</span>
+                            <span class="text-xs text-cyanAccent font-normal">Included</span>
+                        </h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <button onclick="setChassis('titanium')" class="chassis-btn p-4 rounded-xl border border-cyanAccent bg-cyanAccent/10 text-left transition-all">
+                                <div class="w-6 h-6 rounded-full bg-gray-700 mb-2 border border-white/20"></div>
+                                <div class="text-white font-semibold text-sm">Brushed Titanium</div>
+                                <div class="text-xs text-gray-400">Standard Unibody</div>
+                            </button>
+                            <button onclick="setChassis('obsidian')" class="chassis-btn p-4 rounded-xl border border-white/10 hover:border-white/30 text-left transition-all">
+                                <div class="w-6 h-6 rounded-full bg-black mb-2 border border-white/20"></div>
+                                <div class="text-white font-semibold text-sm">Obsidian Black</div>
+                                <div class="text-xs text-gray-400">Ceramic Matte</div>
+                            </button>
+                            <button onclick="setChassis('gold')" class="chassis-btn p-4 rounded-xl border border-white/10 hover:border-white/30 text-left transition-all">
+                                <div class="w-6 h-6 rounded-full bg-amber-600 mb-2 border border-white/20"></div>
+                                <div class="text-white font-semibold text-sm">Titanium Gold</div>
+                                <div class="text-xs text-gray-400">Limited Edition</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Camera Module -->
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center justify-between">
+                            <span>2. Camera Module</span>
+                            <span id="cam-price" class="text-xs text-cyanAccent font-bold">$0</span>
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="setCamera('standard', 0)" class="cam-btn p-4 rounded-xl border border-cyanAccent bg-cyanAccent/10 text-left transition-all">
+                                <div class="text-white font-semibold text-sm">Standard Triple Lens</div>
+                                <div class="text-xs text-gray-400">50MP Primary + Ultra Wide</div>
+                                <div class="text-xs text-cyanAccent mt-2">Included</div>
+                            </button>
+                            <button onclick="setCamera('periscope', 149)" class="cam-btn p-4 rounded-xl border border-white/10 hover:border-white/30 text-left transition-all">
+                                <div class="text-white font-semibold text-sm">Periscope Pro Zoom</div>
+                                <div class="text-xs text-gray-400">53.5x Telephoto + 200MP</div>
+                                <div class="text-xs text-cyanAccent mt-2">+$149</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Power & Cooling Module -->
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center justify-between">
+                            <span>3. Power / Cooling Module</span>
+                            <span id="power-price" class="text-xs text-cyanAccent font-bold">$0</span>
+                        </h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <button onclick="setPower('battery', 0)" class="power-btn p-4 rounded-xl border border-cyanAccent bg-cyanAccent/10 text-left transition-all">
+                                <div class="text-white font-semibold text-sm">5000mAh Battery</div>
+                                <div class="text-xs text-gray-400">Standard Pack</div>
+                                <div class="text-xs text-cyanAccent mt-2">Included</div>
+                            </button>
+                            <button onclick="setPower('cooling', 99)" class="power-btn p-4 rounded-xl border border-white/10 hover:border-white/30 text-left transition-all">
+                                <div class="text-white font-semibold text-sm">Cooling & Fan</div>
+                                <div class="text-xs text-gray-400">Overclocked SoC</div>
+                                <div class="text-xs text-cyanAccent mt-2">+$99</div>
+                            </button>
+                            <button onclick="setPower('audio', 79)" class="power-btn p-4 rounded-xl border border-white/10 hover:border-white/30 text-left transition-all">
+                                <div class="text-white font-semibold text-sm">Audio Speaker</div>
+                                <div class="text-xs text-gray-400">Studio Stereo</div>
+                                <div class="text-xs text-cyanAccent mt-2">+$79</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary & Checkout Box -->
+                <div class="glass-panel p-8 rounded-3xl flex flex-col justify-between border border-cyanAccent/30">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white mb-6">Order Summary</h3>
+                        <div class="space-y-4 text-sm mb-6 border-b border-white/10 pb-6">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Elatra E-Alpha (Base)</span>
+                                <span class="text-white font-semibold">$899</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Chassis Finish</span>
+                                <span id="summary-chassis" class="text-cyanAccent font-semibold">Titanium</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Camera Module</span>
+                                <span id="summary-camera" class="text-white font-semibold">Standard</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Power / Cooling Module</span>
+                                <span id="summary-power" class="text-white font-semibold">5000mAh Battery</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center mb-8">
+                            <span class="text-lg font-bold text-white">Total Price</span>
+                            <span id="total-price" class="text-3xl font-extrabold text-cyanAccent">$899</span>
+                        </div>
+                    </div>
+                    <button onclick="openModal()" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyanAccent to-teal-400 text-black font-extrabold text-center hover:opacity-90 transition-all shadow-lg shadow-cyanAccent/20">
+                        Secure Pre-Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Specs Section -->
+    <section id="specs" class="py-32 px-6 bg-titanium border-t border-white/10">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-20">
+                <span class="text-cyanAccent text-xs font-bold tracking-widest uppercase mb-3 block">Technical Specifications</span>
+                <h2 class="text-4xl md:text-5xl font-extrabold text-white mb-6">Uncompromising Power</h2>
+                <p class="text-gray-400 text-lg">Built without limits. Explore the elite hardware specifications powering the Elatra E-Alpha.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="glass-panel p-6 rounded-2xl">
+                    <div class="text-cyanAccent text-2xl font-bold mb-2">Snapdragon 8</div>
+                    <div class="text-white font-semibold mb-1">Gen 3 / 16GB RAM</div>
+                    <p class="text-gray-400 text-sm">Ultra-fast LPDDR5X memory coupled with advanced neural processing cores.</p>
+                </div>
+                <div class="glass-panel p-6 rounded-2xl">
+                    <div class="text-cyanAccent text-2xl font-bold mb-2">120Gbps</div>
+                    <div class="text-white font-semibold mb-1">Pogo Pin Rails</div>
+                    <p class="text-gray-400 text-sm">High-speed magnetic data transfer with zero latency across all attached modules.</p>
+                </div>
+                <div class="glass-panel p-6 rounded-2xl">
+                    <div class="text-cyanAccent text-2xl font-bold mb-2">6.7" AMOLED</div>
+                    <div class="text-white font-semibold mb-1">144Hz Flush Display</div>
+                    <p class="text-gray-400 text-sm">Sapphire shield glass protection with 3,000 nits peak outdoor brightness.</p>
+                </div>
+                <div class="glass-panel p-6 rounded-2xl">
+                    <div class="text-cyanAccent text-2xl font-bold mb-2">UFS 4.0</div>
+                    <div class="text-white font-semibold mb-1">Up to 1TB Storage</div>
+                    <p class="text-gray-400 text-sm">Blazing fast read/write speeds with hot-swappable storage expansion module.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-16 px-6 bg-darkBg border-t border-white/10 text-gray-400 text-sm">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between space-y-6 md:space-y-0">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-black border border-cyanAccent/40 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-cyanAccent" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 3h8v3H6v4h5v3H6v4h5v3H3V3zm10 0h8v18h-8v-3h5V6h-5V3z"/>
+                    </svg>
+                </div>
+                <span class="text-white font-bold tracking-wider">ELATRA TECHNOLOGIES</span>
+            </div>
+            <div>
+                <p>&copy; 2026 Elatra Technologies Inc. All rights reserved. Designed for Eternity.</p>
+            </div>
+            <div class="flex space-x-6">
+                <a href="#" class="hover:text-cyanAccent transition-colors"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="#" class="hover:text-cyanAccent transition-colors"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" class="hover:text-cyanAccent transition-colors"><i class="fa-brands fa-linkedin"></i></a>
+                <a href="#" class="hover:text-cyanAccent transition-colors"><i class="fa-brands fa-github"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Custom Modal for Pre-Order Confirmation (No alert() used) -->
+    <div id="order-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md px-6">
+        <div class="glass-panel p-8 rounded-3xl max-w-md w-full border border-cyanAccent/40 text-center relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="w-16 h-16 rounded-full bg-cyanAccent/20 border border-cyanAccent flex items-center justify-center text-cyanAccent text-2xl mx-auto mb-6">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2">Pre-Order Confirmed!</h3>
+            <p class="text-gray-300 text-sm mb-6">Your customized Elatra E-Alpha has been reserved successfully. We will email your tracking and priority batch details shortly.</p>
+            <button onclick="closeModal()" class="w-full py-3 rounded-xl bg-cyanAccent text-black font-bold hover:bg-cyan-400 transition-all">
+                Back to Website
+            </button>
+        </div>
+    </div>
+
+    <!-- Three.js Interactive Animation Script -->
+    <script>
+        // Setup Three.js Scene for E-Alpha 3D Phone Model
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 12);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
+        dirLight.position.set(10, 20, 15);
+        scene.add(dirLight);
+
+        const cyanLight = new THREE.PointLight(0x00f0ff, 3, 50);
+        cyanLight.position.set(-10, -10, 5);
+        scene.add(cyanLight);
+
+        const goldLight = new THREE.PointLight(0xd4af37, 2, 50);
+        goldLight.position.set(10, 10, 5);
+        scene.add(goldLight);
+
+        // Create Phone Group Hierarchy
+        const phoneGroup = new THREE.Group();
+        scene.add(phoneGroup);
+
+        // Materials
+        const titaniumMat = new THREE.MeshStandardMaterial({ color: 0x1a1d24, metalness: 0.95, roughness: 0.15 });
+        const screenMat = new THREE.MeshStandardMaterial({ color: 0x050b14, metalness: 0.2, roughness: 0.1, emissive: 0x002233, emissiveIntensity: 0.5 });
+        const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x090a0f, metalness: 0.1, roughness: 0.1, transparent: true, opacity: 0.95 });
+        const goldMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2 });
+        const circuitMat = new THREE.MeshStandardMaterial({ color: 0x112218, metalness: 0.5, roughness: 0.4 });
+        const batteryMat = new THREE.MeshStandardMaterial({ color: 0x22262e, metalness: 0.8, roughness: 0.3 });
+        const cameraMat = new THREE.MeshStandardMaterial({ color: 0x111318, metalness: 0.9, roughness: 0.2 });
+
+        // 1. Chassis (Main Frame)
+        const chassisGeo = new THREE.BoxGeometry(3.0, 6.2, 0.4);
+        const chassis = new THREE.Mesh(chassisGeo, titaniumMat);
+        phoneGroup.add(chassis);
+
+        // 2. Display (Front)
+        const displayGeo = new THREE.BoxGeometry(2.8, 6.0, 0.05);
+        const display = new THREE.Mesh(displayGeo, screenMat);
+        display.position.set(0, 0, 0.22);
+        phoneGroup.add(display);
+
+        // 3. Back Cover
+        const backGeo = new THREE.BoxGeometry(2.9, 6.1, 0.08);
+        const backCover = new THREE.Mesh(backGeo, titaniumMat);
+        backCover.position.set(0, 0, -0.24);
+        phoneGroup.add(backCover);
+
+        // 4. CPU & Memory Core Board
+        const cpuGeo = new THREE.BoxGeometry(1.6, 2.2, 0.1);
+        const cpuBoard = new THREE.Mesh(cpuGeo, circuitMat);
+        cpuBoard.position.set(0, -0.5, -0.05);
+        phoneGroup.add(cpuBoard);
+
+        // 5. Battery Module
+        const batteryGeo = new THREE.BoxGeometry(1.8, 2.6, 0.12);
+        const battery = new THREE.Mesh(batteryGeo, batteryMat);
+        battery.position.set(0, 1.2, -0.05);
+        phoneGroup.add(battery);
+
+        // 6. Camera Module (Standard & Periscope Variant)
+        const cameraGroup = new THREE.Group();
+        const camBaseGeo = new THREE.BoxGeometry(1.2, 1.5, 0.15);
+        const camBase = new THREE.Mesh(camBaseGeo, cameraMat);
+        cameraGroup.add(camBase);
+        
+        // Lens rings
+        for(let i=0; i<3; i++) {
+            const lensGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.1, 32);
+            const lens = new THREE.Mesh(lensGeo, goldMat);
+            lens.rotation.x = Math.PI / 2;
+            lens.position.set(0.3, 0.4 - (i * 0.4), 0.1);
+            cameraGroup.add(lens);
+        }
+        cameraGroup.position.set(0.7, 1.8, -0.15);
+        phoneGroup.add(cameraGroup);
+
+        // Pogo Pin connectors (Gold dots)
+        const pogoGroup = new THREE.Group();
+        for(let i=0; i<8; i++) {
+            const pinGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.05, 16);
+            const pin = new THREE.Mesh(pinGeo, goldMat);
+            pin.rotation.x = Math.PI / 2;
+            pin.position.set(-1.1 + (i * 0.3), -2.6, 0.05);
+            pogoGroup.add(pin);
+        }
+        phoneGroup.add(pogoGroup);
+
+        // Mouse Parallax Effect
+        let mouseX = 0, mouseY = 0;
+        let targetRotationX = 0, targetRotationY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
+            mouseY = (e.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
+        });
+
+        // Scroll Animation Logic
+        let scrollProgress = 0;
+        const stepsInfo = [
+            { tag: "Phase 01", title: "Aerospace Titanium Chassis", desc: "Solid unibody milled from aerospace-grade titanium with high-speed 120Gbps gold-plated pogo pin interfaces." },
+            { tag: "Phase 02", title: "Internal Core & Pogo Pins", desc: "Snapdragon 8 Gen 3 silicon core paired with 16GB LPDDR5X RAM and spring-loaded gold data rails." },
+            { tag: "Phase 03", title: "Periscope Pro Camera", desc: "Instantly swap standard optics for the Pro Periscope Module featuring 53.5x hybrid optical zoom." },
+            { tag: "Phase 04", title: "Active Cooling & Audio", desc: "Snap on the Performance Boost module with active micro-cooling fan or Dynamic Audio stereo speakers." },
+            { tag: "Phase 05", title: "Infinite Ecosystem", desc: "Fully reassembled and customized to your exact professional lifestyle. Zero planned obsolescence." }
+        ];
+
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            scrollProgress = Math.min(Math.max(scrollTop / docHeight, 0), 1);
+
+            // Update UI step info based on scroll progress
+            const stepIndex = Math.min(Math.floor(scrollProgress * 5), 4);
+            const stepInfoEl = document.getElementById('step-info');
+            const stepTagEl = document.getElementById('step-tag');
+            const stepTitleEl = document.getElementById('step-title');
+            const stepDescEl = document.getElementById('step-desc');
+
+            if (scrollProgress > 0.05) {
+                stepInfoEl.style.opacity = '1';
+                stepInfoEl.style.transform = 'translateY(0)';
+                stepTagEl.innerText = stepsInfo[stepIndex].tag;
+                stepTitleEl.innerText = stepsInfo[stepIndex].title;
+                stepDescEl.innerText = stepsInfo[stepIndex].desc;
+            } else {
+                stepInfoEl.style.opacity = '0';
+                stepInfoEl.style.transform = 'translateY(1rem)';
+            }
+        });
+
+        // Animation Loop
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+
+            // Smooth parallax damping
+            targetRotationY = mouseX * 0.5 + (scrollProgress * Math.PI * 4);
+            targetRotationX = mouseY * 0.3;
+
+            phoneGroup.rotation.y += (targetRotationY - phoneGroup.rotation.y) * 0.05;
+            phoneGroup.rotation.x += (targetRotationX - phoneGroup.rotation.x) * 0.05;
+
+            // Exploded view offsets driven by scrollProgress (0 to 1)
+            const explodeFactor = Math.sin(scrollProgress * Math.PI); // Peak explosion in middle
+            
+            // Back cover slides back
+            backCover.position.z = -0.24 - (scrollProgress * 2.5);
+            
+            // Battery moves up
+            battery.position.y = 1.2 + (scrollProgress * 2.0);
+            
+            // CPU board moves down
+            cpuBoard.position.y = -0.5 - (scrollProgress * 2.0);
+            
+            // Camera module moves right & back
+            cameraGroup.position.x = 0.7 + (scrollProgress * 2.2);
+            cameraGroup.position.z = -0.15 + (scrollProgress * 1.5);
+
+            // Gentle floating idle animation
+            phoneGroup.position.y = Math.sin(elapsedTime * 2) * 0.1;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Window resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+    <!-- Customizer State Management Script -->
+    <script>
+        let config = {
+            chassis: 'titanium',
+            camera: 'standard',
+            cameraPrice: 0,
+            power: 'battery',
+            powerPrice: 0
+        };
+
+        const basePrice = 899;
+
+        function setChassis(type) {
+            config.chassis = type;
+            document.getElementById('summary-chassis').innerText = type.charAt(0).toUpperCase() + type.slice(1);
+            
+            // Update button styles
+            const buttons = document.querySelectorAll('.chassis-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('border-cyanAccent', 'bg-cyanAccent/10');
+                btn.classList.add('border-white/10');
+            });
+            event.currentTarget.classList.remove('border-white/10');
+            event.currentTarget.classList.add('border-cyanAccent', 'bg-cyanAccent/10');
+        }
+
+        function setCamera(type, price) {
+            config.camera = type;
+            config.cameraPrice = price;
+            document.getElementById('summary-camera').innerText = type === 'standard' ? 'Standard Triple Lens' : 'Periscope Pro Zoom';
+            document.getElementById('cam-price').innerText = price === 0 ? '$0' : `+$${price}`;
+            updateTotal();
+
+            const buttons = document.querySelectorAll('.cam-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('border-cyanAccent', 'bg-cyanAccent/10');
+                btn.classList.add('border-white/10');
+            });
+            event.currentTarget.classList.remove('border-white/10');
+            event.currentTarget.classList.add('border-cyanAccent', 'bg-cyanAccent/10');
+        }
+
+        function setPower(type, price) {
+            config.power = type;
+            config.powerPrice = price;
+            let name = '5000mAh Battery';
+            if(type === 'cooling') name = 'Cooling & Fan';
+            if(type === 'audio') name = 'Audio Speaker';
+
+            document.getElementById('summary-power').innerText = name;
+            document.getElementById('power-price').innerText = price === 0 ? '$0' : `+$${price}`;
+            updateTotal();
+
+            const buttons = document.querySelectorAll('.power-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('border-cyanAccent', 'bg-cyanAccent/10');
+                btn.classList.add('border-white/10');
+            });
+            event.currentTarget.classList.remove('border-white/10');
+            event.currentTarget.classList.add('border-cyanAccent', 'bg-cyanAccent/10');
+        }
+
+        function updateTotal() {
+            const total = basePrice + config.cameraPrice + config.powerPrice;
+            document.getElementById('total-price').innerText = `$${total}`;
+        }
+
+        function openModal() {
+            const modal = document.getElementById('order-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('order-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
