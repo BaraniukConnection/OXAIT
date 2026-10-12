@@ -371,5 +371,83 @@ window.OXAIT_ENTRIES = {
         "id": "skyfront"
       }
     ]
+  },
+  "modeling/sec3": {
+    "chatgpt": [
+      {
+        "type": "iframe",
+        "title": "VX-47 Kestrel · Flight Atelier",
+        "src": "entries/modeling/sec3/chatgpt/kestrel-fighter.html",
+        "size": 39530,
+        "id": "kestrelfighter"
+      },
+      {
+        "type": "iframe",
+        "title": "M4 / Armory Studio",
+        "src": "entries/modeling/sec3/chatgpt/m4-armory-studio.html",
+        "size": 723521,
+        "id": "m4armorystudio"
+      },
+      {
+        "type": "iframe",
+        "title": "FIELDWORK — PMC operator studio",
+        "src": "entries/modeling/sec3/chatgpt/pmc-soldier-studio.html",
+        "size": 720369,
+        "id": "pmcsoldierstudio"
+      }
+    ],
+    "claude": [
+      {
+        "type": "iframe",
+        "title": "M4 Configurator",
+        "src": "entries/modeling/sec3/claude/m4-configurator.html",
+        "size": 98924,
+        "id": "m4configurator"
+      },
+      {
+        "type": "iframe",
+        "title": "PMC Operator",
+        "src": "entries/modeling/sec3/claude/pmc-operator.html",
+        "size": 100247,
+        "id": "pmcoperator"
+      },
+      {
+        "type": "iframe",
+        "title": "SF-45 Strix",
+        "src": "entries/modeling/sec3/claude/strix-fighter.html",
+        "size": 115153,
+        "id": "strixfighter"
+      }
+    ],
+    "glm": [
+      {
+        "type": "iframe",
+        "title": "SF-45 VARYAG — Gen 4.5 Fighter · 3D Walkaround & Demo",
+        "src": "entries/modeling/sec3/glm/Fighter.html",
+        "size": 50208,
+        "id": "fighter"
+      },
+      {
+        "type": "iframe",
+        "title": "M4 WORKBENCH — Modular Carbine Configurator",
+        "src": "entries/modeling/sec3/glm/M4-GLM.html",
+        "size": 64545,
+        "id": "m4glm"
+      },
+      {
+        "type": "iframe",
+        "title": "M4 WORKBENCH — Modular Carbine Configurator",
+        "src": "entries/modeling/sec3/glm/M4.html",
+        "size": 55330,
+        "id": "m4"
+      },
+      {
+        "type": "iframe",
+        "title": "PMC OPERATOR — FIELD DOSSIER",
+        "src": "entries/modeling/sec3/glm/Soldier.html",
+        "size": 54613,
+        "id": "soldier"
+      }
+    ]
   }
 };

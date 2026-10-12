@@ -1,0 +1,1874 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>M4 Configurator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: full-bleed 3D stage, docked build panel on the right (bottom sheet on phones) */
+:root{
+  --bg:#0d1011;
+  --panel:#13181a;
+  --panel-2:#1a2123;
+  --line:#283133;
+  --fg:#dbe0d8;
+  --muted:#879189;
+  --accent:#c9a54a;      /* cartridge brass */
+  --accent-ink:#16130b;
+  --warn:#e0703c;
+  --ok:#7fb069;
+  --f-display:'Saira Condensed','Arial Narrow',sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --panel-w:340px;
+  color-scheme:dark;
+}
+/* The stage is a dark 3D scene in both themes; light mode only softens the chrome */
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){--panel:#161b1d;--panel-2:#1d2427}
+}
+:root[data-theme="light"]{--panel:#161b1d;--panel-2:#1d2427}
+:root[data-theme="dark"]{--panel:#13181a;--panel-2:#1a2123}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font:13px/1.45 var(--f-body)}
+button{font:inherit;color:inherit}
+#stage{position:fixed;left:0;top:0;bottom:0;right:var(--panel-w)}
+#stage canvas{display:block;width:100%;height:100%;outline:none;touch-action:none}
+#stage.nv canvas{filter:grayscale(1) sepia(1) hue-rotate(58deg) saturate(3.2) brightness(1.35) contrast(1.15)}
+#stage.grab canvas{cursor:grab}
+#stage.dragging canvas{cursor:grabbing}
+
+.hud{position:fixed;left:18px;top:16px;pointer-events:none;z-index:5;text-shadow:0 1px 3px rgba(0,0,0,.55)}
+.brand{font:700 30px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.brand b{color:var(--accent);font-weight:700}
+.desig{margin-top:4px;font:500 11px/1.3 var(--f-mono);color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.stats{margin-top:14px;display:grid;grid-template-columns:auto auto;gap:3px 14px;font:500 11px/1.4 var(--f-mono)}
+.stats dt{color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stats dd{margin:0;color:var(--fg);font-variant-numeric:tabular-nums}
+.stats dd.warn{color:var(--warn)}
+
+.toolbar{position:fixed;left:18px;bottom:18px;z-index:6;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100vw - var(--panel-w) - 36px)}
+.tb{background:rgba(19,24,26,.86);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:6px;padding:7px 11px;font:600 12px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:7px;transition:border-color .15s,background .15s}
+.tb:hover{border-color:#3d494b}
+.tb[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.tb:disabled{opacity:.4;cursor:not-allowed}
+.tb kbd{font:500 10px/1 var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:2px 4px}
+.tb-sep{width:1px;background:var(--line);margin:0 2px}
+
+.hint{position:fixed;left:50%;transform:translateX(calc(-50% - var(--panel-w)/2));top:16px;z-index:4;pointer-events:none;font:500 11px/1.3 var(--f-mono);color:var(--muted);background:rgba(13,16,17,.7);border:1px solid var(--line);border-radius:20px;padding:6px 12px;white-space:nowrap;transition:opacity .4s}
+.tip{position:fixed;z-index:9;pointer-events:none;font:600 12px/1.2 var(--f-display);letter-spacing:.06em;text-transform:uppercase;background:var(--accent);color:var(--accent-ink);padding:4px 8px;border-radius:4px;opacity:0;transform:translate(12px,12px);transition:opacity .12s}
+.tip.on{opacity:1}
+.tip small{display:block;font:500 10px/1.2 var(--f-mono);text-transform:none;letter-spacing:0;opacity:.8}
+
+/* Build panel */
+#panel{position:fixed;top:0;right:0;bottom:0;width:var(--panel-w);background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;z-index:7}
+#panel header{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+#panel h2{margin:0;font:700 20px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase}
+#panel header .sub{font:500 10px/1 var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.scroll{flex:1;overflow-y:auto;padding:6px 0 24px;scrollbar-width:thin;scrollbar-color:#2c3537 transparent}
+.cat{padding:12px 18px 6px;border-bottom:1px solid rgba(40,49,51,.6)}
+.cat h3{margin:0 0 8px;display:flex;justify-content:space-between;align-items:baseline;font:600 13px/1 var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.cat h3 span{font:500 10px/1 var(--f-mono);letter-spacing:.04em}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.opt{position:relative;text-align:left;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:8px 9px 7px;cursor:pointer;transition:border-color .15s,background .15s;min-height:46px}
+.opt:hover{border-color:#3d494b}
+.opt b{display:block;font:600 14px/1.1 var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+.opt small{display:block;margin-top:3px;font:400 10.5px/1.25 var(--f-mono);color:var(--muted)}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:linear-gradient(180deg,rgba(201,165,74,.12),rgba(201,165,74,.03))}
+.opt[aria-pressed="true"] b{color:var(--accent)}
+.opt .flag{position:absolute;right:7px;top:7px;width:7px;height:7px;border-radius:50%;background:var(--warn);display:none}
+.opt.conflict .flag{display:block}
+
+.place{margin:8px 0 6px;padding:9px 10px;background:#0f1314;border:1px solid var(--line);border-radius:6px}
+.place .row{display:flex;align-items:center;gap:8px}
+.place .row + .row{margin-top:8px}
+.place .lbl{font:600 11px/1 var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--fg);min-width:74px}
+.place .lbl em{font-style:normal;color:var(--muted)}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--panel-2);border-radius:4px;padding:4px 7px;font:500 10.5px/1 var(--f-mono);cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.chip:disabled{opacity:.3;cursor:not-allowed}
+.place input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+.place output{font:500 11px/1 var(--f-mono);color:var(--accent);min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
+.place .warnline{margin-top:7px;font:500 10.5px/1.3 var(--f-mono);color:var(--warn);display:none}
+.place .warnline.on{display:block}
+.toggle{display:flex;align-items:center;gap:7px;font:500 11px/1 var(--f-mono);color:var(--muted);cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--accent);margin:0}
+
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel-2);border-radius:20px;padding:4px 10px 4px 5px;font:500 11px/1 var(--f-mono);cursor:pointer}
+.sw i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(255,255,255,.18)}
+.sw[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.swrow + .swrow{margin-top:10px}
+.swrow .lbl{font:600 11px/1 var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+
+/* Sight picture overlay (magnified optics) */
+.ads{position:fixed;inset:0;right:var(--panel-w);z-index:3;pointer-events:none;display:none}
+.ads.on{display:block}
+.ads canvas{width:100%;height:100%;display:block}
+.ads-info{position:fixed;left:50%;bottom:70px;transform:translateX(calc(-50% - var(--panel-w)/2));z-index:6;font:500 11px/1.3 var(--f-mono);color:var(--fg);background:rgba(13,16,17,.75);border:1px solid var(--line);border-radius:20px;padding:6px 14px;display:none;white-space:nowrap}
+.ads-info.on{display:block}
+.ads-info b{color:var(--accent);font-weight:500}
+
+.loading{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:20;font:600 14px/1 var(--f-display);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);transition:opacity .5s}
+.loading.done{opacity:0;pointer-events:none}
+
+@media (max-width:760px){
+  :root{--panel-w:0px}
+  #stage{bottom:46vh}
+  #panel{top:auto;width:100%;height:46vh;border-left:0;border-top:1px solid var(--line)}
+  .toolbar{bottom:calc(46vh + 10px);left:16px;right:16px;max-width:none}
+  .hint{display:none}
+  .hud{left:16px;top:12px}
+  .brand{font-size:24px}
+  .stats{display:none}
+  .ads{bottom:46vh}
+  .ads-info{bottom:calc(46vh + 100px);transform:translateX(-50%)}
+  .tb kbd{display:none}
+}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div class="ads" id="ads"><canvas id="adsCanvas"></canvas></div>
+<div class="ads-info" id="adsInfo"></div>
+
+<div class="hud">
+  <div class="brand">M4<b>A1</b> Configurator</div>
+  <div class="desig">5.56×45 NATO · Modular carbine build</div>
+  <dl class="stats" id="stats"></dl>
+</div>
+
+<div class="hint" id="hint">Drag any rail-mounted part to slide it along a rail or move it to another rail</div>
+
+<div class="toolbar" id="toolbar">
+  <button class="tb" id="bAds" aria-pressed="false" title="Look through the mounted sight">Look through sight <kbd>A</kbd></button>
+  <button class="tb" id="bBeam" aria-pressed="false" title="Switch lasers and flashlight on">Activate lasers/light <kbd>L</kbd></button>
+  <button class="tb" id="bNv" aria-pressed="false" title="Night vision view: IR lasers become visible">Night vision <kbd>N</kbd></button>
+  <span class="tb-sep"></span>
+  <button class="tb" data-view="34">3/4</button>
+  <button class="tb" data-view="side">Side</button>
+  <button class="tb" data-view="top">Top</button>
+  <button class="tb" data-view="front">Front</button>
+  <button class="tb" id="bSpin" aria-pressed="false">Turntable</button>
+</div>
+
+<aside id="panel" aria-label="Build options">
+  <header><h2>Build</h2><span class="sub" id="buildCount"></span></header>
+  <div class="scroll" id="cats"></div>
+</aside>
+
+<div class="tip" id="tip"></div>
+<div class="loading" id="loading">Machining parts…</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ---------- Units: 1 = 1 cm. Bore axis on +X (muzzle forward), +Y up, +Z = shooter's right ---------- */
+const $ = s => document.querySelector(s);
+const PI = Math.PI, TAU = PI * 2;
+const PITCH = 1.0;      // Picatinny slot pitch (10 mm)
+const RAIL_H = 0.66;    // rail height above its base
+const SIGHT_AXIS = 4.4; // optical axis height above rail top (lower-1/3 co-witness)
+const FLOOR = -32;
+
+const stage = $('#stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0e1112);
+scene.fog = new THREE.FogExp2(0x0e1112, 0.00016);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.85;
+
+const camera = new THREE.PerspectiveCamera(30, 1, 1, 12000);
+camera.position.set(-22, 26, 122);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 16;
+controls.maxDistance = 280;
+controls.target.set(4, -2, 0);
+
+scene.add(new THREE.HemisphereLight(0xdfe8ee, 0x1a1712, 0.55));
+const key = new THREE.DirectionalLight(0xfff3e2, 2.3);
+key.position.set(40, 95, 60);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+Object.assign(key.shadow.camera, { left: -75, right: 75, top: 55, bottom: -55, near: 10, far: 320 });
+key.shadow.bias = -0.0004;
+key.shadow.normalBias = 0.02;
+key.shadow.radius = 4;
+scene.add(key, key.target);
+const rim = new THREE.DirectionalLight(0x9fc4ff, 1.3);
+rim.position.set(-80, 40, -70);
+const fill = new THREE.DirectionalLight(0xffffff, 0.45);
+fill.position.set(-20, -30, 80);
+scene.add(rim, fill);
+
+/* ---------- Procedural surface textures ---------- */
+function noiseTex(size, amp, dots) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d');
+  const img = g.createImageData(size, size);
+  for (let i = 0; i < size * size; i++) {
+    const v = 128 + (Math.random() - 0.5) * 255 * amp;
+    img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v;
+    img.data[i * 4 + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  if (dots) {
+    for (let i = 0; i < size * size / 14; i++) {
+      const x = Math.random() * size, y = Math.random() * size, r = 0.6 + Math.random() * 1.6;
+      g.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,.55)' : 'rgba(255,255,255,.45)';
+      g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+    }
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 4;
+  return t;
+}
+const grain = noiseTex(256, 0.35, false);
+const stipple = noiseTex(128, 0.25, true);
+stipple.repeat.set(0.35, 0.35);
+
+function gridTex() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const g = c.getContext('2d');
+  g.fillStyle = '#1b2021'; g.fillRect(0, 0, 256, 256);
+  g.strokeStyle = 'rgba(160,175,170,.10)'; g.lineWidth = 2;
+  g.strokeRect(0, 0, 256, 256);
+  g.strokeStyle = 'rgba(160,175,170,.045)'; g.lineWidth = 1;
+  for (let i = 32; i < 256; i += 32) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 256); g.moveTo(0, i); g.lineTo(256, i); g.stroke(); }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+
+/* ---------- Materials ---------- */
+const M = {
+  recv:   new THREE.MeshPhysicalMaterial({ color: 0x1e2021, metalness: 0.45, roughness: 0.5, clearcoat: 0.3, clearcoatRoughness: 0.5, bumpMap: grain, bumpScale: 0.25 }),
+  steel:  new THREE.MeshStandardMaterial({ color: 0x2b2c2c, metalness: 0.75, roughness: 0.48, bumpMap: grain, bumpScale: 0.2 }),
+  bright: new THREE.MeshStandardMaterial({ color: 0x9a9c9e, metalness: 1, roughness: 0.22 }),
+  dark:   new THREE.MeshStandardMaterial({ color: 0x08090a, metalness: 0.3, roughness: 0.85 }),
+  furn:   new THREE.MeshPhysicalMaterial({ color: 0x1d1e1e, metalness: 0, roughness: 0.74, sheen: 0.3, sheenRoughness: 0.8, bumpMap: stipple, bumpScale: 0.6 }),
+  poly:   new THREE.MeshPhysicalMaterial({ color: 0x18191a, metalness: 0, roughness: 0.7, sheen: 0.2, bumpMap: grain, bumpScale: 0.3 }),
+  rubber: new THREE.MeshStandardMaterial({ color: 0x121212, roughness: 0.95, bumpMap: stipple, bumpScale: 0.4 }),
+  optic:  new THREE.MeshPhysicalMaterial({ color: 0x17191a, metalness: 0.4, roughness: 0.55, clearcoat: 0.2, bumpMap: grain, bumpScale: 0.2 }),
+  tan:    new THREE.MeshPhysicalMaterial({ color: 0x8b775a, metalness: 0.05, roughness: 0.7, bumpMap: grain, bumpScale: 0.3 }),
+  can:    new THREE.MeshPhysicalMaterial({ color: 0x2e302f, metalness: 0.25, roughness: 0.62, bumpMap: grain, bumpScale: 0.35 }),
+  alu:    new THREE.MeshStandardMaterial({ color: 0x5b5f61, metalness: 0.9, roughness: 0.38 }),
+  brass:  new THREE.MeshStandardMaterial({ color: 0xc9a250, metalness: 1, roughness: 0.28 }),
+  copper: new THREE.MeshStandardMaterial({ color: 0xb5653a, metalness: 1, roughness: 0.32 }),
+  mark:   new THREE.MeshStandardMaterial({ color: 0xd6d4c8, roughness: 0.6 }),
+  redMark:new THREE.MeshStandardMaterial({ color: 0xb02a1f, roughness: 0.5 }),
+  glass:  new THREE.MeshPhysicalMaterial({ color: 0xa8c8ff, metalness: 0, roughness: 0.04, transparent: true, opacity: 0.3, iridescence: 1, iridescenceIOR: 1.6, iridescenceThicknessRange: [200, 520], clearcoat: 1, side: THREE.DoubleSide, depthWrite: false, envMapIntensity: 2.2 }),
+  smoke:  new THREE.MeshPhysicalMaterial({ color: 0x3a3f42, metalness: 0, roughness: 0.22, transparent: true, opacity: 0.5, clearcoat: 0.6, depthWrite: false, side: THREE.DoubleSide }),
+  ledOff: new THREE.MeshStandardMaterial({ color: 0x9aa0a0, emissive: 0x000000, metalness: 0.2, roughness: 0.3 }),
+  apRed:  new THREE.MeshStandardMaterial({ color: 0x3a0806, emissive: 0x000000, roughness: 0.3 }),
+  apGreen:new THREE.MeshStandardMaterial({ color: 0x06300f, emissive: 0x000000, roughness: 0.3 }),
+  apIR:   new THREE.MeshStandardMaterial({ color: 0x1a0d1d, emissive: 0x000000, roughness: 0.3 }),
+};
+
+/* ---------- Geometry helpers (all return fresh geometries) ---------- */
+const V2 = (x, y) => new THREE.Vector2(x, y);
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+const G = {
+  box(w, h, d, r = 0.1, seg = 3) {
+    r = Math.max(0.001, Math.min(r, Math.min(w, h, d) / 2 - 0.001));
+    return new RoundedBoxGeometry(w, h, d, seg, r);
+  },
+  // Cylinder along +X (r1 at rear, r2 at front)
+  cylX(r1, r2, len, seg = 48, open = false, t0 = 0, tl = TAU) {
+    return new THREE.CylinderGeometry(r2, r1, len, seg, 1, open, t0, tl).rotateZ(-PI / 2);
+  },
+  cylY(r1, r2, len, seg = 40, open = false) { return new THREE.CylinderGeometry(r2, r1, len, seg, 1, open); },
+  cylZ(r1, r2, len, seg = 40, open = false) { return new THREE.CylinderGeometry(r2, r1, len, seg, 1, open).rotateX(PI / 2); },
+  // Lathe around the X axis from [[radius, x], ...]
+  lathe(pts, seg = 64) {
+    return new THREE.LatheGeometry(pts.map(([r, x]) => V2(Math.max(r, 0.0001), x)), seg).rotateZ(-PI / 2);
+  },
+  // Side-profile extrusion: shape in XY, thickness along Z (centred)
+  extrude(shape, thick, bevel = 0.12, curveSeg = 24, bevelSeg = 3) {
+    const depth = Math.max(0.01, thick - bevel * 2);
+    return new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments: bevelSeg, curveSegments: curveSeg })
+      .translate(0, 0, -depth / 2);
+  },
+  // Cross-section extrusion: shape in (z, y), length along +X starting at 0
+  extrudeX(shape, len, bevel = 0.05, curveSeg = 16, bevelSeg = 2) {
+    const depth = Math.max(0.01, len - bevel * 2);
+    return new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments: bevelSeg, curveSegments: curveSeg })
+      .translate(0, 0, bevel).rotateY(PI / 2);
+  },
+  tube(pts, r, seg = 64, rad = 16, closed = false) {
+    return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => V3(...p)), closed), seg, r, rad, closed);
+  },
+  torus(R, r, rs = 16, ts = 48, arc = TAU) { return new THREE.TorusGeometry(R, r, rs, ts, arc); },
+  sphere(r, ws = 32, hs = 20) { return new THREE.SphereGeometry(r, ws, hs); },
+};
+function poly(pts) {
+  const s = new THREE.Shape();
+  pts.forEach(([x, y], i) => i ? s.lineTo(x, y) : s.moveTo(x, y));
+  s.closePath();
+  return s;
+}
+function rrect(w, h, r, cx = 0, cy = 0, path = new THREE.Shape()) {
+  const x = cx - w / 2, y = cy - h / 2;
+  r = Math.min(r, w / 2, h / 2);
+  path.moveTo(x + r, y);
+  path.lineTo(x + w - r, y); path.quadraticCurveTo(x + w, y, x + w, y + r);
+  path.lineTo(x + w, y + h - r); path.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  path.lineTo(x + r, y + h); path.quadraticCurveTo(x, y + h, x, y + h - r);
+  path.lineTo(x, y + r); path.quadraticCurveTo(x, y, x + r, y);
+  return path;
+}
+function circlePath(r, cx = 0, cy = 0, hole = false) {
+  const p = hole ? new THREE.Path() : new THREE.Shape();
+  p.absarc(cx, cy, r, 0, TAU, hole);
+  return p;
+}
+
+/* Merges every part that shares a material into one mesh: high poly counts, few draw calls */
+class Builder {
+  constructor() { this.buckets = new Map(); }
+  add(geo, mat, p = [0, 0, 0], r = [0, 0, 0], s = [1, 1, 1]) {
+    const g = geo.index ? geo.toNonIndexed() : geo.clone();
+    g.clearGroups();
+    for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
+    if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+    g.applyMatrix4(new THREE.Matrix4().compose(V3(...p), new THREE.Quaternion().setFromEuler(new THREE.Euler(...r)), V3(...s)));
+    if (!this.buckets.has(mat)) this.buckets.set(mat, []);
+    this.buckets.get(mat).push(g);
+    geo.dispose();
+    return this;
+  }
+  build(name = '') {
+    const grp = new THREE.Group();
+    grp.name = name;
+    for (const [mat, list] of this.buckets) {
+      const mesh = new THREE.Mesh(mergeGeometries(list, false), mat);
+      mesh.castShadow = !mat.transparent;
+      mesh.receiveShadow = true;
+      grp.add(mesh);
+      list.forEach(g => g.dispose());
+    }
+    this.buckets.clear();
+    return grp;
+  }
+}
+
+/* ---------- MIL-STD-1913 Picatinny rail ---------- */
+const railSpineShape = rrect(1.64, 0.44, 0.06, 0, 0.22);
+const railToothShape = (() => {
+  const h = [[0.82, 0], [0.82, 0.12], [1.06, 0.33], [1.06, 0.40], [0.80, RAIL_H]];
+  return poly([...h, ...h.slice().reverse().map(([x, y]) => [-x, y])]);
+})();
+const toothGeo = G.extrudeX(railToothShape, 0.48, 0.035, 8, 2);
+// Returns the slot layout; adds geometry for a rail running along +X from local origin
+function addPicRail(b, len, mat, p = [0, 0, 0], rot = 0) {
+  const n = Math.max(2, Math.floor(len / PITCH));
+  const s0 = (len - n * PITCH) / 2;
+  const tmp = new Builder();
+  tmp.add(G.extrudeX(railSpineShape, len, 0.05), mat);
+  for (let i = 0; i < n; i++) tmp.add(toothGeo, mat, [s0 + i * PITCH + 0.02, 0, 0]);
+  for (const [, list] of tmp.buckets) list.forEach(g => b.add(g, mat, p, [rot, 0, 0]));
+  tmp.buckets.clear();
+  return { slots: n - 1, slotX: i => s0 + i * PITCH + 0.76 };
+}
+// Mount clamp body used by most attachments: sits on rail top (y=0), centred, length L
+function addClamp(b, L, mat = M.optic, w = 2.6, h = 1.0, knob = true) {
+  b.add(G.box(L, h, w, 0.12), mat, [0, h / 2 - 0.25, 0]);
+  b.add(G.box(L, 0.6, 0.35, 0.08), mat, [0, -0.38, w / 2 - 0.2]);
+  b.add(G.box(L, 0.6, 0.35, 0.08), mat, [0, -0.38, -w / 2 + 0.2]);
+  b.add(G.box(0.42, 0.3, 1.5, 0.05), M.steel, [0, -0.08, 0]);                  // recoil lug
+  if (knob) {
+    b.add(G.cylZ(0.42, 0.42, 0.5, 32), M.steel, [0, -0.2, w / 2 + 0.2]);       // cross-bolt nut
+    b.add(G.cylZ(0.18, 0.18, 0.2, 6), M.dark, [0, -0.2, w / 2 + 0.5]);
+    b.add(G.cylZ(0.3, 0.3, 0.2, 24), M.steel, [0, -0.2, -w / 2 - 0.1]);
+  }
+}
+
+/* ---------- Range: floor and steel targets downrange ---------- */
+const floorTex = gridTex();
+floorTex.repeat.set(160, 60);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(16000, 6000).rotateX(-PI / 2),
+  new THREE.MeshStandardMaterial({ color: 0x59605e, map: floorTex, roughness: 0.95, metalness: 0 }));
+floor.position.set(5000, FLOOR, 0);
+floor.receiveShadow = true;
+scene.add(floor);
+
+const targets = [];
+(function buildRange() {
+  const ipsc = poly([[-22.5, -28.5], [22.5, -28.5], [22.5, 18.5], [12.5, 28.5], [7.5, 28.5], [7.5, 43.5], [-7.5, 43.5], [-7.5, 28.5], [-12.5, 28.5], [-22.5, 18.5]]);
+  const plateMat = new THREE.MeshStandardMaterial({ color: 0xd9d3c3, roughness: 0.8, metalness: 0.2 });
+  const woodMat = new THREE.MeshStandardMaterial({ color: 0x5a4632, roughness: 0.9 });
+  [[1000, 70], [2500, -90], [5000, 0]].forEach(([x, z]) => {
+    const b = new Builder();
+    b.add(G.box(5, 4, 60, 0.3), woodMat, [0, FLOOR + 2, 0]);
+    b.add(G.box(4, 4, 4, 0.3), woodMat, [0, (FLOOR + 4 - 24.5) / 2, 0], [0, 0, 0], [1, (-24.5 - FLOOR) / 4, 1]);
+    b.add(G.box(1.2, 6, 10, 0.2), M.steel, [-0.6, -24, 0]);
+    const g = b.build('stand');
+    g.position.set(x, 0, z);
+    scene.add(g);
+    const plate = new THREE.Mesh(G.extrude(ipsc, 1.2, 0.2).rotateY(PI / 2), plateMat);
+    plate.position.set(x - 1.2, 4, z);
+    plate.castShadow = plate.receiveShadow = true;
+    scene.add(plate);
+    targets.push(plate);
+  });
+})();
+targets.push(floor);
+
+/* =====================================================================
+   RIFLE BASE: lower, upper, buffer tube, barrel + handguard, rails
+   ===================================================================== */
+const rifle = new THREE.Group();
+rifle.position.x = -6;
+scene.add(rifle);
+const RECV_FRONT = 8.5;   // upper receiver face / barrel shoulder
+const TOP_REAR = -11.2;   // rear end of the flat-top rail
+const HG_R = 1.9;         // rail base distance from bore axis (receiver + handguard)
+
+function buildLower() {
+  const b = new Builder();
+  const s = new THREE.Shape();
+  s.moveTo(-11.6, -1.2); s.lineTo(1.6, -1.2); s.lineTo(1.6, -3.0); s.lineTo(-5.6, -3.0);
+  s.lineTo(-6.0, -3.3); s.lineTo(-9.4, -3.3); s.quadraticCurveTo(-11.0, -3.2, -11.6, -2.2); s.closePath();
+  b.add(G.extrude(s, 2.3, 0.15, 24, 3), M.recv);
+  // Magwell with flared mouth
+  b.add(G.extrude(poly([[1.5, -1.3], [7.9, -1.3], [7.9, -3.0], [8.25, -7.3], [8.6, -7.9], [1.0, -7.9], [1.25, -7.3], [1.6, -3.6]]), 2.9, 0.16), M.recv);
+  b.add(G.box(7.9, 0.7, 3.2, 0.22), M.recv, [4.8, -7.6, 0]);
+  b.add(G.box(5.8, 0.1, 2.5, 0.04), M.dark, [4.8, -7.96, 0]);
+  // Raised fences around the mag release and on the left
+  b.add(G.box(0.35, 1.5, 0.3, 0.1), M.recv, [-0.2, -2.3, 1.3]);
+  b.add(G.box(0.35, 1.5, 0.3, 0.1), M.recv, [1.05, -2.3, 1.3]);
+  b.add(G.cylZ(0.45, 0.45, 0.3, 32), M.steel, [0.42, -2.35, 1.25]);
+  b.add(G.cylZ(0.38, 0.38, 0.1, 32), M.dark, [0.42, -2.35, 1.41]);
+  // Bolt catch (left)
+  b.add(G.extrude(poly([[0.2, -1.0], [1.4, -1.0], [1.5, -2.6], [0.9, -2.8], [0.6, -1.8]]), 0.25, 0.05), M.steel, [0, 0, -1.3]);
+  for (let i = 0; i < 4; i++) b.add(G.box(0.06, 0.6, 0.06, 0.02), M.dark, [0.9 + i * 0.13, -2.2, -1.44]);
+  // Takedown & pivot pins, both sides
+  for (const z of [1.18, -1.18]) {
+    b.add(G.cylZ(0.38, 0.38, 0.22, 32), M.steel, [7.1, -0.75, z]);
+    b.add(G.cylZ(0.38, 0.38, 0.22, 32), M.steel, [-9.6, -0.75, z]);
+    b.add(G.cylZ(0.25, 0.25, 0.2, 24), M.steel, [-2.6, -2.1, z]);   // hammer pin
+    b.add(G.cylZ(0.25, 0.25, 0.2, 24), M.steel, [-0.6, -2.1, z]);   // trigger pin
+  }
+  // Selector (left) on SAFE, with markings
+  b.add(G.cylZ(0.48, 0.48, 0.22, 32), M.steel, [-5.3, -1.95, -1.25]);
+  b.add(G.box(2.0, 0.38, 0.2, 0.08), M.steel, [-4.6, -1.95, -1.42]);
+  b.add(G.box(0.25, 0.25, 0.04, 0.02), M.mark, [-6.2, -1.95, -1.17]);
+  b.add(G.box(0.25, 0.25, 0.04, 0.02), M.redMark, [-5.3, -0.95, -1.17]);
+  // Trigger guard (flat bar) and trigger blade
+  b.add(G.tube([[1.3, -2.9, 0], [1.15, -4.2, 0], [0.4, -4.85, 0], [-4.0, -4.85, 0], [-5.3, -4.3, 0], [-5.55, -3.1, 0]], 0.3, 72, 14), M.recv, [0, 0, 0], [0, 0, 0], [1, 1, 1.8]);
+  b.add(G.extrude(poly([[-1.75, -2.9], [-1.25, -2.9], [-1.3, -3.7], [-1.55, -4.35], [-2.05, -4.6], [-1.8, -4.15], [-1.65, -3.6]]), 0.45, 0.07, 24, 2), M.steel);
+  // Pistol grip
+  const gs = new THREE.Shape();
+  gs.moveTo(-5.4, -3.0); gs.lineTo(-5.9, -4.6);
+  gs.quadraticCurveTo(-6.0, -5.4, -6.5, -5.9); gs.quadraticCurveTo(-6.6, -6.8, -7.0, -7.4);
+  gs.lineTo(-8.0, -11.6); gs.quadraticCurveTo(-8.2, -12.4, -9.0, -12.4);
+  gs.lineTo(-10.5, -12.3); gs.quadraticCurveTo(-11.2, -12.2, -11.1, -11.4);
+  gs.lineTo(-10.2, -6.4); gs.quadraticCurveTo(-9.8, -4.4, -10.7, -3.4);
+  gs.lineTo(-10.9, -3.0); gs.closePath();
+  b.add(G.extrude(gs, 3.0, 0.42, 40, 6), M.furn);
+  b.add(G.box(2.6, 0.5, 2.4, 0.2), M.poly, [-9.6, -12.45, 0], [0, 0, -0.06]);
+  // Buffer tube with castle nut, end plate and stock rail
+  b.add(G.cylX(1.4, 1.4, 19.6, 56), M.recv, [-21.4, 0, 0]);
+  b.add(G.box(19.2, 0.8, 1.0, 0.12), M.recv, [-21.6, -1.35, 0]);
+  for (let i = 0; i < 6; i++) b.add(G.cylY(0.18, 0.18, 0.2, 16), M.dark, [-15.2 - i * 1.3, -1.72, 0]);
+  b.add(G.lathe([[0.01, -31.35], [1.3, -31.35], [1.42, -31.2], [1.42, -31.0]]), M.recv);
+  const nut = [[1.42, -12.6], [1.85, -12.55], [1.85, -11.7], [1.42, -11.65]];
+  b.add(G.lathe(nut, 72), M.steel);
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * TAU;
+    b.add(G.box(0.4, 0.5, 0.45, 0.05), M.dark, [-12.4, Math.cos(a) * 1.7, Math.sin(a) * 1.7], [a, 0, 0]);
+  }
+  b.add(G.box(0.3, 3.4, 2.6, 0.12), M.steel, [-11.75, -0.55, 0]);
+  b.add(G.torus(0.42, 0.13, 12, 32), M.steel, [-11.75, -2.35, 1.35], [0, 0, 0]);
+  return b.build('lower');
+}
+
+function buildUpper() {
+  const b = new Builder();
+  const outer = () => poly([[-11.6, -1.2], [8.5, -1.2], [8.5, 1.9], [-10.9, 1.9], [-11.6, 1.5]]);
+  const right = outer();
+  right.holes.push(rrect(6.0, 1.3, 0.2, -1.1, 0.3, new THREE.Path()));
+  b.add(G.extrude(right, 1.25, 0.12), M.recv, [0, 0, 0.625]);
+  b.add(G.extrude(outer(), 1.25, 0.12), M.recv, [0, 0, -0.625]);
+  // Bolt carrier visible through the open port
+  b.add(G.cylX(0.95, 0.95, 9, 48), M.bright, [-1.5, 0.3, 0]);
+  b.add(G.box(1.2, 0.35, 0.4, 0.1), M.dark, [0.2, 0.3, 0.86]);
+  b.add(G.cylZ(0.28, 0.28, 0.3, 24), M.steel, [-2.2, 0.75, 0.82]);
+  b.add(G.box(5.8, 1.25, 0.1, 0.03), M.dark, [-1.1, 0.3, -0.6]);
+  // Dust cover hanging open, hinge rod
+  b.add(G.cylX(0.12, 0.12, 7.2, 20), M.steel, [-1.1, -0.45, 1.35]);
+  b.add(G.box(6.2, 1.35, 0.1, 0.04), M.steel, [-1.1, -1.1, 1.42]);
+  b.add(G.box(0.8, 0.5, 0.12, 0.05), M.steel, [1.4, -1.55, 1.45]);
+  // Brass deflector + forward assist housing
+  b.add(G.box(1.5, 1.2, 0.8, 0.3), M.recv, [-5.1, 0.6, 1.05]);
+  b.add(G.cylX(0.62, 0.68, 2.8, 40), M.recv, [-7.9, 0.95, 1.3], [0, 0.28, 0]);
+  b.add(G.lathe([[0.01, -10.2], [0.72, -10.2], [0.78, -10.0], [0.78, -9.3], [0.6, -9.25]]), M.steel, [0, 0.95, 1.3]);
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * TAU;
+    b.add(G.box(0.7, 0.08, 0.08, 0.02), M.dark, [-9.65, 0.95 + Math.cos(a) * 0.78, 1.3 + Math.sin(a) * 0.78], [a, 0, 0]);
+  }
+  // Charging handle with ambi latches
+  b.add(G.box(1.6, 0.52, 1.3, 0.1), M.steel, [-12.2, 1.62, 0]);
+  b.add(G.box(1.0, 0.62, 4.0, 0.22), M.steel, [-12.75, 1.62, 0]);
+  b.add(G.box(0.6, 0.15, 3.6, 0.05), M.dark, [-12.75, 1.95, 0]);
+  // Barrel nut collar visible at the receiver face
+  b.add(G.lathe([[1.0, 8.4], [1.62, 8.4], [1.62, 9.1], [1.0, 9.1]]), M.steel);
+  // Serial/markings plate on the magwell side (engraving strip)
+  b.add(G.box(3.2, 0.12, 0.03, 0.02), M.mark, [4.6, -2.3, 1.46]);
+  b.add(G.box(2.0, 0.12, 0.03, 0.02), M.mark, [4.0, -2.65, 1.46]);
+  return b.build('upper');
+}
+
+rifle.add(buildLower(), buildUpper());
+
+/* ---------- Barrels & handguards ---------- */
+const BARRELS = {
+  cqb:     { name: 'CQB',     sub: '10.3" barrel · 9" rail',  len: 26.2, hg: 23, gas: 13.5, kg: 0.78 },
+  regular: { name: 'Regular', sub: '14.5" barrel · 13" rail', len: 36.8, hg: 33, gas: 18.4, kg: 1.02 },
+  long:    { name: 'Long',    sub: '20" barrel · 15" rail',   len: 50.8, hg: 38, gas: 31.5, kg: 1.36 },
+};
+const RAILS = {
+  top:    { id: 'top',    label: 'Top',    rot: 0 },
+  right:  { id: 'right',  label: 'Right',  rot: PI / 2 },
+  left:   { id: 'left',   label: 'Left',   rot: -PI / 2 },
+  bottom: { id: 'bottom', label: 'Bottom', rot: PI },
+};
+for (const r of Object.values(RAILS)) {
+  r.obj = new THREE.Group();
+  r.obj.rotation.x = r.rot;
+  r.plane = new THREE.Group();                 // rail top surface; mounts are children
+  r.plane.position.y = HG_R + RAIL_H;
+  r.obj.add(r.plane);
+  rifle.add(r.obj);
+  // Highlight bar shown while dragging
+  r.glow = new THREE.Mesh(new THREE.BoxGeometry(1, 0.12, 2.3),
+    new THREE.MeshBasicMaterial({ color: 0xc9a54a, transparent: true, opacity: 0.0, depthWrite: false, toneMapped: false }));
+  r.glow.position.y = 0.08;
+  r.plane.add(r.glow);
+}
+
+let barrelGroup = null;
+function buildBarrel(key) {
+  const B = BARRELS[key];
+  const b = new Builder();
+  const x0 = RECV_FRONT, L = B.len, end = x0 + L;
+  const gx = x0 + B.gas;
+  const pts = [[0.29, x0 - 2], [1.0, x0 - 2], [1.0, x0 + 4], [0.88, x0 + 5], [0.88, gx + 1.4], [0.74, gx + 2.2], [0.74, end - 2.3], [0.68, end - 2.0]];
+  for (let t = end - 1.95, k = 0; t < end - 0.12; t += 0.07, k++) pts.push([k % 2 ? 0.58 : 0.63, t]);
+  pts.push([0.6, end - 0.05], [0.52, end], [0.28, end], [0.28, end - 4]);
+  b.add(G.lathe(pts, 64), M.steel);
+  // Low-profile gas block + gas tube
+  b.add(G.cylX(1.05, 1.05, 2.2, 48), M.steel, [gx, 0, 0]);
+  b.add(G.box(2.2, 0.9, 1.6, 0.15), M.steel, [gx, 0.75, 0]);
+  for (const dx of [-0.5, 0.5]) b.add(G.cylY(0.16, 0.16, 0.1, 6), M.dark, [gx + dx, -1.04, 0]);
+  b.add(G.cylX(0.2, 0.2, gx - x0 + 1, 20), M.steel, [(gx + x0 - 1) / 2, 1.12, 0]);
+
+  // Free-float octagonal handguard with a bore hole you can see into
+  const H = HG_R, c = 0.75, hx = x0 + 0.1;
+  const sec = poly([[-H + c, -H], [H - c, -H], [H, -H + c], [H, H - c], [H - c, H], [-H + c, H], [-H, H - c], [-H, -H + c]]);
+  sec.holes.push(circlePath(1.48, 0, 0, true));
+  b.add(G.extrudeX(sec, B.hg, 0.08, 40), M.recv, [hx, 0, 0]);
+  const d = (H - c / 2) * Math.SQRT2;
+  for (const a of [PI / 4, 3 * PI / 4, -PI / 4, -3 * PI / 4]) {
+    for (let x = hx + 2.6; x < hx + B.hg - 1.8; x += 2.4) {
+      b.add(G.box(1.6, 0.06, 0.42, 0.03), M.dark, [x, d * Math.cos(a), d * Math.sin(a)], [a, 0, 0]);
+    }
+  }
+  // QD sling sockets at the rear of the handguard
+  for (const z of [1, -1]) {
+    b.add(G.cylZ(0.55, 0.55, 0.3, 32), M.steel, [hx + 1.6, -0.9, z * 1.98]);
+    b.add(G.cylZ(0.3, 0.3, 0.32, 24), M.dark, [hx + 1.6, -0.9, z * 2.0]);
+  }
+
+  // Rails: continuous flat-top over receiver + handguard, three handguard rails
+  const top = RAILS.top;
+  top.x0 = TOP_REAR; top.len = hx + B.hg - TOP_REAR;
+  Object.assign(top, addPicRail(b, top.len, M.recv, [top.x0, H, 0], 0));
+  b.add(G.box(0.08, 0.6, 2.25, 0.02), M.dark, [x0 + 0.05, H + 0.36, 0]);
+  for (const id of ['right', 'left', 'bottom']) {
+    const r = RAILS[id];
+    r.x0 = hx + 1.2; r.len = B.hg - 1.8;
+    Object.assign(r, addPicRail(b, r.len, M.recv, [r.x0, H * Math.cos(r.rot), H * Math.sin(r.rot)], r.rot));
+  }
+  for (const r of Object.values(RAILS)) {
+    r.obj.position.x = r.x0;
+    r.glow.scale.x = r.len;
+    r.glow.position.x = r.len / 2;
+  }
+  if (barrelGroup) { rifle.remove(barrelGroup); barrelGroup.traverse(o => o.geometry?.dispose()); }
+  barrelGroup = b.build('barrel');
+  rifle.add(barrelGroup);
+  rifle.userData.muzzleX = end - 1.95;   // thread shoulder where muzzle devices seat
+}
+
+/* =====================================================================
+   OPTICS — origin = clamp centre on rail top, +X forward, +Y away from rail
+   Optical axis sits SIGHT_AXIS above the rail for every optic so they co-witness.
+   ===================================================================== */
+const glassRed = M.glass.clone(); glassRed.color.set(0xff8a70); glassRed.iridescenceThicknessRange = [300, 600];
+const glassAmber = M.glass.clone(); glassAmber.color.set(0xffd27a);
+
+function reticleTex(kind) {
+  const S = 256, c = document.createElement('canvas');
+  c.width = c.height = S;
+  const g = c.getContext('2d');
+  const glow = (r, a) => {
+    const gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, r);
+    gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, S, S);
+  };
+  g.strokeStyle = '#fff'; g.fillStyle = '#fff';
+  if (kind === 'holo') {
+    g.shadowColor = '#fff'; g.shadowBlur = 6;
+    g.lineWidth = 5; g.beginPath(); g.arc(S / 2, S / 2, S * 0.36, 0, TAU); g.stroke();
+    for (const a of [0, PI / 2, PI, PI * 1.5]) {
+      g.beginPath(); g.moveTo(S / 2 + Math.cos(a) * S * 0.36, S / 2 + Math.sin(a) * S * 0.36);
+      g.lineTo(S / 2 + Math.cos(a) * S * 0.44, S / 2 + Math.sin(a) * S * 0.44); g.stroke();
+    }
+    g.beginPath(); g.arc(S / 2, S / 2, 6, 0, TAU); g.fill();
+  } else {
+    glow(S * 0.3, 0.35);
+    g.shadowColor = '#fff'; g.shadowBlur = 12;
+    g.beginPath(); g.arc(S / 2, S / 2, S * 0.07, 0, TAU); g.fill();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const reticleMat = (kind, color = 0xff2a1a) => new THREE.MeshBasicMaterial({
+  map: reticleTex(kind), color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, side: THREE.DoubleSide,
+});
+function reticlePlane(kind, size, x) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size).rotateY(PI / 2), reticleMat(kind));
+  m.position.set(x, SIGHT_AXIS, 0);
+  m.renderOrder = 5;
+  m.userData.noPick = true;
+  return m;
+}
+// Knurled ring of ridges around the X axis (or Y/Z via rotation of the parent placement)
+function knurlX(b, mat, x, r, len, n = 36, h = 0.12, y = SIGHT_AXIS, z = 0) {
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * TAU;
+    b.add(G.box(len, h, h * 1.1, 0.03, 1), mat, [x, y + Math.cos(a) * r, z + Math.sin(a) * r], [a, 0, 0]);
+  }
+}
+function knurlY(b, mat, p, r, len, n = 28, h = 0.11) {
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * TAU;
+    b.add(G.box(h, len, h, 0.03, 1), mat, [p[0] + Math.cos(a) * r, p[1], p[2] + Math.sin(a) * r], [0, -a, 0]);
+  }
+}
+// A capped adjustment turret pointing along local +Y, then rotated into place
+function turret(r = 1.15, h = 1.3) {
+  const b = new Builder();
+  b.add(G.cylY(r * 0.85, r * 0.85, 0.6, 48), M.optic, [0, 0.3, 0]);
+  b.add(G.cylY(r, r, h, 64), M.optic, [0, 0.6 + h / 2, 0]);
+  b.add(G.cylY(r * 0.98, r * 0.9, 0.16, 64), M.optic, [0, 0.6 + h + 0.08, 0]);
+  knurlY(b, M.optic, [0, 0.6 + h * 0.55, 0], r, h * 0.7, 40, 0.1);
+  for (let i = 0; i < 20; i++) {
+    const a = (i / 20) * TAU, big = i % 5 === 0;
+    b.add(G.box(0.05, 0.03, big ? 0.32 : 0.18, 0.01, 1), M.mark, [Math.cos(a) * (r - (big ? 0.2 : 0.12)), 0.6 + h + 0.17, Math.sin(a) * (r - (big ? 0.2 : 0.12))], [0, -a, 0]);
+  }
+  return b;
+}
+function mergeInto(b, sub, p, r) {
+  for (const [mat, list] of sub.buckets) list.forEach(g => b.add(g, mat, p, r));
+  sub.buckets.clear();
+}
+
+/* ----- Holographic sight (EXPS3-style, QD) ----- */
+function buildHolo() {
+  const b = new Builder(), A = SIGHT_AXIS;
+  addClamp(b, 6.6, M.optic, 2.7, 1.0, false);
+  b.add(G.box(8.8, 1.3, 3.2, 0.25), M.optic, [0.2, 0.75, 0]);
+  b.add(G.box(9.6, 2.0, 3.9, 0.45), M.optic, [0.2, 2.2, 0]);
+  const frame = rrect(4.7, 3.5, 0.6, 0, A + 0.15);
+  frame.holes.push(rrect(3.15, 2.45, 0.28, 0, A, new THREE.Path()));
+  b.add(G.extrudeX(frame, 5.6, 0.14, 24), M.optic, [-2.2, 0, 0]);
+  b.add(G.box(5.0, 0.28, 1.3, 0.12), M.optic, [0.6, A + 1.98, 0]);
+  b.add(G.box(0.08, 2.4, 3.1, 0.02), glassRed, [3.0, A, 0], [0, 0, 0.12]);
+  b.add(G.box(0.06, 2.4, 3.1, 0.02), M.glass, [-1.4, A, 0]);
+  // Rear control pad
+  for (const z of [-0.95, 0, 0.95]) b.add(G.box(0.4, 0.9, 0.75, 0.18), M.rubber, [-4.75, 2.2, z]);
+  b.add(G.box(0.3, 1.4, 3.2, 0.12), M.poly, [-4.5, 2.2, 0]);
+  // Battery cap (right) and QD lever (left)
+  b.add(G.cylZ(0.9, 0.9, 0.5, 48), M.optic, [2.3, 2.1, 2.1]);
+  for (let i = 0; i < 24; i++) { const a = (i / 24) * TAU; b.add(G.box(0.1, 0.1, 0.46, 0.02, 1), M.optic, [2.3 + Math.cos(a) * 0.9, 2.1 + Math.sin(a) * 0.9, 2.1]); }
+  b.add(G.box(3.4, 0.62, 0.32, 0.14), M.optic, [-0.4, 0.3, -1.85], [0, 0.06, 0.05]);
+  b.add(G.cylZ(0.5, 0.5, 0.4, 32), M.steel, [1.2, 0.3, -1.65]);
+  b.add(G.box(3.0, 0.08, 0.03, 0.01), M.mark, [0.6, 1.85, 1.96]);
+  const g = b.build('holo');
+  g.add(reticlePlane('holo', 1.6, 0.8));
+  return g;
+}
+
+/* ----- Red dot (micro tube on 1.93" mount) ----- */
+function buildRedDot() {
+  const b = new Builder(), A = SIGHT_AXIS;
+  addClamp(b, 3.9, M.optic, 2.6);
+  const riser = poly([[-1.95, 0.5], [1.95, 0.5], [1.65, A - 1.2], [-1.65, A - 1.2]]);
+  riser.holes.push(circlePath(0.62, 0, 1.75, true));
+  b.add(G.extrude(riser, 2.1, 0.16), M.optic);
+  b.add(G.box(3.4, 0.9, 2.7, 0.25), M.optic, [0, A - 1.35, 0]);
+  b.add(G.lathe([[1.28, -3.0], [1.46, -3.12], [1.58, -2.95], [1.58, -1.45], [1.5, -1.3], [1.5, 1.3], [1.64, 1.42], [1.64, 3.0], [1.5, 3.18], [1.3, 3.1], [1.28, -2.9]], 72), M.optic, [0, A, 0]);
+  knurlX(b, M.optic, -2.25, 1.58, 1.3, 40, 0.09);
+  b.add(G.cylX(1.3, 1.3, 0.06, 48), glassRed, [2.9, A, 0]);
+  b.add(G.cylX(1.3, 1.3, 0.06, 48), M.glass, [-2.75, A, 0]);
+  mergeInto(b, turret(0.72, 0.8), [0, A + 1.35, 0]);
+  mergeInto(b, turret(0.72, 0.8), [0, A, 1.35], [PI / 2, 0, 0]);
+  b.add(G.cylZ(0.88, 0.88, 0.75, 48), M.optic, [-0.4, A, -1.75]);
+  for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU; b.add(G.box(0.16, 0.16, 0.7, 0.04, 1), M.optic, [-0.4 + Math.cos(a) * 0.9, A + Math.sin(a) * 0.9, -1.78]); }
+  // Flip caps, open
+  for (const s of [1, -1]) {
+    b.add(G.cylZ(0.22, 0.22, 1.2, 20), M.poly, [s * 3.2, A + 1.62, 0]);
+    b.add(G.cylY(1.66, 1.66, 0.32, 48), M.poly, [s * 4.85, A + 1.75, 0]);
+    b.add(G.box(1.2, 0.2, 0.7, 0.08), M.poly, [s * 6.4, A + 1.75, 0]);
+  }
+  const g = b.build('reddot');
+  g.add(reticlePlane('dot', 0.5, 0.2));
+  return g;
+}
+
+/* ----- LPVO 1-6x on a cantilever mount ----- */
+function buildLPVO() {
+  const b = new Builder(), A = SIGHT_AXIS;
+  b.add(G.lathe([[1.6, -13.0], [1.98, -12.95], [2.1, -12.4], [2.1, -9.6], [1.95, -9.3], [1.95, -6.4], [1.8, -6.0], [1.52, -5.3], [1.5, -5.0],
+    [1.5, 5.6], [1.6, 6.2], [1.78, 8.6], [1.9, 11.5], [1.98, 11.8], [1.98, 13.0], [1.72, 13.1], [1.56, 12.7], [1.56, -12.7]], 80), M.optic, [0, A, 0]);
+  knurlX(b, M.optic, -7.9, 1.95, 2.4, 44, 0.12);            // magnification ring
+  knurlX(b, M.rubber, -11.0, 2.1, 2.0, 48, 0.1);            // diopter
+  b.add(G.box(0.6, 1.5, 0.55, 0.2), M.optic, [-7.9, A + 2.4 * Math.cos(0.6), 2.4 * Math.sin(0.6)], [0.6, 0, 0]);   // throw lever
+  b.add(G.box(5.8, 3.4, 3.4, 0.7), M.optic, [0, A, 0]);       // turret saddle
+  mergeInto(b, turret(1.2, 1.4), [0, A + 1.6, 0]);
+  mergeInto(b, turret(1.2, 1.4), [0, A, 1.6], [PI / 2, 0, 0]);
+  mergeInto(b, turret(1.1, 0.9), [0, A, -1.6], [-PI / 2, 0, 0]);   // illumination dial
+  b.add(G.cylX(1.56, 1.56, 0.06, 64), M.glass, [12.9, A, 0]);
+  b.add(G.cylX(1.6, 1.6, 0.06, 64), M.glass, [-12.85, A, 0]);
+  // Cantilever mount: base, two ring towers and split rings
+  addClamp(b, 10.5, M.optic, 2.6);
+  b.add(G.box(11.0, 0.9, 2.5, 0.2), M.optic, [-0.5, 0.4, 0]);
+  for (const x of [-4.2, 3.9]) {
+    b.add(G.extrude(poly([[-0.9, 0.6], [0.9, 0.6], [0.7, A - 1.7], [-0.7, A - 1.7]]), 2.3, 0.15), M.optic, [x, 0, 0]);
+    b.add(G.lathe([[1.5, -0.7], [1.96, -0.7], [2.02, -0.6], [2.02, 0.6], [1.96, 0.7], [1.5, 0.7]], 64), M.optic, [x, A, 0]);
+    b.add(G.box(1.4, 0.08, 4.3, 0.02), M.dark, [x, A, 0]);
+    for (const z of [1, -1]) for (const dx of [-0.38, 0.38]) b.add(G.cylZ(0.15, 0.15, 0.2, 12), M.steel, [x + dx, A + 0.5, z * 1.95]);
+  }
+  return b.build('lpvo');
+}
+
+/* ----- Elcan-style 1x/4x dual role ----- */
+function buildElcan() {
+  const b = new Builder(), A = SIGHT_AXIS;
+  addClamp(b, 7.8, M.optic, 2.7, 1.0, false);
+  b.add(G.box(7.6, 1.3, 2.9, 0.3), M.optic, [0, 0.55, 0]);
+  for (const x of [-2.2, 2.3]) {                              // throw levers
+    b.add(G.cylZ(0.45, 0.45, 0.4, 32), M.steel, [x, 0.15, 1.6]);
+    b.add(G.box(2.8, 0.5, 0.32, 0.15), M.optic, [x - 1.1, 0.0, 1.78], [0, 0, 0.22]);
+  }
+  const body = new THREE.Shape();
+  body.moveTo(-8.0, 1.3); body.lineTo(8.2, 1.3); body.quadraticCurveTo(8.9, 1.4, 8.9, 2.4);
+  body.lineTo(8.9, 6.4); body.quadraticCurveTo(8.8, 7.0, 7.9, 7.0); body.lineTo(-0.8, 7.0);
+  body.quadraticCurveTo(-1.6, 6.9, -2.3, 6.4); body.lineTo(-6.6, 6.3); body.quadraticCurveTo(-8.0, 6.2, -8.0, 5.0); body.closePath();
+  b.add(G.extrude(body, 4.3, 0.42, 32, 4), M.optic);
+  b.add(G.lathe([[0.01, 8.8], [2.3, 8.8], [2.42, 9.0], [2.42, 10.3], [2.25, 10.4], [2.08, 10.1], [2.08, 9.2]], 72), M.optic, [0, A, 0]);
+  b.add(G.lathe([[1.55, -8.5], [1.55, -10.0], [1.7, -10.4], [2.1, -10.3], [2.1, -9.6], [1.95, -8.4], [1.9, -7.9], [0.01, -7.9]], 72), M.rubber, [0, A, 0]);
+  b.add(G.cylX(2.06, 2.06, 0.06, 64), glassAmber, [9.25, A, 0]);
+  b.add(G.cylX(1.55, 1.55, 0.06, 64), M.glass, [-9.95, A, 0]);
+  // Dual-role lever (left), battery cap (top), windage cam (right)
+  b.add(G.cylZ(0.9, 0.9, 0.5, 48), M.steel, [-0.6, 5.2, -2.35]);
+  b.add(G.box(5.2, 0.75, 0.42, 0.2), M.optic, [-2.6, 5.6, -2.55], [0, 0, -0.12]);
+  b.add(G.box(1.0, 1.1, 0.5, 0.25), M.rubber, [-5.0, 5.9, -2.6]);
+  b.add(G.cylY(0.95, 0.95, 0.6, 48), M.optic, [3.6, 7.2, 0]);
+  knurlY(b, M.optic, [3.6, 7.25, 0], 0.95, 0.5, 32, 0.1);
+  b.add(G.cylZ(0.75, 0.75, 0.5, 40), M.optic, [-4.2, 2.6, 2.25]);
+  b.add(G.box(0.1, 1.1, 0.06, 0.02), M.dark, [-4.2, 2.6, 2.52]);
+  for (let i = 0; i < 7; i++) b.add(G.box(0.28, 0.06, 4.4, 0.02, 1), M.dark, [1.0 + i * 0.85, 1.6, 0]);
+  return b.build('elcan');
+}
+
+/* ----- 3x magnifier on a flip-to-side mount ----- */
+function buildMagnifier() {
+  const A = SIGHT_AXIS, hinge = [0, 2.5, -1.55];
+  const base = new Builder();
+  addClamp(base, 3.4, M.optic, 2.6);
+  base.add(G.box(3.4, 2.4, 1.3, 0.25), M.optic, [0, 1.3, -1.0]);
+  base.add(G.cylX(0.55, 0.55, 3.8, 32), M.steel, hinge);
+  base.add(G.box(0.7, 0.9, 0.6, 0.2), M.optic, [1.4, 2.0, -1.9]);    // release button
+  const sw = new Builder();
+  sw.add(G.lathe([[1.4, -5.8], [1.88, -5.75], [1.95, -5.2], [1.95, -3.4], [1.62, -3.0], [1.5, -2.6], [1.5, 4.8], [1.6, 5.4], [1.62, 6.2], [1.42, 6.3], [1.38, -5.6]], 72), M.optic, [0, A, 0]);
+  sw.add(G.lathe([[1.92, -5.9], [2.0, -5.9], [2.0, -4.4], [1.92, -4.4]], 64), M.rubber, [0, A, 0]);
+  knurlX(sw, M.optic, -4.1, 1.95, 1.0, 40, 0.1);
+  sw.add(G.lathe([[1.5, -1.3], [2.0, -1.3], [2.05, -1.2], [2.05, 1.2], [2.0, 1.3], [1.5, 1.3]], 64), M.optic, [0, A, 0]);
+  sw.add(G.box(2.6, 1.6, 1.0, 0.25), M.optic, [0, (A + hinge[1]) / 2 + 0.1, -1.4], [0.55, 0, 0]);
+  sw.add(G.cylX(1.4, 1.4, 0.06, 48), M.glass, [6.15, A, 0]);
+  sw.add(G.cylX(1.4, 1.4, 0.06, 48), M.glass, [-5.65, A, 0]);
+  const g = base.build('magnifier');
+  const pivot = new THREE.Group();
+  pivot.position.set(...hinge);
+  const inner = sw.build('magnifier-swing');
+  inner.position.set(-hinge[0], -hinge[1], -hinge[2]);
+  pivot.add(inner);
+  g.add(pivot);
+  g.userData.pivot = pivot;
+  return g;
+}
+
+/* =====================================================================
+   ILLUMINATION — emitters point along local +X
+   ===================================================================== */
+const latheY = (pts, seg = 64) => new THREE.LatheGeometry(pts.map(([r, y]) => V2(Math.max(r, 0.0001), y)), seg);
+
+function buildIRLaser() {
+  const b = new Builder();
+  addClamp(b, 4.2, M.tan, 2.6);
+  b.add(G.box(9.8, 2.5, 4.3, 0.5), M.tan, [0, 1.85, 0]);
+  b.add(G.box(9.0, 0.3, 3.4, 0.12), M.tan, [0.1, 3.15, 0]);
+  for (let i = 0; i < 6; i++) b.add(G.box(0.18, 0.12, 3.0, 0.04, 1), M.dark, [-2.6 + i * 0.7, 3.32, 0]);
+  // Front apertures: aiming laser (small) + illuminator (large, focus bezel)
+  b.add(G.lathe([[0.62, 4.85], [0.72, 4.9], [0.72, 5.5], [0.5, 5.55], [0.48, 5.0]], 48), M.tan, [0, 2.25, -1.1]);
+  b.add(G.lathe([[0.85, 4.85], [1.05, 4.9], [1.08, 6.1], [0.8, 6.2], [0.78, 5.2]], 64), M.tan, [0, 1.6, 0.95]);
+  knurlX(b, M.tan, 5.6, 1.06, 0.8, 32, 0.08, 1.6, 0.95);
+  b.add(G.cylX(0.78, 0.78, 0.05, 48), M.glass, [5.95, 1.6, 0.95]);
+  // Adjusters (top + side) with direction marks, rear rotary mode switch, buttons, battery cap
+  for (const [p, r] of [[[1.6, 3.3, -1.2], [0, 0, 0]], [[1.6, 1.8, -2.15], [-PI / 2, 0, 0]]]) {
+    const t = new Builder();
+    t.add(G.cylY(0.42, 0.42, 0.32, 32), M.steel, [0, 0.16, 0]);
+    t.add(G.box(0.08, 0.04, 0.55, 0.01, 1), M.dark, [0, 0.33, 0]);
+    mergeInto(b, t, p, r);
+  }
+  b.add(G.cylX(1.0, 1.0, 0.6, 48), M.tan, [-5.1, 2.0, 0]);
+  for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU; b.add(G.box(0.55, 0.16, 0.16, 0.04, 1), M.tan, [-5.1, 2.0 + Math.cos(a) * 1.0, Math.sin(a) * 1.0], [a, 0, 0]); }
+  b.add(G.box(0.12, 0.5, 0.12, 0.03, 1), M.mark, [-5.42, 2.6, 0]);
+  for (const z of [-1.4, 1.4]) b.add(G.box(0.5, 0.75, 0.75, 0.25), M.rubber, [-5.0, 0.95, z]);
+  b.add(G.cylZ(0.9, 0.9, 0.55, 48), M.tan, [-2.2, 1.85, 2.3]);
+  b.add(G.box(0.12, 1.2, 0.08, 0.02), M.dark, [-2.2, 1.85, 2.58]);
+  const g = b.build('ir');
+  const ap1 = new THREE.Mesh(G.cylX(0.42, 0.42, 0.05, 32), M.apIR.clone()); ap1.position.set(5.08, 2.25, -1.1);
+  const ap2 = new THREE.Mesh(G.cylX(0.3, 0.3, 0.05, 32), M.apIR.clone()); ap2.position.set(5.0, 1.6, 0.95);
+  g.add(ap1, ap2);
+  g.userData.emitters = [{ type: 'ir', pos: V3(5.1, 2.25, -1.1), ap: ap1 }];
+  return g;
+}
+
+function buildVisLaser() {
+  const b = new Builder();
+  addClamp(b, 3.4, M.optic, 2.6);
+  b.add(G.box(3.6, 1.2, 2.2, 0.3), M.optic, [0, 0.75, 0]);
+  b.add(G.lathe([[0.85, -3.4], [1.05, -3.3], [1.1, -2.8], [1.1, 2.6], [1.02, 3.2], [0.6, 3.35], [0.55, 3.0]], 64), M.optic, [0, 2.0, 0]);
+  knurlX(b, M.optic, -2.9, 1.1, 0.7, 32, 0.08, 2.0, 0);
+  b.add(G.lathe([[0.01, -4.0], [0.7, -4.0], [0.78, -3.8], [0.78, -3.3]], 40), M.rubber, [0, 2.0, 0]);
+  for (const [p, r] of [[[0.6, 3.1, 0], [0, 0, 0]], [[0.6, 2.0, 1.1], [PI / 2, 0, 0]]]) {
+    const t = new Builder();
+    t.add(G.cylY(0.3, 0.3, 0.25, 24), M.steel, [0, 0.12, 0]);
+    t.add(G.box(0.06, 0.03, 0.4, 0.01, 1), M.dark, [0, 0.26, 0]);
+    mergeInto(b, t, p, r);
+  }
+  b.add(G.box(1.6, 0.1, 0.03, 0.01), M.mark, [-1.0, 2.0, 1.12]);
+  const g = b.build('vis');
+  const ap = new THREE.Mesh(G.cylX(0.5, 0.5, 0.04, 32), M.apGreen.clone()); ap.position.set(3.32, 2.0, 0);
+  g.add(ap);
+  g.userData.emitters = [{ type: 'vis', pos: V3(3.4, 2.0, 0), ap }];
+  return g;
+}
+
+function buildFlashlight() {
+  const b = new Builder(), Y = 2.35;
+  addClamp(b, 3.6, M.optic, 2.6);
+  b.add(G.box(3.4, 1.2, 1.6, 0.3), M.optic, [0.2, 0.9, 0]);
+  b.add(G.lathe([[1.27, -1.3], [1.6, -1.3], [1.65, -1.1], [1.65, 1.1], [1.6, 1.3], [1.27, 1.3]], 64), M.optic, [0.2, Y, 0]);
+  b.add(G.cylZ(0.25, 0.25, 3.6, 16), M.steel, [0.2, Y - 1.2, 0]);
+  // Body, tailcap, head with cooling fins and crenellated bezel
+  b.add(G.lathe([[0.01, -7.6], [0.85, -7.6], [1.0, -7.4], [1.0, -6.8]], 48), M.rubber, [0, Y, 0]);
+  b.add(G.lathe([[1.0, -6.95], [1.32, -6.9], [1.35, -5.2], [1.27, -5.0], [1.27, 3.4], [1.45, 3.8], [1.62, 4.4], [1.65, 7.0], [1.55, 7.25], [1.38, 7.2], [1.3, 6.8]], 72), M.optic, [0, Y, 0]);
+  knurlX(b, M.optic, -6.1, 1.34, 1.5, 36, 0.08, Y, 0);
+  for (let x = 4.6; x < 6.6; x += 0.42) b.add(G.lathe([[1.62, x], [1.75, x + 0.06], [1.75, x + 0.2], [1.62, x + 0.26]], 64), M.optic, [0, Y, 0]);
+  for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU; b.add(G.box(0.35, 0.3, 0.55, 0.08), M.optic, [7.3, Y + Math.cos(a) * 1.45, Math.sin(a) * 1.45], [a, 0, 0]); }
+  b.add(G.lathe([[0.25, 5.4], [0.5, 5.5], [1.0, 6.2], [1.3, 6.9]], 64), M.bright, [0, Y, 0]);   // reflector
+  b.add(G.cylX(1.32, 1.32, 0.06, 64), M.glass, [7.0, Y, 0]);
+  // Remote pressure switch port at the tail
+  b.add(G.box(1.0, 0.7, 0.8, 0.2), M.rubber, [-7.0, Y - 1.1, 0]);
+  const g = b.build('light');
+  const led = new THREE.Mesh(G.box(0.12, 0.5, 0.5, 0.05), M.ledOff.clone());
+  led.position.set(5.5, Y, 0);
+  g.add(led);
+  g.userData.emitters = [{ type: 'light', pos: V3(7.0, Y, 0), ap: led }];
+  return g;
+}
+
+/* =====================================================================
+   GRIPS — extend along local +Y (away from the rail)
+   ===================================================================== */
+function buildVertGrip() {
+  const b = new Builder();
+  addClamp(b, 5.0, M.furn, 2.7, 1.0, false);
+  b.add(G.box(5.2, 1.1, 2.9, 0.4), M.furn, [0, 0.95, 0]);
+  b.add(latheY([[0.01, 0.9], [1.3, 0.9], [1.42, 1.3], [1.38, 2.4], [1.56, 3.4], [1.42, 4.4], [1.58, 5.4], [1.45, 6.4], [1.6, 7.4], [1.55, 9.5], [1.62, 10.6], [1.5, 11.2], [1.4, 11.3]], 72), M.furn, [0.6, 0, 0]);
+  b.add(latheY([[1.38, 11.25], [1.45, 11.3], [1.45, 11.9], [1.2, 12.15], [0.01, 12.2]], 64), M.rubber, [0.6, 0, 0]);
+  for (let i = 0; i < 18; i++) { const a = (i / 18) * TAU; b.add(G.box(0.1, 0.5, 0.1, 0.03, 1), M.rubber, [0.6 + Math.cos(a) * 1.45, 11.6, Math.sin(a) * 1.45], [0, -a, 0]); }
+  for (let y = 1.8; y < 10.5; y += 0.55) b.add(G.box(0.08, 0.12, 2.2, 0.03, 1), M.furn, [0.6 - 1.52, y, 0]);
+  return b.build('vfg');
+}
+
+function buildHorizGrip() {
+  const b = new Builder();
+  addClamp(b, 8.4, M.furn, 2.7, 1.0, false);
+  const s = new THREE.Shape();
+  s.moveTo(-5.2, 0.4); s.lineTo(5.0, 0.4); s.quadraticCurveTo(5.8, 0.5, 5.6, 1.4);
+  s.quadraticCurveTo(5.2, 2.8, 4.1, 3.2); s.quadraticCurveTo(3.5, 3.35, 3.0, 2.9);
+  s.quadraticCurveTo(0, 1.7, -3.6, 1.45); s.quadraticCurveTo(-5.3, 1.35, -5.4, 0.9); s.closePath();
+  b.add(G.extrude(s, 3.3, 0.5, 40, 5), M.furn);
+  for (let x = -4.4; x < 2.6; x += 0.5) b.add(G.box(0.12, 0.08, 2.2, 0.03, 1), M.furn, [x, 1.5 + (2.6 - x) * 0.04 + 0.06, 0], [0, 0, -0.05]);
+  b.add(G.box(1.2, 0.8, 1.2, 0.3), M.rubber, [-4.6, 1.0, 0]);
+  return b.build('afg');
+}
+
+function buildBipod() {
+  const b = new Builder();
+  addClamp(b, 3.6, M.steel, 2.7);
+  b.add(G.box(3.2, 1.6, 2.6, 0.3), M.steel, [0, 1.0, 0]);
+  b.add(G.cylY(1.1, 1.1, 0.7, 40), M.steel, [0, 2.1, 0]);                  // swivel
+  b.add(G.box(2.2, 1.2, 4.4, 0.3), M.steel, [0, 2.9, 0]);                  // yoke
+  b.add(G.cylZ(0.3, 0.3, 5.4, 24), M.bright, [0, 3.0, 0]);
+  b.add(G.box(1.2, 0.5, 0.5, 0.15), M.steel, [0.0, 2.2, 1.5]);             // pod-loc lever
+  const g = b.build('bipod');
+  const legs = [];
+  for (const s of [1, -1]) {
+    const lb = new Builder();
+    lb.add(G.box(1.6, 1.4, 1.1, 0.25), M.steel, [0, 0.4, 0]);
+    lb.add(G.cylY(0.55, 0.55, 12.5, 40), M.steel, [0, 7.2, 0]);
+    lb.add(G.cylY(0.42, 0.42, 6.0, 32), M.bright, [0, 14.4, 0]);
+    for (let i = 0; i < 5; i++) lb.add(G.cylY(0.46, 0.46, 0.12, 32), M.dark, [0, 12.3 + i * 0.9, 0]);
+    lb.add(G.box(0.9, 0.9, 0.9, 0.3), M.steel, [0, 13.0, 0]);
+    lb.add(G.cylZ(0.25, 0.25, 1.3, 16), M.bright, [0, 13.0, 0]);
+    lb.add(latheY([[0.01, 17.2], [0.6, 17.2], [0.95, 17.9], [0.85, 18.7], [0.01, 19.0]], 48), M.rubber);
+    lb.add(G.tube([[0, 2, s * 0.6], [0.3, 3.5, s * 0.8], [0, 5, s * 0.6]], 0.12, 24, 8), M.bright);  // spring
+    const pivot = new THREE.Group();
+    pivot.position.set(0, 3.0, s * 2.25);
+    pivot.add(lb.build('leg'));
+    pivot.userData.side = s;
+    g.add(pivot);
+    legs.push(pivot);
+  }
+  g.userData.legs = legs;
+  return g;
+}
+function poseBipod(g, deployed, t = 1) {
+  for (const p of g.userData.legs) {
+    const tz = deployed ? 0 : -PI / 2 + 0.04, tx = deployed ? p.userData.side * 0.3 : p.userData.side * 0.03;
+    p.rotation.z += (tz - p.rotation.z) * t;
+    p.rotation.x += (tx - p.rotation.x) * t;
+  }
+}
+
+/* =====================================================================
+   MUZZLE DEVICES — origin at the barrel thread shoulder, +X forward
+   ===================================================================== */
+function buildFlashHider() {
+  const b = new Builder();
+  b.add(G.lathe([[0.62, -0.18], [0.95, -0.18], [0.95, -0.02], [0.62, -0.02]], 48), M.steel);   // crush washer
+  b.add(G.lathe([[0.6, 0.0], [1.0, 0.0], [1.1, 0.15], [1.1, 1.65], [0.75, 1.7]], 64), M.steel);
+  for (const z of [1, -1]) b.add(G.box(1.1, 1.3, 0.06, 0.02), M.steel, [0.8, 0, z * 1.06]);
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * TAU;          // a=PI is 6 o'clock; bottom stays closed to stop dust signature
+    const bottom = Math.abs(a - PI) < 0.6;
+    if (i % 2 === 0 || bottom) b.add(G.box(2.6, 0.24, 0.52, 0.06), M.steel, [2.9, Math.cos(a) * 0.98, Math.sin(a) * 0.98], [a, 0, 0]);
+  }
+  b.add(G.lathe([[0.72, 1.6], [0.75, 4.1], [1.1, 4.15], [1.12, 5.0], [1.0, 5.25], [0.72, 5.2], [0.7, 4.3]], 64), M.steel);
+  const g = b.build('flash');
+  g.userData.reach = 5.25;
+  return g;
+}
+
+function buildCompensator() {
+  const b = new Builder();
+  b.add(G.lathe([[0.62, -0.18], [0.95, -0.18], [0.95, -0.02], [0.62, -0.02]], 48), M.steel);
+  b.add(G.lathe([[0.6, 0.0], [1.05, 0.0], [1.15, 0.2], [1.15, 1.3], [0.7, 1.35]], 64), M.steel);
+  const baffle = rrect(2.3, 2.3, 0.75);
+  baffle.holes.push(circlePath(0.42, 0, 0, true));
+  for (const x of [1.2, 2.55, 3.9]) b.add(G.extrudeX(baffle, 0.45, 0.06, 32), M.steel, [x, 0, 0]);
+  b.add(G.extrudeX(baffle, 0.8, 0.1, 32), M.steel, [5.25, 0, 0]);
+  for (const y of [1, -1]) b.add(G.box(5.0, 0.42, 2.3, 0.18), M.steel, [3.45, y * 0.95, 0]);
+  for (const x of [2.0, 3.35, 4.7]) b.add(G.cylY(0.2, 0.2, 0.06, 20), M.dark, [x, 1.17, 0]);   // top ports
+  for (const x of [1.85, 3.2, 4.55]) for (const z of [1, -1]) b.add(G.box(0.9, 1.45, 0.05, 0.02), M.dark, [x + 0.05, 0, z * 0.5]);
+  const g = b.build('comp');
+  g.userData.reach = 6.05;
+  return g;
+}
+
+function buildSuppressor() {
+  const b = new Builder();
+  b.add(G.lathe([[1.2, -0.3], [1.5, -0.2], [1.58, 0.3], [1.58, 3.8], [1.78, 4.1], [1.78, 4.6], [1.95, 4.8], [2.02, 5.0], [2.02, 16.8], [1.96, 17.0],
+    [1.86, 17.1], [1.86, 18.0], [1.7, 18.3], [0.55, 18.35], [0.5, 17.4]], 96), M.can);
+  knurlX(b, M.can, 2.0, 1.6, 2.4, 36, 0.12, 0, 0);                               // locking collar
+  for (let i = 0; i < 24; i++) { const a = (i / 24) * TAU; b.add(G.box(0.3, 0.12, 0.2, 0.04, 1), M.steel, [3.6, Math.cos(a) * 1.62, Math.sin(a) * 1.62], [a, 0, 0]); }
+  for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU + PI / 8; b.add(G.box(0.8, 0.12, 0.6, 0.04), M.dark, [17.55, Math.cos(a) * 1.84, Math.sin(a) * 1.84], [a, 0, 0]); }
+  for (const x of [5.6, 6.0, 16.0]) b.add(G.lathe([[2.02, x], [2.05, x + 0.04], [2.05, x + 0.14], [2.02, x + 0.18]], 96), M.dark);
+  b.add(G.box(3.4, 0.06, 0.18, 0.02, 1), M.mark, [11.0, 2.03, 0]);
+  const g = b.build('can');
+  g.userData.reach = 18.35;
+  return g;
+}
+
+/* =====================================================================
+   MAGAZINES — origin at the magazine top centre, seated in the magwell
+   ===================================================================== */
+const cordMat = new THREE.MeshStandardMaterial({ color: 0x7a2a1e, roughness: 0.9, bumpMap: stipple, bumpScale: 0.5 });
+// 5.56 cartridge along +X centred on its length
+function addCartridge(b, p, r = [0, 0, 0]) {
+  b.add(G.lathe([[0.01, -2.85], [0.48, -2.85], [0.48, -2.7], [0.41, -2.64], [0.41, -2.54], [0.48, -2.48], [0.48, 0.95], [0.33, 1.25], [0.3, 1.32], [0.3, 1.62], [0.01, 1.62]], 28), M.brass, p, r);
+  b.add(G.lathe([[0.01, 1.5], [0.29, 1.5], [0.29, 1.95], [0.21, 2.5], [0.06, 2.83], [0.01, 2.85]], 28), M.copper, p, r);
+}
+function magShape() {
+  const s = new THREE.Shape();
+  s.moveTo(-3.1, 0); s.lineTo(3.1, 0); s.lineTo(3.15, -4.0);
+  s.quadraticCurveTo(3.35, -11.5, 5.4, -18.0); s.lineTo(-0.6, -19.4);
+  s.quadraticCurveTo(-3.0, -12.5, -3.1, -4.0); s.closePath();
+  return s;
+}
+// Point on the magazine's curved centre line, t: 0 (top) .. 1 (floor)
+function magSpine(t) {
+  const q = (a, c, e) => (1 - t) * (1 - t) * a + 2 * (1 - t) * t * c + t * t * e;
+  const fx = q(3.15, 3.35, 5.4), fy = q(-4.0, -11.5, -18.0), rx = q(-3.1, -3.0, -0.6), ry = q(-4.0, -12.5, -19.4);
+  return { x: (fx + rx) / 2, y: (fy + ry) / 2 };
+}
+function addMagDetails(b, mat, floorMat) {
+  const ang = Math.atan2(1.4, 6.0);
+  b.add(G.box(6.9, 0.75, 2.75, 0.25), floorMat, [2.4, -18.85, 0], [0, 0, ang]);
+  b.add(G.box(1.0, 0.5, 2.3, 0.15), floorMat, [5.8, -18.0, 0], [0, 0, ang]);
+  for (const z of [1, -1]) {
+    b.add(G.box(5.6, 0.3, 0.14, 0.06), mat, [0.1, -2.6, z * 1.12]);         // side guide rails
+    for (let i = 0; i < 6; i++) {                                           // grip ribs on the lower front
+      const t = 0.45 + i * 0.075, s = magSpine(t);
+      b.add(G.box(3.2, 0.16, 0.12, 0.05), mat, [s.x + 1.0, s.y, z * 1.13], [0, 0, 0.08 + t * 0.2]);
+    }
+    b.add(G.box(2.4, 1.4, 0.06, 0.04), M.mark, [-0.6, -9.6, z * 1.13]);      // write-on panel
+  }
+}
+
+function buildMagStd() {
+  const b = new Builder();
+  b.add(G.extrude(magShape(), 2.25, 0.18, 40, 3), M.furn);
+  addMagDetails(b, M.furn, M.furn);
+  b.add(G.box(5.0, 0.25, 1.6, 0.08), M.furn, [-0.1, -0.08, 0]);
+  addCartridge(b, [0.2, 0.25, 0.3], [0, 0, 0.0]);
+  const g = b.build('mag30');
+  g.userData.reach = -19.6;
+  return g;
+}
+
+function buildMagSport() {
+  const b = new Builder();
+  b.add(G.extrude(magShape(), 2.25, 0.18, 40, 3), M.smoke);
+  addMagDetails(b, M.smoke, M.alu);
+  // 30 rounds, double-stacked along the curve — visible through the smoke body
+  for (let i = 0; i < 30; i++) {
+    const y = -0.75 - i * 0.56, t = Math.min(1, Math.max(0, (-4 - y) / 14.7));
+    addCartridge(b, [(y > -4 ? 0 : magSpine(t).x) + 0.1, y, i % 2 ? 0.45 : -0.45], [0, 0, t * 0.3]);
+  }
+  addCartridge(b, [0.25, 0.25, 0.3]);
+  // Extended aluminium base pad with grip grooves and a pull loop
+  const ang = Math.atan2(1.4, 6.0);
+  b.add(G.box(7.6, 1.8, 3.2, 0.4), M.alu, [2.35, -19.6, 0], [0, 0, ang]);
+  for (let i = 0; i < 5; i++) b.add(G.box(7.0, 0.08, 3.25, 0.03, 1), M.dark, [2.35 + Math.sin(ang) * (0.9 - i * 0.32), -19.6 - 0.6 + i * 0.32, 0], [0, 0, ang]);
+  b.add(G.torus(1.25, 0.24, 14, 40), cordMat, [2.0, -21.6, 0], [PI / 2 - 0.1, 0, ang]);
+  const g = b.build('mag30sport');
+  g.userData.reach = -23.0;
+  return g;
+}
+
+function buildMagDrum() {
+  const b = new Builder(), cx = 2.0, cy = -13.2, R = 6.3;
+  b.add(G.extrude(poly([[-3.1, 0], [3.1, 0], [3.15, -4.0], [3.6, -8.4], [-2.9, -8.4], [-3.1, -4.0]]), 2.25, 0.18), M.furn);
+  b.add(G.box(5.0, 0.25, 1.6, 0.08), M.furn, [-0.1, -0.08, 0]);
+  for (const z of [1, -1]) b.add(G.box(5.6, 0.3, 0.14, 0.06), M.furn, [0.1, -2.6, z * 1.12]);
+  // Drum shell: solid left half, clear right cover showing the case heads
+  b.add(G.lathe([[0.01, -2.4], [R - 0.5, -2.4], [R - 0.1, -2.2], [R, -1.8], [R, 1.75]], 96), M.furn, [cx, cy, 0], [0, -PI / 2, 0]);
+  b.add(G.lathe([[R - 0.15, 1.7], [R + 0.2, 1.75], [R + 0.2, 2.15], [R - 0.15, 2.2]], 96), M.furn, [cx, cy, 0], [0, -PI / 2, 0]);
+  b.add(G.cylZ(R - 0.05, R - 0.05, 0.08, 96), M.smoke, [cx, cy, 2.1]);
+  for (let i = 0; i < 24; i++) { const a = (i / 24) * TAU; b.add(G.box(0.3, 0.3, 3.9, 0.1, 1), M.furn, [cx + Math.cos(a) * (R + 0.05), cy + Math.sin(a) * (R + 0.05), -0.15], [0, 0, a]); }
+  for (const [rr, n] of [[5.0, 28], [3.95, 22]]) {
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * TAU + rr;
+      const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr;
+      b.add(G.cylZ(0.48, 0.48, 3.4, 24), M.brass, [x, y, 0.3]);
+      b.add(G.cylZ(0.42, 0.42, 0.08, 24), M.brass, [x, y, 2.02]);
+      b.add(G.cylZ(0.17, 0.17, 0.05, 16), M.bright, [x, y, 2.07]);
+    }
+  }
+  b.add(G.cylZ(2.6, 2.6, 0.4, 64), M.furn, [cx, cy, 1.85]);
+  // Winding key on the left face
+  b.add(G.cylZ(1.3, 1.3, 0.6, 48), M.alu, [cx, cy, -2.7]);
+  b.add(G.box(4.2, 0.9, 0.7, 0.3), M.alu, [cx, cy, -3.2]);
+  b.add(G.cylZ(0.3, 0.3, 0.3, 16), M.dark, [cx + 1.6, cy, -3.6]);
+  const g = b.build('drum');
+  g.userData.reach = cy - R - 0.2;
+  return g;
+}
+
+/* =====================================================================
+   STOCKS — origin at the stock's front face on the buffer tube, extends -X
+   ===================================================================== */
+function addStockCommon(b, len) {
+  b.add(G.box(3.8, 0.6, 1.0, 0.2), M.poly, [-2.6, -2.95, 0]);                 // adjustment lever
+  b.add(G.cylZ(0.18, 0.18, 1.4, 12), M.steel, [-0.9, -2.75, 0]);
+  for (const z of [1, -1]) {
+    b.add(G.cylZ(0.55, 0.55, 0.3, 32), M.steel, [-3.4, 0.2, z * 1.72]);       // QD sockets
+    b.add(G.cylZ(0.3, 0.3, 0.32, 24), M.dark, [-3.4, 0.2, z * 1.76]);
+  }
+}
+
+function buildStockLight() {
+  const b = new Builder();
+  const s = new THREE.Shape();
+  s.moveTo(0, 1.9); s.lineTo(-13.6, 2.35); s.quadraticCurveTo(-15.4, 2.55, -16.0, 3.3); s.lineTo(-17.2, 3.3);
+  s.lineTo(-17.2, -9.4); s.lineTo(-15.8, -9.4); s.quadraticCurveTo(-9.0, -5.2, -5.4, -2.95); s.lineTo(0, -2.4); s.closePath();
+  const hole = new THREE.Path();
+  hole.moveTo(-7.0, -1.75); hole.lineTo(-14.4, 0.9); hole.quadraticCurveTo(-14.9, 1.0, -14.9, 0.4);
+  hole.lineTo(-14.9, -6.6); hole.quadraticCurveTo(-14.9, -7.3, -14.4, -6.9); hole.closePath();
+  s.holes.push(hole);
+  b.add(G.extrude(s, 3.2, 0.42, 40, 5), M.furn);
+  b.add(G.box(1.0, 12.9, 3.4, 0.35), M.rubber, [-17.6, -3.05, 0]);
+  for (let y = -9.0; y < 2.9; y += 0.55) b.add(G.box(0.12, 0.18, 3.0, 0.05, 1), M.rubber, [-18.12, y, 0]);
+  addStockCommon(b);
+  const g = b.build('stockLight');
+  g.userData.reach = -18.15;
+  return g;
+}
+
+function buildStockHeavy() {
+  const b = new Builder();
+  const s = new THREE.Shape();
+  s.moveTo(0, 2.2); s.lineTo(-5.5, 2.4); s.lineTo(-19.6, 2.6); s.quadraticCurveTo(-20.6, 2.7, -20.7, 3.4);
+  s.lineTo(-20.7, -10.0); s.quadraticCurveTo(-20.4, -10.6, -19.4, -10.4);
+  s.quadraticCurveTo(-12.0, -6.2, -7.5, -3.9); s.lineTo(-1.0, -3.4); s.quadraticCurveTo(0, -3.3, 0, -2.4); s.closePath();
+  b.add(G.extrude(s, 4.2, 0.5, 40, 5), M.furn);
+  // Cheek riser + height knob
+  b.add(G.box(12.0, 1.3, 3.8, 0.55), M.furn, [-13.0, 3.0, 0]);
+  b.add(G.cylZ(0.7, 0.7, 0.5, 40), M.poly, [-8.0, 2.4, 2.3]);
+  for (let i = 0; i < 10; i++) { const a = (i / 10) * TAU; b.add(G.box(0.14, 0.14, 0.5, 0.04, 1), M.poly, [-8.0 + Math.cos(a) * 0.72, 2.4 + Math.sin(a) * 0.72, 2.3]); }
+  // Storage compartment door outlines and battery tubes
+  for (const z of [1, -1]) {
+    b.add(G.box(7.0, 0.07, 0.04, 0.02, 1), M.dark, [-13.5, -1.0, z * 2.12]);
+    b.add(G.box(7.0, 0.07, 0.04, 0.02, 1), M.dark, [-13.5, -5.2, z * 2.12], [0, 0, 0.12]);
+    b.add(G.cylX(0.75, 0.75, 7.5, 40), M.furn, [-13.0, -2.6, z * 2.0]);
+    b.add(G.cylX(0.62, 0.62, 0.3, 32), M.poly, [-9.1, -2.6, z * 2.0]);
+  }
+  // Thick ventilated recoil pad
+  b.add(G.box(1.8, 14.2, 4.3, 0.6), M.rubber, [-21.5, -3.3, 0]);
+  for (let y = -9.6; y < 3.4; y += 0.7) b.add(G.box(0.14, 0.3, 3.6, 0.06, 1), M.dark, [-22.42, y, 0]);
+  b.add(G.box(1.6, 1.2, 1.8, 0.4), M.poly, [-17.0, -8.6, 0], [0, 0, 0.5]);        // bottom sling loop
+  b.add(G.torus(0.7, 0.16, 10, 28), M.steel, [-17.4, -9.6, 0], [0, 0, 0.5]);
+  addStockCommon(b);
+  const g = b.build('stockHeavy');
+  g.userData.reach = -22.45;
+  return g;
+}
+
+/* =====================================================================
+   CATALOG + BUILD STATE
+   ===================================================================== */
+const ALL4 = ['top', 'right', 'left', 'bottom'];
+const HG3 = ['bottom', 'left', 'right'];
+const CATALOG = [
+  { cat: 'Sights', note: 'Top rail', groups: [
+    { key: 'optic', mode: 'one', none: true, items: [
+      { id: 'holo', name: 'Holo', sub: 'Holographic · 1×', build: buildHolo, rails: ['top'], foot: [-4.9, 4.9], kg: 0.32, place: ['top', 15], optic: { mag: 1, ret: 'holo', rear: -4.9, relief: 16, plane: true } },
+      { id: 'reddot', name: 'Red Dot', sub: 'Micro tube · 2 MOA', build: buildRedDot, rails: ['top'], foot: [-3.3, 3.3], kg: 0.24, place: ['top', 14], optic: { mag: 1, ret: 'dot', rear: -3.2, relief: 16, plane: true } },
+      { id: 'lpvo', name: 'LPVO', sub: '1–6× · 30 mm tube', build: buildLPVO, rails: ['top'], foot: [-13.1, 13.1], kg: 0.78, place: ['top', 10], optic: { zoom: [1, 6], ret: 'lpvo', rear: -13.1, relief: 9 } },
+      { id: 'elcan', name: 'Elcan Specter', sub: 'Dual role 1× / 4×', build: buildElcan, rails: ['top'], foot: [-10.4, 10.4], kg: 0.64, place: ['top', 11], optic: { zoom: [1, 4], dual: true, ret: 'elcan', rear: -10.4, relief: 7 } },
+    ] },
+    { key: 'magnifier', mode: 'toggle', items: [
+      { id: 'magnifier', name: 'Magnifier', sub: '3× · flip-to-side', build: buildMagnifier, rails: ['top'], foot: [-5.9, 6.3], kg: 0.31, place: ['top', 3], optic: { mag: 3, rear: -5.9, relief: 7.5 } },
+    ] },
+  ] },
+  { cat: 'Illumination', note: 'Any rail', groups: [
+    { key: 'ir', mode: 'toggle', items: [{ id: 'ir', name: 'IR Laser', sub: 'Aiming laser + illuminator', build: buildIRLaser, rails: ALL4, foot: [-5.4, 6.2], kg: 0.22, place: ['top', -7] }] },
+    { key: 'vis', mode: 'toggle', items: [{ id: 'vis', name: 'Visible Laser', sub: 'Green aiming laser', build: buildVisLaser, rails: ALL4, foot: [-4.0, 3.4], kg: 0.09, place: ['left', -5] }] },
+    { key: 'light', mode: 'toggle', items: [{ id: 'light', name: 'Flashlight', sub: '1000 lm weapon light', build: buildFlashlight, rails: ALL4, foot: [-7.7, 7.6], kg: 0.2, place: ['right', -9] }] },
+  ] },
+  { cat: 'Grips', note: 'Handguard rails', groups: [
+    { key: 'grip', mode: 'one', none: true, items: [
+      { id: 'vfg', name: 'Vertical', sub: 'Vertical foregrip', build: buildVertGrip, rails: HG3, foot: [-2.6, 2.6], kg: 0.11, place: ['bottom', 5] },
+      { id: 'afg', name: 'Horizontal', sub: 'Angled / horizontal grip', build: buildHorizGrip, rails: HG3, foot: [-5.9, 5.9], kg: 0.07, place: ['bottom', 6] },
+    ] },
+    { key: 'bipod', mode: 'toggle', items: [{ id: 'bipod', name: 'Bipod', sub: 'Swivel, notched legs', build: buildBipod, rails: ['bottom'], foot: [-1.9, 1.9], kg: 0.34, place: ['bottom', -3] }] },
+  ] },
+  { cat: 'Muzzle', note: '1/2-28 threads', groups: [
+    { key: 'muzzle', mode: 'one', none: true, items: [
+      { id: 'can', name: 'Suppressor', sub: 'QD can · 7.2"', build: buildSuppressor, kg: 0.48 },
+      { id: 'flash', name: 'Flash Hider', sub: 'Birdcage, closed bottom', build: buildFlashHider, kg: 0.07 },
+      { id: 'comp', name: 'Compensator', sub: '3-port side brake', build: buildCompensator, kg: 0.11 },
+    ] },
+  ] },
+  { cat: 'Magazine', note: '5.56 NATO', groups: [
+    { key: 'mag', mode: 'one', items: [
+      { id: 'std', name: 'Regular 30', sub: 'Polymer, 30 rd', build: buildMagStd, kg: 0.49, rounds: 30 },
+      { id: 'drum', name: 'Drum 50', sub: '50 rd, clear back', build: buildMagDrum, kg: 1.18, rounds: 50 },
+      { id: 'sport', name: 'Sport 30', sub: 'Quick reload, pull loop', build: buildMagSport, kg: 0.55, rounds: 30 },
+    ] },
+  ] },
+  { cat: 'Stock', note: 'Carbine tube', groups: [
+    { key: 'stock', mode: 'one', items: [
+      { id: 'stockLight', name: 'Light', sub: 'Skeletal, 6-position', build: buildStockLight, kg: 0.21 },
+      { id: 'stockHeavy', name: 'Heavy', sub: 'Cheek riser, storage', build: buildStockHeavy, kg: 0.58 },
+    ] },
+  ] },
+  { cat: 'Barrel & Handguard', note: 'Free-float quad rail', groups: [
+    { key: 'barrel', mode: 'one', items: ['long', 'regular', 'cqb'].map(id => ({ id, name: BARRELS[id].name, sub: BARRELS[id].sub, kg: BARRELS[id].kg })) },
+  ] },
+];
+const ITEMS = {};
+for (const c of CATALOG) for (const g of c.groups) for (const it of g.items) ITEMS[it.id] = Object.assign(it, { group: g.key, mode: g.mode, none: !!g.none, cat: c.cat });
+
+const state = {
+  sel: { optic: 'holo', magnifier: null, ir: 'ir', vis: null, light: 'light', grip: 'vfg', bipod: null, muzzle: 'flash', mag: 'std', stock: 'stockLight', barrel: 'regular' },
+  place: {}, stockPos: 3, magFlip: false, bipodDeployed: true, beams: false, nv: false, zoom: { lpvo: 4, elcan: 4 },
+};
+const STOCK0 = -13.4, STOCK_STEP = 1.3;
+const BASE_KG = 2.05;
+
+buildBarrel(state.sel.barrel);
+for (const it of Object.values(ITEMS)) if (it.place) {
+  const [rail, slot] = it.place;
+  state.place[it.id] = { rail, slot: slot < 0 ? RAILS[rail].slots + slot : slot };
+}
+
+/* ---------- Instances ---------- */
+const inst = {};
+function getInst(id) {
+  if (!inst[id]) {
+    const obj = ITEMS[id].build();
+    obj.traverse(o => { if (o.isMesh) o.userData.itemId = id; });
+    const mount = new THREE.Group();
+    mount.add(obj);
+    inst[id] = { obj, mount };
+  }
+  return inst[id];
+}
+const isActive = id => state.sel[ITEMS[id].group] === id;
+const activeIds = () => Object.values(state.sel).filter(id => id && ITEMS[id].build);
+const railX = id => RAILS[state.place[id].rail].slotX(state.place[id].slot);
+
+function applyPlacement(id) {
+  const p = state.place[id], r = RAILS[p.rail];
+  p.slot = Math.max(0, Math.min(r.slots - 1, Math.round(p.slot)));
+  const m = getInst(id).mount;
+  if (m.parent !== r.plane) r.plane.add(m);
+  m.position.x = r.slotX(p.slot);
+}
+function stockX() { return STOCK0 - state.stockPos * STOCK_STEP; }
+function lengthNumbers() {
+  const tip = state.sel.muzzle ? rifle.userData.muzzleX + inst[state.sel.muzzle].obj.userData.reach : RECV_FRONT + BARRELS[state.sel.barrel].len;
+  const butt = stockX() + inst[state.sel.stock].obj.userData.reach;
+  return { tip, butt, len: tip - butt };
+}
+
+function syncScene() {
+  for (const id of Object.keys(ITEMS)) {
+    if (!ITEMS[id].build) continue;
+    const on = isActive(id);
+    if (!on) { if (inst[id]?.mount.parent) inst[id].mount.parent.remove(inst[id].mount); continue; }
+    const { mount, obj } = getInst(id);
+    const it = ITEMS[id];
+    if (it.rails) applyPlacement(id);
+    else {
+      if (mount.parent !== rifle) rifle.add(mount);
+      if (it.group === 'muzzle') mount.position.set(rifle.userData.muzzleX, 0, 0);
+      if (it.group === 'mag') mount.position.set(4.7, -1.4, 0);
+      if (it.group === 'stock') mount.position.set(stockX(), 0, 0);
+    }
+    if (id === 'bipod' && !obj.userData.posed) { poseBipod(obj, state.bipodDeployed, 1); obj.userData.posed = true; }
+  }
+  if (!ads.on) {
+    const { tip, butt } = lengthNumbers();
+    rifle.position.x = -(tip + butt) / 2 + 2;
+  }
+  computeConflicts();
+  refreshUI();
+}
+
+/* ---------- Overlap / clearance checks ---------- */
+let conflicts = {};
+function footOf(id) { return id === 'bipod' && !state.bipodDeployed ? [-1.9, 19.8] : ITEMS[id].foot; }
+function computeConflicts() {
+  conflicts = {};
+  const on = activeIds().filter(id => ITEMS[id].rails);
+  const note = (id, msg) => (conflicts[id] ||= []).push(msg);
+  for (let i = 0; i < on.length; i++) for (let j = i + 1; j < on.length; j++) {
+    const a = on[i], b = on[j];
+    if (state.place[a].rail !== state.place[b].rail) continue;
+    const xa = railX(a), xb = railX(b), fa = footOf(a), fb = footOf(b);
+    if (xa + fa[0] < xb + fb[1] - 0.05 && xb + fb[0] < xa + fa[1] - 0.05) {
+      note(a, `Overlaps ${ITEMS[b].name}`); note(b, `Overlaps ${ITEMS[a].name}`);
+    }
+  }
+  const o = state.sel.optic;
+  if (o && state.sel.magnifier && !state.magFlip && state.place.magnifier.rail === 'top' && railX('magnifier') > railX(o))
+    note('magnifier', `Sits in front of the ${ITEMS[o].name} — move it behind`);
+  if (state.sel.ir && state.place.ir.rail === 'top' && o && railX('ir') + footOf('ir')[0] < railX(o) + footOf(o)[1] + 0.5 && railX('ir') > railX(o))
+    note('ir', 'Close to the sight line');
+}
+
+/* ---------- Stats ---------- */
+function refreshStats() {
+  const kg = BASE_KG + BARRELS[state.sel.barrel].kg + activeIds().reduce((s, id) => s + (ITEMS[id].kg || 0), 0);
+  const { len } = lengthNumbers();
+  const nConf = Object.keys(conflicts).length;
+  const rows = [
+    ['Barrel', BARRELS[state.sel.barrel].sub.split(' · ')[0]],
+    ['Length', `${len.toFixed(1)} cm · ${(len / 2.54).toFixed(1)}"`],
+    ['Weight', `${kg.toFixed(2)} kg · ${(kg * 2.2046).toFixed(1)} lb`],
+    ['Capacity', `${ITEMS[state.sel.mag].rounds}+1 rd`],
+    ['Fit check', nConf ? `${nConf} part${nConf > 1 ? 's' : ''} need attention` : 'Clear', nConf ? 'warn' : ''],
+  ];
+  $('#stats').innerHTML = rows.map(([k, v, c]) => `<dt>${k}</dt><dd class="${c || ''}">${v}</dd>`).join('');
+  $('#buildCount').textContent = `${activeIds().length} parts fitted`;
+}
+
+/* =====================================================================
+   BUILD PANEL
+   ===================================================================== */
+const FINISH = {
+  furn: { label: 'Furniture', mat: [M.furn], opts: [['Black', 0x1d1e1e], ['FDE', 0x9a8262], ['OD Green', 0x4a5040], ['Wolf Grey', 0x5b5e60]] },
+  recv: { label: 'Receiver & rails', mat: [M.recv], opts: [['Anodized', 0x1e2021], ['FDE Cerakote', 0x8f7a5c], ['Tungsten', 0x45484a]] },
+  can: { label: 'Suppressor', mat: [M.can], opts: [['Graphite', 0x2e302f], ['FDE', 0x8a7556], ['Bronze', 0x6b5a3e]] },
+};
+const finishSel = { furn: 0, recv: 0, can: 0 };
+const ui = { opt: {}, place: {} };
+const h = (tag, cls, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; e.innerHTML = html; return e; };
+const railCode = { top: 'T', right: 'R', left: 'L', bottom: 'B' };
+
+function select(id) {
+  const it = ITEMS[id], g = it.group;
+  if (it.mode === 'toggle') state.sel[g] = state.sel[g] ? null : id;
+  else if (state.sel[g] === id) { if (it.none) state.sel[g] = null; else return; }
+  else state.sel[g] = id;
+  if (g === 'barrel') buildBarrel(id);
+  syncScene();
+  if (ads.on) enterADS();
+}
+
+function buildPanel() {
+  const root = $('#cats');
+  for (const c of CATALOG) {
+    const sec = h('section', 'cat');
+    sec.append(h('h3', '', `${c.cat}<span>${c.note}</span>`));
+    const grid = h('div', 'opts');
+    sec.append(grid);
+    for (const g of c.groups) for (const it of g.items) {
+      const b = h('button', 'opt', `<b>${it.name}</b><small>${it.sub}</small><i class="flag"></i>`);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', 'false');
+      b.onclick = () => select(it.id);
+      grid.append(b);
+      ui.opt[it.id] = b;
+    }
+    for (const g of c.groups) for (const it of g.items) if (it.rails) sec.append(buildPlaceBlock(it));
+    if (c.cat === 'Stock') {
+      const p = h('div', 'place');
+      p.innerHTML = `<div class="row"><span class="lbl">Length <em>of pull</em></span><input type="range" min="0" max="5" step="1" value="${state.stockPos}" aria-label="Stock position"><output></output></div>`;
+      const r = p.querySelector('input'), out = p.querySelector('output');
+      const upd = () => { out.textContent = `Pos ${state.stockPos + 1}/6`; };
+      r.oninput = () => { state.stockPos = +r.value; upd(); syncScene(); };
+      upd();
+      sec.append(p);
+    }
+    root.append(sec);
+  }
+  const fin = h('section', 'cat');
+  fin.append(h('h3', '', 'Finish<span>Cerakote / anodize</span>'));
+  for (const [k, f] of Object.entries(FINISH)) {
+    const row = h('div', 'swrow');
+    row.append(h('div', 'lbl', f.label));
+    const sw = h('div', 'swatches');
+    f.opts.forEach(([name, hex], i) => {
+      const b = h('button', 'sw', `<i style="background:#${hex.toString(16).padStart(6, '0')}"></i>${name}`);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(i === finishSel[k]));
+      b.onclick = () => {
+        finishSel[k] = i;
+        f.mat.forEach(m => m.color.setHex(hex));
+        sw.querySelectorAll('.sw').forEach((x, j) => x.setAttribute('aria-pressed', String(j === i)));
+      };
+      sw.append(b);
+    });
+    row.append(sw);
+    fin.append(row);
+  }
+  root.append(fin);
+}
+
+function buildPlaceBlock(it) {
+  const p = h('div', 'place');
+  const chips = it.rails.map(r => `<button type="button" class="chip" data-rail="${r}">${RAILS[r].label}</button>`).join('');
+  p.innerHTML = `<div class="row"><span class="lbl">${it.name}</span><div class="chips">${chips}</div></div>
+    <div class="row"><span class="lbl"><em>Position</em></span><input type="range" min="0" step="1" aria-label="${it.name} rail position"><output></output></div>`;
+  if (it.id === 'magnifier' || it.id === 'bipod') {
+    const row = h('div', 'row');
+    const key = it.id === 'magnifier' ? 'magFlip' : 'bipodDeployed';
+    row.innerHTML = `<label class="toggle"><input type="checkbox" ${state[key] ? 'checked' : ''}> ${it.id === 'magnifier' ? 'Flipped to side' : 'Legs deployed'}</label>`;
+    row.querySelector('input').onchange = e => { state[key] = e.target.checked; syncScene(); if (ads.on) enterADS(); };
+    p.append(row);
+  }
+  p.append(h('div', 'warnline'));
+  p.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    const pl = state.place[it.id], from = RAILS[pl.rail], to = RAILS[c.dataset.rail];
+    // keep roughly the same spot along the gun when hopping rails
+    const x = from.x0 + from.slotX(pl.slot);
+    pl.rail = to.id;
+    pl.slot = Math.round(x - to.x0 - to.slotX(0));
+    syncScene();
+  });
+  const range = p.querySelector('input[type=range]');
+  range.oninput = () => { state.place[it.id].slot = +range.value; syncScene(); };
+  ui.place[it.id] = { el: p, range, out: p.querySelector('output'), warn: p.querySelector('.warnline'), chips: [...p.querySelectorAll('.chip')] };
+  return p;
+}
+
+function refreshUI() {
+  for (const [id, b] of Object.entries(ui.opt)) {
+    b.setAttribute('aria-pressed', String(isActive(id)));
+    b.classList.toggle('conflict', !!conflicts[id]);
+  }
+  for (const [id, u] of Object.entries(ui.place)) {
+    const on = isActive(id);
+    u.el.style.display = on ? '' : 'none';
+    if (!on) continue;
+    const pl = state.place[id], r = RAILS[pl.rail];
+    u.chips.forEach(c => c.setAttribute('aria-pressed', String(c.dataset.rail === pl.rail)));
+    u.range.max = r.slots - 1;
+    u.range.value = pl.slot;
+    u.out.textContent = `${railCode[pl.rail]}${pl.slot + 1}`;
+    u.warn.textContent = conflicts[id] ? '⚠ ' + conflicts[id].join(' · ') : '';
+    u.warn.classList.toggle('on', !!conflicts[id]);
+  }
+  refreshStats();
+  $('#bAds').disabled = !sightChain();
+}
+
+/* =====================================================================
+   LOOK THROUGH THE SIGHT
+   ===================================================================== */
+const ads = { on: false, saved: null, chain: null };
+const adsCanvas = $('#adsCanvas'), adsCtx = adsCanvas.getContext('2d');
+function sightChain() {
+  const o = state.sel.optic, mgOn = !!state.sel.magnifier && !state.magFlip;
+  if (!o && !mgOn) return null;
+  const parts = [];
+  if (o) parts.push({ rear: railX(o) + ITEMS[o].optic.rear, relief: ITEMS[o].optic.relief });
+  if (mgOn) parts.push({ rear: railX('magnifier') + ITEMS.magnifier.optic.rear, relief: ITEMS.magnifier.optic.relief });
+  parts.sort((a, b) => a.rear - b.rear);
+  const zo = o ? (ITEMS[o].optic.mag ?? state.zoom[o]) : 1;
+  return { o, mgOn, mag: zo * (mgOn ? 3 : 1), eyeX: parts[0].rear - parts[0].relief, overlay: mgOn || (o && !ITEMS[o].optic.plane), ret: o ? ITEMS[o].optic.ret : null };
+}
+function setOpticsVisible(v) {
+  for (const id of ['holo', 'reddot', 'lpvo', 'elcan', 'magnifier']) if (inst[id]) inst[id].obj.visible = v;
+}
+function updateAdsInfo() {
+  const ch = ads.chain;
+  if (!ch) return;
+  const names = [ch.o && ITEMS[ch.o].name, ch.mgOn && '3× magnifier'].filter(Boolean).join(' + ');
+  const zoomable = ch.o && ITEMS[ch.o].optic.zoom;
+  $('#adsInfo').innerHTML = `${names} · <b>${ch.mag.toFixed(1)}×</b>${zoomable ? ' · scroll to zoom' : ''} · Esc to exit`;
+}
+function enterADS() {
+  const ch = sightChain();
+  if (!ch) { exitADS(); return; }
+  if (!ads.on) ads.saved = { pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov, spin: controls.autoRotate };
+  ads.on = true;
+  ads.chain = ch;
+  viewAnim = null;
+  controls.enabled = false;
+  controls.autoRotate = false;
+  setOpticsVisible(true);
+  if (ch.overlay) setOpticsVisible(false);
+  $('#ads').classList.add('on');
+  $('#adsInfo').classList.add('on');
+  $('#bAds').setAttribute('aria-pressed', 'true');
+  $('#tip').classList.remove('on');
+  updateAdsInfo();
+}
+function exitADS() {
+  if (!ads.on) return;
+  ads.on = false;
+  setOpticsVisible(true);
+  camera.position.copy(ads.saved.pos);
+  controls.target.copy(ads.saved.target);
+  camera.fov = ads.saved.fov;
+  camera.updateProjectionMatrix();
+  controls.enabled = true;
+  controls.autoRotate = ads.saved.spin;
+  $('#ads').classList.remove('on');
+  $('#adsInfo').classList.remove('on');
+  $('#bAds').setAttribute('aria-pressed', 'false');
+  adsCtx.clearRect(0, 0, adsCanvas.width, adsCanvas.height);
+  syncScene();
+}
+function updateADSCamera(t) {
+  const ch = ads.chain;
+  const eye = RAILS.top.plane.localToWorld(V3(ch.eyeX, SIGHT_AXIS, 0));
+  camera.position.copy(eye);
+  const sway = 1.2 / Math.max(1, ch.mag * 0.6);
+  camera.lookAt(eye.x + 1000, eye.y + Math.sin(t * 1.3) * sway, eye.z + Math.sin(t * 0.9 + 1) * sway * 0.8);
+  const fov = 36 / ch.mag;
+  camera.fov += (fov - camera.fov) * 0.18;
+  camera.updateProjectionMatrix();
+}
+function drawOverlay() {
+  const W = adsCanvas.width, H = adsCanvas.height, g = adsCtx, ch = ads.chain;
+  g.clearRect(0, 0, W, H);
+  if (!ch.overlay) return;
+  const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.44;
+  const moa = H / (camera.fov * 60);
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  g.globalCompositeOperation = 'destination-out';
+  const gr = g.createRadialGradient(cx, cy, R * 0.9, cx, cy, R);
+  gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.fill();
+  g.globalCompositeOperation = 'source-over';
+  g.fillStyle = 'rgba(120,160,255,0.035)'; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.fill();
+  const red = (fn) => { g.save(); g.shadowColor = '#ff2a1a'; g.shadowBlur = 10; g.fillStyle = g.strokeStyle = '#ff3b22'; fn(); g.restore(); };
+  const line = (x1, y1, x2, y2, w) => { g.lineWidth = w; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); };
+  g.strokeStyle = '#050505'; g.fillStyle = '#050505';
+  if (ch.ret === 'holo') red(() => {
+    g.lineWidth = Math.max(1.5, 1.4 * moa);
+    g.beginPath(); g.arc(cx, cy, 32.5 * moa, 0, TAU); g.stroke();
+    for (const a of [0, PI / 2, PI, PI * 1.5]) line(cx + Math.cos(a) * 32.5 * moa, cy + Math.sin(a) * 32.5 * moa, cx + Math.cos(a) * 38 * moa, cy + Math.sin(a) * 38 * moa, g.lineWidth);
+    g.beginPath(); g.arc(cx, cy, Math.max(1.5, 0.6 * moa), 0, TAU); g.fill();
+  });
+  else if (ch.ret === 'dot') red(() => { g.beginPath(); g.arc(cx, cy, Math.max(2, 1.1 * moa), 0, TAU); g.fill(); });
+  else if (ch.ret === 'lpvo') {
+    const thin = Math.max(1, R * 0.004), thick = R * 0.028;
+    line(cx - R, cy, cx - R * 0.42, cy, thick); line(cx + R * 0.42, cy, cx + R, cy, thick); line(cx, cy + R * 0.42, cx, cy + R, thick);
+    line(cx - R * 0.42, cy, cx + R * 0.42, cy, thin); line(cx, cy - R, cx, cy + R * 0.42, thin);
+    for (let i = 1; i <= 4; i++) line(cx - R * (0.05 - i * 0.006), cy + R * 0.08 * i, cx + R * (0.05 - i * 0.006), cy + R * 0.08 * i, thin * 1.4);
+    red(() => {
+      g.lineWidth = R * 0.007;
+      g.beginPath(); g.arc(cx, cy, R * 0.07, PI * 0.72, PI * 2.28); g.stroke();
+      g.beginPath(); g.arc(cx, cy, R * 0.008 + 1, 0, TAU); g.fill();
+    });
+  } else if (ch.ret === 'elcan') {
+    const thin = Math.max(1, R * 0.004), thick = R * 0.035;
+    line(cx - R, cy, cx - R * 0.55, cy, thick); line(cx + R * 0.55, cy, cx + R, cy, thick); line(cx, cy + R * 0.55, cx, cy + R, thick);
+    line(cx - R * 0.55, cy, cx + R * 0.55, cy, thin); line(cx, cy - R * 0.25, cx, cy + R * 0.55, thin);
+    [0.12, 0.2, 0.3, 0.42].forEach((d, i) => line(cx - R * (0.09 - i * 0.017), cy + R * d, cx + R * (0.09 - i * 0.017), cy + R * d, thin * 1.6));
+    red(() => { g.beginPath(); g.moveTo(cx, cy - R * 0.002); g.lineTo(cx - R * 0.03, cy + R * 0.045); g.lineTo(cx + R * 0.03, cy + R * 0.045); g.closePath(); g.fill(); });
+  }
+  g.strokeStyle = 'rgba(25,25,25,.95)'; g.lineWidth = R * 0.035;
+  g.beginPath(); g.arc(cx, cy, R * 0.985, 0, TAU); g.stroke();
+}
+
+/* =====================================================================
+   LASERS + WEAPON LIGHT
+   ===================================================================== */
+function glowTex(stops) {
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  stops.forEach(([o, a]) => gr.addColorStop(o, `rgba(255,255,255,${a})`));
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+}
+const dotTex = glowTex([[0, 1], [0.15, 0.9], [0.4, 0.25], [1, 0]]);
+const coneTex = (() => {
+  const c = document.createElement('canvas'); c.width = 4; c.height = 128;
+  const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 128);
+  gr.addColorStop(0, '#fff'); gr.addColorStop(0.3, '#555'); gr.addColorStop(1, '#000');
+  g.fillStyle = gr; g.fillRect(0, 0, 4, 128);
+  return new THREE.CanvasTexture(c);
+})();
+const beamGeo = new THREE.CylinderGeometry(0.05, 0.05, 1, 8, 1, true).rotateZ(-PI / 2).translate(0.5, 0, 0);
+const coneGeo = new THREE.ConeGeometry(1, 1, 48, 1, true).translate(0, -0.5, 0).rotateZ(PI / 2);
+const additive = (color, opacity, map) => new THREE.MeshBasicMaterial({ color, opacity, map, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, side: THREE.DoubleSide });
+const BEAM_COL = { vis: 0x33ff66, ir: 0xff4455, light: 0xfff1d8 };
+const fx = {};
+function getFx(key, type) {
+  if (fx[key]) return fx[key];
+  const g = new THREE.Group();
+  const f = { g, type };
+  if (type === 'light') {
+    f.cone = new THREE.Mesh(coneGeo, additive(BEAM_COL.light, 0.12, coneTex));
+    f.cone.scale.set(260, 55, 55);
+    g.add(f.cone);
+  } else {
+    f.core = new THREE.Mesh(beamGeo, additive(BEAM_COL[type], 0.7));
+    f.halo = new THREE.Mesh(beamGeo, additive(BEAM_COL[type], 0.12));
+    g.add(f.core, f.halo);
+  }
+  f.dot = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: BEAM_COL[type], blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, transparent: true }));
+  scene.add(g, f.dot);
+  return (fx[key] = f);
+}
+const spot = new THREE.SpotLight(0xfff1d8, 0, 0, 0.3, 0.6, 1.2);
+spot.castShadow = false;
+scene.add(spot, spot.target);
+const beamRay = new THREE.Raycaster();
+const _p = V3(0, 0, 0), _d = V3(0, 0, 0), _x = V3(1, 0, 0);
+
+function updateBeams() {
+  for (const f of Object.values(fx)) { f.g.visible = false; f.dot.visible = false; }
+  spot.intensity = 0;
+  for (const id of ['ir', 'vis', 'light']) {
+    if (!isActive(id) || !inst[id]) continue;
+    const obj = inst[id].obj;
+    obj.userData.emitters.forEach((em, i) => {
+      const on = state.beams;
+      const seen = on && (em.type !== 'ir' || state.nv);
+      const am = em.ap.material;
+      if (em.type === 'light') { am.emissive.setHex(on ? 0xfff6e8 : 0); am.emissiveIntensity = on ? 6 : 0; }
+      else { am.emissive.setHex(seen ? BEAM_COL[em.type] : 0); am.emissiveIntensity = seen ? 4 : 0; }
+      if (!on) return;
+      _p.copy(em.pos); obj.localToWorld(_p);
+      _d.copy(_x).transformDirection(obj.matrixWorld);
+      beamRay.set(_p, _d);
+      beamRay.far = 8000;
+      const hit = beamRay.intersectObjects(targets, false)[0];
+      const dist = hit ? hit.distance : 8000;
+      if (em.type === 'light') {
+        spot.intensity = 1800;
+        spot.position.copy(_p);
+        spot.target.position.copy(_p).addScaledVector(_d, 100);
+      }
+      if (!seen) return;
+      const f = getFx(id + i, em.type);
+      f.g.visible = true;
+      f.g.position.copy(_p);
+      f.g.quaternion.setFromUnitVectors(_x, _d);
+      if (f.core) {
+        f.core.scale.set(dist, 1, 1);
+        f.halo.scale.set(dist, 5, 5);
+        f.core.material.opacity = em.type === 'ir' ? 0.5 : 0.35;
+      } else f.cone.material.opacity = state.nv ? 0.22 : 0.1;
+      if (hit && em.type !== 'light') {
+        f.dot.visible = true;
+        f.dot.position.copy(hit.point).addScaledVector(_d, -0.5);
+        const s = Math.max(1.5, camera.position.distanceTo(hit.point) * (ads.on ? 0.0015 : 0.008));
+        f.dot.scale.set(s, s, 1);
+      }
+    });
+  }
+}
+
+/* =====================================================================
+   DRAG ATTACHMENTS ALONG / BETWEEN RAILS
+   ===================================================================== */
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+let drag = null, hoverEvt = null;
+function setRay(e) { setRayXY(e.clientX, e.clientY); }
+function setRayXY(x, y) {
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+}
+function toScreen(v) {
+  const r = renderer.domElement.getBoundingClientRect(), p = v.clone().project(camera);
+  return [r.left + (p.x + 1) / 2 * r.width, r.top + (1 - p.y) / 2 * r.height];
+}
+// Pixel distance from a screen point to a rail's projected segment
+function railScreenDist(r, x, y) {
+  const a = toScreen(r.plane.localToWorld(V3(0, 0, 0))), b = toScreen(r.plane.localToWorld(V3(r.len, 0, 0)));
+  const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy || 1;
+  const u = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / L2));
+  return Math.hypot(x - a[0] - u * dx, y - a[1] - u * dy);
+}
+function pickItem() {
+  const objs = activeIds().filter(id => ITEMS[id].rails).map(id => inst[id].obj);
+  const hit = ray.intersectObjects(objs, true).find(h => !h.object.userData.noPick);
+  return hit ? hit.object.userData.itemId : null;
+}
+function railParam(r) {
+  const A = r.plane.localToWorld(V3(0, 0, 0));
+  const D = r.plane.localToWorld(V3(1, 0, 0)).sub(A).normalize();
+  const O = ray.ray.origin, R = ray.ray.direction;
+  const w0 = A.clone().sub(O);
+  const b = D.dot(R), d = D.dot(w0), e = R.dot(w0), den = 1 - b * b;
+  const t = Math.max(0, Math.min(r.len, den < 1e-6 ? 0 : (b * e - d) / den));
+  const P = A.clone().addScaledVector(D, t);
+  const s = Math.max(0, P.clone().sub(O).dot(R));
+  return { t, d: P.distanceTo(O.clone().addScaledVector(R, s)) };
+}
+function showGlow(rails) {
+  for (const r of Object.values(RAILS)) r.glow.material.opacity = rails.includes(r.id) ? (r.id === drag?.rail ? 0.55 : 0.18) : 0;
+}
+
+stage.addEventListener('pointerdown', e => {
+  if (ads.on || e.button !== 0) return;
+  setRay(e);
+  const id = pickItem();
+  if (!id) return;
+  e.stopPropagation();                       // keep the orbit controls out of it
+  const ms = toScreen(inst[id].mount.getWorldPosition(V3(0, 0, 0)));
+  drag = { id, rail: state.place[id].rail, gx: e.clientX - ms[0], gy: e.clientY - ms[1] };
+  stage.classList.add('dragging');
+  showGlow(ITEMS[id].rails);
+  $('#hint').style.opacity = 0;
+}, true);
+
+addEventListener('pointermove', e => {
+  if (!drag) { hoverEvt = e; return; }
+  // the mount point follows the cursor, keeping the offset from where the part was grabbed
+  const x = e.clientX - drag.gx, y = e.clientY - drag.gy;
+  setRayXY(x, y);
+  const it = ITEMS[drag.id], pl = state.place[drag.id];
+  let best = null;
+  for (const id of it.rails) {
+    const score = railScreenDist(RAILS[id], x, y) - (id === drag.rail ? 10 : 0);   // a little stickiness
+    if (!best || score < best.score) best = { id, score };
+  }
+  const r = RAILS[best.id];
+  drag.rail = pl.rail = best.id;
+  pl.slot = Math.round(railParam(r).t - r.slotX(0));
+  syncScene();
+  showGlow(it.rails);
+  showTip(e, drag.id);
+});
+addEventListener('pointerup', () => {
+  if (!drag) return;
+  drag = null;
+  stage.classList.remove('dragging');
+  showGlow([]);
+});
+
+const tip = $('#tip');
+function showTip(e, id) {
+  const pl = state.place[id];
+  tip.innerHTML = `${ITEMS[id].name}<small>${RAILS[pl.rail].label} rail · ${railCode[pl.rail]}${pl.slot + 1}${drag ? '' : ' · drag to move'}</small>`;
+  tip.style.left = e.clientX + 'px';
+  tip.style.top = e.clientY + 'px';
+  tip.classList.add('on');
+}
+function doHover() {
+  const e = hoverEvt; hoverEvt = null;
+  if (ads.on || e.target !== renderer.domElement) { tip.classList.remove('on'); stage.classList.remove('grab'); return; }
+  setRay(e);
+  const id = pickItem();
+  stage.classList.toggle('grab', !!id);
+  if (id) showTip(e, id); else tip.classList.remove('on');
+}
+
+stage.addEventListener('wheel', e => {
+  if (!ads.on) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const o = state.sel.optic, op = o && ITEMS[o].optic;
+  if (!op?.zoom) return;
+  const up = e.deltaY < 0;
+  state.zoom[o] = op.dual ? op.zoom[up ? 1 : 0] : Math.max(op.zoom[0], Math.min(op.zoom[1], state.zoom[o] + (up ? 0.5 : -0.5)));
+  ads.chain = sightChain();
+  updateAdsInfo();
+}, { passive: false, capture: true });
+
+/* =====================================================================
+   TOOLBAR, KEYS, VIEWS
+   ===================================================================== */
+const VIEWS = { '34': [-22, 28, 125], side: [2, 2, 150], top: [2, 165, 0.01], front: [150, 10, 34] };
+let viewAnim = null;
+function goView(k) {
+  if (ads.on) exitADS();
+  const tt = V3(2, -2, 0);
+  viewAnim = { from: camera.position.clone(), to: tt.clone().add(fitView(V3(...VIEWS[k]).sub(tt))), ft: controls.target.clone(), tt, t0: performance.now() };
+}
+document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => goView(b.dataset.view));
+const toggleAds = () => (ads.on ? exitADS() : enterADS());
+const toggleBeams = () => { state.beams = !state.beams; $('#bBeam').setAttribute('aria-pressed', String(state.beams)); };
+const toggleNv = () => { state.nv = !state.nv; stage.classList.toggle('nv', state.nv); $('#bNv').setAttribute('aria-pressed', String(state.nv)); scene.environmentIntensity = state.nv ? 0.35 : 0.85; };
+$('#bAds').onclick = toggleAds;
+$('#bBeam').onclick = toggleBeams;
+$('#bNv').onclick = toggleNv;
+$('#bSpin').onclick = () => {
+  controls.autoRotate = !controls.autoRotate;
+  $('#bSpin').setAttribute('aria-pressed', String(controls.autoRotate));
+};
+controls.autoRotateSpeed = 1.2;
+addEventListener('keydown', e => {
+  if (e.target.closest('input') && e.key.startsWith('Arrow')) return;
+  const k = e.key.toLowerCase();
+  if (k === 'a') toggleAds();
+  else if (k === 'l') toggleBeams();
+  else if (k === 'n') toggleNv();
+  else if (k === 'escape') exitADS();
+});
+
+/* =====================================================================
+   RENDER LOOP
+   ===================================================================== */
+// Distance that keeps the whole rifle in frame for the current aspect ratio
+function fitView(dir) {
+  const vf = camera.fov * PI / 180, hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
+  const need = Math.max(50 / Math.tan(hf / 2), 32 / Math.tan(vf / 2));
+  return dir.clone().normalize().multiplyScalar(Math.min(need, controls.maxDistance - 5));
+}
+function resize() {
+  const w = stage.clientWidth, hgt = stage.clientHeight, dpr = Math.min(devicePixelRatio, 2);
+  if (!w || !hgt) return;                    // hidden tab / collapsed pane: keep the last good size
+  renderer.setSize(w, hgt, false);
+  camera.aspect = w / hgt;
+  camera.updateProjectionMatrix();
+  adsCanvas.width = w * dpr;
+  adsCanvas.height = hgt * dpr;
+  if (!ads.on && !viewAnim) {
+    const off = fitView(camera.position.clone().sub(controls.target));
+    camera.position.copy(controls.target).add(off);
+  }
+}
+new ResizeObserver(() => resize()).observe(stage);
+
+const clock = new THREE.Clock();
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  if (viewAnim) {
+    const k = Math.min(1, (performance.now() - viewAnim.t0) / 700), e = 1 - Math.pow(1 - k, 3);
+    camera.position.lerpVectors(viewAnim.from, viewAnim.to, e);
+    controls.target.lerpVectors(viewAnim.ft, viewAnim.tt, e);
+    if (k >= 1) viewAnim = null;
+  }
+  if (inst.magnifier) {
+    const p = inst.magnifier.obj.userData.pivot, goal = state.magFlip ? -PI / 2 * 1.04 : 0;
+    p.rotation.x += (goal - p.rotation.x) * Math.min(1, dt * 10);
+  }
+  if (inst.bipod) poseBipod(inst.bipod.obj, state.bipodDeployed, Math.min(1, dt * 8));
+  if (ads.on) updateADSCamera(t); else controls.update();
+  scene.updateMatrixWorld();
+  updateBeams();
+  if (hoverEvt && !drag) doHover();
+  renderer.render(scene, camera);
+  if (ads.on) drawOverlay();
+  requestAnimationFrame(frame);
+}
+
+buildPanel();
+syncScene();
+resize();
+frame();
+requestAnimationFrame(() => $('#loading').classList.add('done'));
+setTimeout(() => { $('#hint').style.opacity = 0; }, 14000);
+</script>
+</body>
+</html>

@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMC OPERATOR — FIELD DOSSIER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#101208; --panel:#15180f; --panel2:#1a1e13; --line:#2c3120; --line2:#3a4128;
+  --ink:#d9d6c3; --dim:#7f8369; --amber:#d3a54c; --amber2:#eccf8a; --red:#b0492f;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:12px}
+#app{display:flex;flex-direction:column;height:100%}
+header{height:48px;flex:0 0 48px;display:flex;align-items:center;gap:14px;padding:0 16px;
+  border-bottom:1px solid var(--line);background:var(--panel)}
+header .mark{width:26px;height:26px;color:var(--amber)}
+header h1{font-family:"Saira Condensed";font-size:19px;font-weight:700;letter-spacing:.22em;color:var(--ink)}
+header h1 b{color:var(--amber);font-weight:700}
+header .sub{font-size:10px;color:var(--dim);letter-spacing:.14em;border-left:1px solid var(--line);padding-left:14px}
+header .right{margin-left:auto;display:flex;gap:18px;font-size:10px;color:var(--dim);letter-spacing:.1em}
+header .right b{color:var(--ink);font-weight:500}
+#burger{display:none;background:none;border:1px solid var(--line2);color:var(--ink);padding:5px 9px;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:.1em}
+#wrap{flex:1;display:flex;min-height:0}
+aside{width:296px;flex:0 0 296px;background:var(--panel);border-right:1px solid var(--line);
+  overflow-y:auto;padding:14px 14px 30px}
+aside::-webkit-scrollbar{width:5px} aside::-webkit-scrollbar-thumb{background:var(--line2)}
+.sec{margin-bottom:22px}
+.sec h2{font-family:"Saira Condensed";font-size:11px;font-weight:600;letter-spacing:.3em;
+  color:var(--dim);margin-bottom:9px;display:flex;align-items:center;gap:8px}
+.sec h2::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec h2 i{font-style:normal;color:var(--amber);font-family:"IBM Plex Mono";font-size:10px}
+.btn{display:block;width:100%;text-align:left;background:none;border:1px solid var(--line2);
+  color:var(--ink);padding:9px 11px;cursor:pointer;font-family:inherit;transition:border-color .15s,background .15s}
+.btn:hover{background:var(--panel2)}
+.btn .t{font-family:"Saira Condensed";font-size:14px;font-weight:600;letter-spacing:.14em;display:block}
+.btn .d{font-size:10px;color:var(--dim);display:block;margin-top:2px;letter-spacing:.03em;line-height:1.45}
+.btn.on{border-color:var(--amber);background:rgba(211,165,76,.07)}
+.btn.on .t{color:var(--amber)} .btn.on .d{color:#a89a74}
+.btn+.btn{margin-top:6px}
+.row3{display:flex;gap:6px}
+.camo{flex:1;background:none;border:1px solid var(--line2);cursor:pointer;padding:5px;color:var(--dim);font-family:inherit}
+.camo canvas{width:100%;height:44px;display:block;image-rendering:auto}
+.camo span{display:block;text-align:center;font-size:9px;letter-spacing:.2em;margin-top:5px}
+.camo:hover{border-color:var(--dim)} .camo.on{border-color:var(--amber);color:var(--amber)}
+.load{display:flex;justify-content:space-between;align-items:baseline}
+.load .tag{font-size:10px;color:var(--dim);letter-spacing:.06em}
+.load.on .tag{color:#a89a74}
+.tgl{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line2);
+  padding:8px 11px;cursor:pointer;color:var(--ink);font-family:inherit;background:none;width:100%}
+.tgl+.tgl{margin-top:6px}
+.tgl .sw{width:30px;height:15px;border:1px solid var(--line2);position:relative;flex:0 0 30px}
+.tgl .sw::after{content:"";position:absolute;top:2px;left:2px;width:9px;height:9px;background:var(--dim);transition:all .15s}
+.tgl.on .sw{border-color:var(--amber)}
+.tgl.on .sw::after{left:16px;background:var(--amber)}
+.tgl span{font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.tgl.on span{color:var(--amber)}
+#stage{flex:1;position:relative;min-width:0;background:#0d0f0a}
+#stage canvas{display:block}
+#stage::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 42%,transparent 55%,rgba(0,0,0,.42) 100%)}
+.corner{position:absolute;width:20px;height:20px;border:1px solid rgba(211,165,76,.4);pointer-events:none;z-index:2}
+.c-tl{top:12px;left:12px;border-right:0;border-bottom:0}
+.c-tr{top:12px;right:12px;border-left:0;border-bottom:0}
+.c-bl{bottom:12px;left:12px;border-right:0;border-top:0}
+.c-br{bottom:12px;right:12px;border-left:0;border-top:0}
+#desig{position:absolute;top:22px;left:44px;z-index:2;pointer-events:none}
+#desig .big{font-family:"Saira Condensed";font-size:26px;font-weight:700;letter-spacing:.18em;color:var(--ink)}
+#desig .big b{color:var(--amber)}
+#desig .sm{font-size:10px;color:var(--dim);letter-spacing:.2em;margin-top:2px}
+#spec{position:absolute;top:22px;right:44px;z-index:2;pointer-events:none;text-align:right}
+#spec .w{font-family:"Saira Condensed";font-size:16px;font-weight:600;letter-spacing:.16em;color:var(--amber);margin-bottom:6px}
+#spec .r{font-size:10px;color:var(--dim);letter-spacing:.08em;line-height:1.7}
+#spec .r b{color:var(--ink);font-weight:500;margin-left:8px}
+#posebar{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:3}
+#posebar button{background:rgba(16,18,8,.82);border:1px solid var(--line2);color:var(--dim);
+  cursor:pointer;padding:7px 10px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-family:inherit;transition:all .15s;backdrop-filter:blur(3px)}
+#posebar button svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+#posebar button span{font-size:8px;letter-spacing:.18em}
+#posebar button:hover{color:var(--ink);border-color:var(--dim)}
+#posebar button.on{color:var(--amber);border-color:var(--amber);background:rgba(211,165,76,.1)}
+#hint{position:absolute;bottom:22px;left:44px;z-index:2;font-size:9px;color:var(--dim);letter-spacing:.16em;pointer-events:none;transition:opacity .8s}
+@media (max-width:880px){
+  #burger{display:block}
+  aside{position:fixed;left:0;top:48px;bottom:0;z-index:20;transform:translateX(-100%);transition:transform .25s}
+  aside.open{transform:none}
+  #spec{display:none} #desig .big{font-size:18px} #hint{display:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+    <path d="M12 2 21 12 12 22 3 12Z"/><path d="M7.5 12 12 7.5 16.5 12M7.5 16 12 11.5 16.5 16"/>
+  </svg>
+  <h1>PMC <b>OPERATOR</b> DOSSIER</h1>
+  <div class="sub" id="unit">KORD-6 "CONDOR"</div>
+  <button id="burger">MENU</button>
+  <div class="right">
+    <div>TRIS <b id="hud-tri">0</b></div>
+    <div>DRAWS <b id="hud-call">0</b></div>
+    <div>FPS <b id="hud-fps">0</b></div>
+    <div>SN <b>8842-KM</b></div>
+  </div>
+</header>
+<div id="wrap">
+<aside id="rail">
+  <div class="sec"><h2><i>01</i>FACTION</h2>
+    <button class="btn on" id="f-west"><span class="t">WESTERN — CONDOR</span>
+      <span class="d">NATO contractor profile · FAST cut helmet · plate carrier with MOLLE · multicam-family pattern</span></button>
+    <button class="btn" id="f-east"><span class="t">EASTERN — VULKAN</span>
+      <span class="d">Slavic PMC profile · 6B47-type helmet · chest rig webbing &amp; bedroll · digital EMR-family pattern</span></button>
+  </div>
+  <div class="sec"><h2><i>02</i>THEATRE CAMO</h2>
+    <div class="row3">
+      <button class="camo" data-env="city"><canvas width="76" height="44"></canvas><span>CITY</span></button>
+      <button class="camo on" data-env="desert"><canvas width="76" height="44"></canvas><span>DESERT</span></button>
+      <button class="camo" data-env="forest"><canvas width="76" height="44"></canvas><span>FOREST</span></button>
+    </div>
+  </div>
+  <div class="sec"><h2><i>03</i>LOADOUT</h2>
+    <button class="btn load on" data-cls="smg"><span class="t">SMG</span><span class="tag" id="tag-smg">MP5A5</span></button>
+    <button class="btn load" data-cls="assault"><span class="t">ASSAULT</span><span class="tag" id="tag-assault">M4A1</span></button>
+    <button class="btn load" data-cls="marksman"><span class="t">MARKSMAN</span><span class="tag" id="tag-marksman">HK417</span></button>
+  </div>
+  <div class="sec"><h2><i>04</i>VIEW OPTIONS</h2>
+    <button class="tgl on" id="t-orbit"><span>AUTO ORBIT</span><span class="sw"></span></button>
+    <button class="tgl on" id="t-idle"><span>IDLE MOTION</span><span class="sw"></span></button>
+    <button class="tgl" id="t-wire"><span>WIREFRAME / MESH DENSITY</span><span class="sw"></span></button>
+  </div>
+</aside>
+<main id="stage">
+  <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+  <div id="desig"><div class="big" id="d-big">WEST <b>//</b> MC-ARID</div><div class="sm" id="d-sm">M4A1 · AT EASE</div></div>
+  <div id="spec"><div class="w" id="s-name">M4A1 BLOCK II</div>
+    <div class="r">CAL<b id="s-cal">—</b></div><div class="r">RATE<b id="s-rate">—</b></div>
+    <div class="r">MASS<b id="s-mass">—</b></div><div class="r">LENGTH<b id="s-len">—</b></div>
+    <div class="r">ACTION<b id="s-act">—</b></div></div>
+  <div id="posebar">
+    <button data-pose="ease" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.6" r="2"/><path d="M12 6.8V14M12 8.4 9.2 13.5M12 8.4 15 13M12 14 9.6 21M12 14l2.6 7M15 13l3.6 4.4"/></svg><span>AT EASE</span></button>
+    <button data-pose="aim"><svg viewBox="0 0 24 24"><circle cx="11" cy="4.6" r="2"/><path d="M11 6.8v6.7M11 8.2l4.5 1M11 8.6l4.5 1M11 13.5 7 20.5M11 13.5 15.5 21M9 9.8l13-1M20.5 8.9v1.7"/></svg><span>AIM</span></button>
+    <button data-pose="tact"><svg viewBox="0 0 24 24"><circle cx="11.5" cy="6" r="2"/><path d="M11.5 8.2 11 13.5M11.5 9.4l4.3 1.2M11 13.5 6.8 15.6 8 21M11 13.5l3.6 2.3-1.2 5.2M9.4 10.4 21 9.4"/></svg><span>TACTICAL</span></button>
+    <button data-pose="kneel"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.4" r="2"/><path d="M12 6.6v6.2M12 8l4 1.4M12 12.8l2.6 3.8-1 4.4M12 12.8 8.8 17.4H3.6M9.4 9.6 21 8.8"/></svg><span>KNEEL</span></button>
+    <button data-pose="prone"><svg viewBox="0 0 24 24"><circle cx="18.6" cy="15.4" r="1.9"/><path d="M2.5 19.8h19M3.6 18 7 16.4l9.8-.2M7 16.4 4 19.2M13 15l9.8-.8M10.5 16.6 13 15"/></svg><span>PRONE</span></button>
+  </div>
+  <div id="hint">LMB ORBIT · WHEEL ZOOM · RMB PAN</div>
+</main>
+</div>
+</div>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ============================== STATE ============================== */
+const st = { faction:'west', env:'desert', cls:'assault', pose:'ease', wire:false, idle:true, orbit:true };
+
+const ENV = {
+  city:  { gear:0x2f3338, pouch:0x25282c, boot:0x222427, sole:0x121314, helmE:0x33373a, glove:0x2a2d31, lens:0x39414a, furn:0x202225, name:'URBAN' },
+  desert:{ gear:0x8a744f, pouch:0x745f3f, boot:0x66503a, sole:0x191612, helmE:0x937f57, glove:0x8a744f, lens:0x7d5c28, furn:0x8a734e, name:'ARID' },
+  forest:{ gear:0x3c4232, pouch:0x31372a, boot:0x2a281f, sole:0x111210, helmE:0x414c36, glove:0x343a2c, lens:0x2c3a2e, furn:0x4d3728, name:'WOODLAND' }
+};
+const CAMO = {
+  west: { city:[0x565a5e,0x43474b,0x6b6f73,0x33363a,0x24262a], desert:[0xa08c62,0x8a744d,0xb3a17c,0x6e5c3d,0x4c4534], forest:[0x4d5442,0x3a4130,0x5d6449,0x2c3126,0x6b5d3f], tag:{city:'MC-URBAN',desert:'MC-ARID',forest:'MC-TROPIC'} },
+  east: { city:[0x4d5257,0x3c4145,0x5e6468,0x2d3134,0x212427], desert:[0x9c8a60,0x83704b,0xb09d74,0x655738,0x4a4230], forest:[0x4a5340,0x39422f,0x5b6647,0x2b3325,0x1f251c], tag:{city:'EMR-URBAN',desert:'EMR-DESERT',forest:'EMR-TAIGA'} }
+};
+const SPECS = {
+  smg:     { name:'MP5A5',         cal:'9×19 PAR', rate:'700 RPM', mass:'2.5 KG', len:'680 MM', act:'ROLLER-DELAY' },
+  assault_w:{ name:'M4A1 BLOCK II', cal:'5.56×45',  rate:'810 RPM', mass:'3.1 KG', len:'838 MM', act:'GAS-IMPINGE' },
+  assault_e:{ name:'AK-74M',        cal:'5.45×39',  rate:'650 RPM', mass:'3.4 KG', len:'943 MM', act:'LONG-STROKE' },
+  marksman_w:{name:'HK417 DMR',     cal:'7.62×51',  rate:'600 RPM', mass:'4.9 KG', len:'1005 MM', act:'GAS-PISTON' },
+  marksman_e:{name:'SVD-S',         cal:'7.62×54R', rate:'SEMI',    mass:'4.5 KG', len:'1225 MM', act:'SHORT-STROKE' }
+};
+
+/* ============================== POSES ============================== */
+function pose(o){ return Object.assign({
+  px:0,py:0.97,pz:0, prx:0,pry:0,prz:0, crx:0,cry:0,crz:0, nrx:0,nry:0,nrz:0,
+  flx:0.17,fly:0.10,flz:0.10,flYaw:0.2,flPit:0,
+  frx:-0.17,fry:0.10,frz:0.02,frYaw:-0.12,frPit:0,
+  wx:0,wy:1.4,wz:0.2, wrx:0,wry:0,wrz:0,
+  aPLx:0.9,aPLy:-0.5,aPLz:-0.15, aPRx:-0.3,aPRy:-0.95,aPRz:-0.4,
+  lPLx:0,lPLy:0.15,lPLz:1, lPRx:0,lPRy:0.15,lPRz:1,
+  handL:'gun', hLx:0.24,hLy:0.97,hLz:0.06,
+  camY:0.98, breath:1, sway:0.4 }, o); }
+
+const POSES = {
+  ease:  pose({ pry:0.12, crx:0.03, cry:0.04, nrx:0.03, nry:-0.10, nrz:0.04,
+    flYaw:0.20, frYaw:-0.12,
+    wx:-0.26, wy:0.97, wz:0.17, wrx:1.28, wry:0.10, wrz:0.06,
+    aPLx:0.35,aPLy:-0.15,aPLz:-0.9, aPRx:-0.25,aPRy:-0.25,aPRz:-0.95,
+    handL:'free', camY:0.98, breath:1, sway:0.35 }),
+  aim:   pose({ py:0.96, prx:0.05, pry:0.30, crx:0.07, cry:0.02, nrx:0.10, nry:-0.26, nrz:0.06,
+    flx:0.20,flz:0.22,flYaw:0.35, frx:-0.17,frz:-0.14,frYaw:-0.85,
+    wx:-0.10, wy:1.46, wz:0.17, wrx:0.03, wry:-0.10, camY:1.22, breath:1, sway:1.0 }),
+  tact:  pose({ py:0.86, prx:0.10, pry:0.34, crx:0.18, cry:0.05, nrx:0.16, nry:-0.30, nrz:0.05,
+    flx:0.26,flz:0.15,flYaw:0.45, frx:-0.26,frz:-0.05,frYaw:-0.90,
+    wx:-0.09, wy:1.40, wz:0.15, wrx:0.07, wry:-0.12,
+    aPLx:0.95,aPLy:-0.35,aPLz:0.10, aPRx:-0.3,aPRy:-1.0,aPRz:-0.25, camY:1.12, breath:1, sway:1.5 }),
+  kneel: pose({ py:0.45, pry:0.30, prx:0.04, crx:0.10, cry:0.03, nrx:0.06, nry:-0.24, nrz:0.04,
+    flx:0.26,flz:0.26,flYaw:0.50, frx:-0.20,fry:0.14,frz:-0.27,frYaw:2.75,frPit:1.15,
+    wx:-0.10, wy:1.05, wz:0.23, wrx:0.04, wry:-0.08,
+    lPLy:0.5, lPRy:-0.8,lPRz:0.6, camY:0.78, breath:1, sway:1.0 }),
+  prone: pose({ py:0.18, pz:-0.02, prx:1.32, pry:0.05, crx:-0.12, cry:0.04, nrx:-0.58, nry:-0.12, nrz:0.05,
+    flx:0.15,fly:0.09,flz:-0.78,flYaw:3.0,flPit:0.25, frx:-0.15,fry:0.10,frz:-0.76,frYaw:3.25,frPit:0.35,
+    wx:-0.09, wy:0.15, wz:0.48, wrx:-0.05, wry:-0.04,
+    aPLx:0.95,aPLy:-0.55,aPLz:-0.25, aPRx:-0.95,aPRy:-0.45,aPRz:-0.2,
+    lPLx:0.5,lPLy:-0.35,lPLz:0.35, lPRx:-0.5,lPRy:-0.35,lPRz:0.35,
+    camY:0.42, breath:0.25, sway:0.8 })
+};
+const POSE_LABEL = { ease:'AT EASE', aim:'AIM', tact:'TACTICAL AIM', kneel:'KNEELING AIM', prone:'PRONE' };
+
+/* ============================== THREE SETUP ============================== */
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+stage.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0f0a);
+scene.fog = new THREE.Fog(0x0d0f0a, 7.5, 16);
+const pmrem = new THREE.PMREMGenerator(renderer);
+const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environment = envTex;
+
+const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 60);
+camera.position.set(3.6, 2.2, 5.2);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minDistance = 1.1; controls.maxDistance = 7;
+controls.maxPolarAngle = 1.54;
+controls.target.set(0, 0.95, 0);
+controls.autoRotate = true; controls.autoRotateSpeed = 0.9;
+let orbitHold = 0, introT = 0;
+controls.addEventListener('start', () => { orbitHold = 4; document.getElementById('hint').style.opacity = 0; });
+
+const hemi = new THREE.HemisphereLight(0x9aa08a, 0x1a1c12, 0.5); scene.add(hemi);
+const key = new THREE.DirectionalLight(0xffeed8, 2.4);
+key.position.set(2.3, 3.8, 1.8); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.left = -1.8; key.shadow.camera.right = 1.8;
+key.shadow.camera.top = 2.2; key.shadow.camera.bottom = -0.6;
+key.shadow.camera.near = 0.5; key.shadow.camera.far = 10;
+key.shadow.bias = -0.0003; key.shadow.normalBias = 0.02;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x9fb4c8, 1.15);
+rim.position.set(-2.4, 2.6, -2.4); scene.add(rim);
+
+/* floor + turntable markings */
+function floorTexture(){
+  const s = 1024, cv = document.createElement('canvas'); cv.width = cv.height = s;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#191c11'; g.fillRect(0,0,s,s);
+  g.strokeStyle = 'rgba(211,165,76,0.16)'; g.fillStyle = 'rgba(211,165,76,0.28)';
+  const cx = s/2;
+  for(let r = 90; r < 500; r += 82){ g.beginPath(); g.arc(cx,cx,r,0,7); g.lineWidth = 2; g.stroke(); }
+  for(let i = 0; i < 72; i++){
+    const a = i/72*Math.PI*2, major = i%6===0;
+    g.save(); g.translate(cx,cx); g.rotate(a);
+    g.fillRect(-2, -498, 4, major? 34: 18);
+    g.restore();
+  }
+  g.font = '600 30px "Saira Condensed", monospace'; g.textAlign = 'center';
+  g.fillStyle = 'rgba(217,214,195,0.4)';
+  g.fillText('PMC DOSSIER — TURNTABLE 0x1', cx, cx - 150);
+  g.font = '500 22px "IBM Plex Mono", monospace';
+  g.fillText('AZ REF / GRID K22', cx, cx + 190);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+const floor = new THREE.Mesh(new THREE.CircleGeometry(9, 72),
+  new THREE.MeshStandardMaterial({ color:0x14160e, roughness:1, envMapIntensity:0.12 }));
+floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+const disc = new THREE.Mesh(new THREE.CircleGeometry(1.18, 72),
+  new THREE.MeshStandardMaterial({ map:floorTexture(), roughness:0.92, envMapIntensity:0.15 }));
+disc.rotation.x = -Math.PI/2; disc.position.y = 0.004; disc.receiveShadow = true; scene.add(disc);
+
+/* ============================== TEXTURE GENERATORS ============================== */
+const hx = n => '#' + n.toString(16).padStart(6,'0');
+
+function drawCamo(g, style, cols, s){
+  g.clearRect(0,0,s,s);
+  g.fillStyle = hx(cols[0]); g.fillRect(0,0,s,s);
+  if(style === 'multi'){
+    for(let i = 0; i < 130; i++){
+      g.fillStyle = hx(cols[1 + (Math.random()*3|0)]);
+      g.globalAlpha = 0.55 + Math.random()*0.4;
+      const cx = Math.random()*s, cy = Math.random()*s, R = 18 + Math.random()*46;
+      g.beginPath();
+      const lobes = 3 + (Math.random()*4|0);
+      for(let j = 0; j < lobes; j++){
+        const a = Math.random()*6.28, rr = R*(0.4 + Math.random()*0.6);
+        const x = cx + Math.cos(a)*R*0.45, y = cy + Math.sin(a)*R*0.45;
+        g.moveTo(x+rr, y); g.arc(x, y, rr, 0, 6.28);
+      }
+      g.fill();
+    }
+    g.globalAlpha = 0.35; g.fillStyle = hx(cols[4]);
+    for(let i = 0; i < 70; i++){
+      const x = Math.random()*s, y = Math.random()*s, a = Math.random()*6.28, l = 8 + Math.random()*22;
+      g.save(); g.translate(x,y); g.rotate(a); g.fillRect(-l/2,-1.2,l,2.4); g.restore();
+    }
+  } else {
+    const c = 16;
+    for(let y = 0; y < s; y += c) for(let x = 0; x < s; x += c){
+      const r = Math.random(); let col = cols[0];
+      if(r < 0.18) col = cols[1]; else if(r < 0.36) col = cols[2];
+      else if(r < 0.46) col = cols[3]; else if(r < 0.5) col = cols[4];
+      g.fillStyle = hx(col); g.fillRect(x, y, c, c);
+    }
+    g.globalAlpha = 0.18; g.fillStyle = hx(cols[3]);
+    for(let i = 0; i < 40; i++) g.fillRect(Math.random()*s, (Math.random()*s|0), 40 + Math.random()*120, c);
+  }
+  g.globalAlpha = 0.05;
+  for(let i = 0; i < 2600; i++){
+    g.fillStyle = Math.random() < 0.5 ? '#000' : '#fff';
+    g.fillRect(Math.random()*s, Math.random()*s, 2, 2);
+  }
+  g.globalAlpha = 1;
+}
+function camoTex(style, cols, rep){
+  const cv = document.createElement('canvas'); cv.width = cv.height = 512;
+  drawCamo(cv.getContext('2d'), style, cols, 512);
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+function tapeTex(txt, bg, fg){
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64;
+  const g = cv.getContext('2d');
+  g.fillStyle = bg; g.fillRect(0,0,256,64);
+  g.strokeStyle = 'rgba(0,0,0,0.4)'; g.strokeRect(3,3,250,58);
+  g.fillStyle = fg; g.font = '700 30px "Saira Condensed", monospace';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(txt, 128, 34);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+/* ============================== GEOMETRY HELPERS ============================== */
+const B = (w,h,d) => new THREE.BoxGeometry(w,h,d);
+const S = (r,w=48,h=28) => new THREE.SphereGeometry(r,w,h);
+const C = (rt,rb,h,s=40) => new THREE.CylinderGeometry(rt,rb,h,s);
+const Cap = (r,l,s=22,rs=40) => new THREE.CapsuleGeometry(r,l,s,rs);
+const T = (r,t,a=Math.PI*2) => new THREE.TorusGeometry(r,t,14,44,a);
+const cz = g => { g.rotateX(Math.PI/2); return g; };
+const tz = g => { g.rotateX(Math.PI/2); return g; };
+const grp = (x=0,y=0,z=0) => { const g = new THREE.Group(); g.position.set(x,y,z); return g; };
+function mesh(geo, m, x=0,y=0,z=0, rx=0,ry=0,rz=0, sx=1,sy=1,sz=1){
+  const o = new THREE.Mesh(geo, m);
+  o.position.set(x,y,z); o.rotation.set(rx,ry,rz); o.scale.set(sx,sy,sz);
+  o.castShadow = o.receiveShadow = true;
+  return o;
+}
+function railRibs(parent, m, y, z0, z1, n, w=0.034){
+  for(let i = 0; i < n; i++)
+    parent.add(mesh(B(w,0.005,0.008), m, 0, y, z0 + i*(z1-z0)/(n-1)));
+}
+function curvedMag(m, segs, len, w, th, ang, x, y0, z0, tilt){
+  const root = grp(x, y0, z0); root.rotation.x = tilt;
+  let node = root;
+  for(let i = 0; i < segs; i++){
+    const seg = grp(); seg.rotation.x = -ang;
+    seg.add(mesh(B(w, len, th), m, 0, -len/2, 0));
+    const nx = grp(); nx.position.y = -len;
+    seg.add(nx); node.add(seg); node = nx;
+  }
+  return root;
+}
+function addSling(parent, m, pts){
+  const curve = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p)));
+  parent.add(mesh(new THREE.TubeGeometry(curve, 24, 0.005, 8), m));
+}
+function reflex(M, x, y, z){
+  const g = grp(x,y,z);
+  g.add(mesh(B(0.026,0.018,0.055), M.metal, 0,0,0));
+  g.add(mesh(B(0.004,0.034,0.036), M.metal, 0.014,0.024,0));
+  g.add(mesh(B(0.004,0.034,0.036), M.metal, -0.014,0.024,0));
+  g.add(mesh(B(0.032,0.005,0.036), M.metal, 0,0.043,0));
+  g.add(mesh(B(0.024,0.026,0.002), M.glass, 0,0.024,0.018));
+  g.add(mesh(S(0.0026,8,6), M.dot, 0,0.024,0));
+  return g;
+}
+
+/* ============================== MATERIALS ============================== */
+let mats = null, matsAll = [], texsAll = [];
+function std(p){ const m = new THREE.MeshStandardMaterial(p); m.envMapIntensity = p.envMapIntensity ?? 0.45; matsAll.push(m); return m; }
+function makeMats(){
+  matsAll.forEach(m => m.dispose()); matsAll = [];
+  texsAll.forEach(t => t.dispose()); texsAll = [];
+  const E = ENV[st.env];
+  const pal = CAMO[st.faction][st.env];
+  const style = st.faction === 'west' ? 'multi' : 'digital';
+  const tA = camoTex(style, pal, 1.7), tB = camoTex(style, pal, 0.85);
+  texsAll.push(tA, tB);
+  const tape = tapeTex(st.faction === 'west' ? 'KORD-6 · PMC' : 'ОТРЯД · 9',
+    hx(E.pouch), st.faction === 'west' ? '#cfc9ae' : '#c85a3a');
+  texsAll.push(tape);
+  mats = {
+    camo:  std({ map:tA, bumpMap:tA, bumpScale:0.015, roughness:0.94 }),
+    camoH: std({ map:tB, roughness:0.8 }),
+    vest:  std({ color:E.gear, roughness:0.88 }),
+    pouch: std({ color:E.pouch, roughness:0.92 }),
+    gear:  std({ color:E.gear, roughness:0.82 }),
+    dark:  std({ color:0x17181a, roughness:0.7 }),
+    strap: std({ color:0x14150f, roughness:0.9 }),
+    boot:  std({ color:E.boot, roughness:0.78 }),
+    sole:  std({ color:E.sole, roughness:0.95 }),
+    glove: std({ color:E.glove, roughness:0.85 }),
+    metal: std({ color:0x232527, roughness:0.42, metalness:0.75, envMapIntensity:0.7 }),
+    poly:  std({ color:0x1e2023, roughness:0.62 }),
+    furn:  std({ color:E.furn, roughness:0.68 }),
+    bala:  std({ color:0x1c1e1c, roughness:0.95 }),
+    helmE: std({ color:E.helmE, roughness:0.6, envMapIntensity:0.6 }),
+    glass: new THREE.MeshPhysicalMaterial({ color:E.lens, metalness:0.75, roughness:0.14, transparent:true, opacity:0.78, envMapIntensity:1.2 }),
+    lens:  std({ color:0x0d1216, metalness:1, roughness:0.08, envMapIntensity:1.4 }),
+    tapeM: std({ map:tape, roughness:0.9 }),
+    dot:   new THREE.MeshBasicMaterial({ color:0xff5533 })
+  };
+  matsAll.push(mats.glass, mats.dot);
+}
+
+/* ============================== WEAPON BUILDERS ============================== */
+function wMP5(M){
+  const g = new THREE.Group(), m = M.metal, p = M.poly;
+  g.add(mesh(B(0.046,0.072,0.30), m, 0,0.055,0.03));
+  g.add(mesh(B(0.05,0.05,0.15), p, 0,0.05,0.245));
+  g.add(mesh(cz(C(0.027,0.027,0.07,28)), m, 0,0.055,0.345));
+  g.add(mesh(cz(C(0.0105,0.0105,0.09,20)), m, 0,0.062,0.40));
+  g.add(mesh(cz(C(0.012,0.012,0.03,20)), m, 0,0.062,0.448));
+  g.add(mesh(B(0.014,0.05,0.014), m, 0,0.10,0.395));
+  g.add(mesh(T(0.017,0.0045), m, 0,0.128,0.395));
+  g.add(mesh(C(0.013,0.013,0.03,18), m, 0,0.104,-0.075, 0,0,Math.PI/2));
+  g.add(curvedMag(p, 3, 0.075, 0.03, 0.024, 0.10, 0, 0.005, 0.075, 0.12));
+  g.add(mesh(B(0.032,0.10,0.05), p, 0,-0.05,-0.045, 0.32,0,0));
+  g.add(mesh(T(0.02,0.0035), m, 0,-0.012,0.005, 0,Math.PI/2,0, 1,1,0.7));
+  g.add(mesh(B(0.006,0.03,0.008), m, 0,-0.005,0.005));
+  g.add(mesh(cz(C(0.006,0.006,0.17,12)), m, 0.017,0.055,-0.20));
+  g.add(mesh(cz(C(0.006,0.006,0.17,12)), m, -0.017,0.055,-0.20));
+  g.add(mesh(B(0.05,0.07,0.11), p, 0,0.055,-0.245));
+  g.add(mesh(B(0.054,0.10,0.024), p, 0,0.045,-0.31));
+  g.add(mesh(B(0.022,0.012,0.012), m, -0.032,0.075,0.115));
+  g.add(mesh(B(0.002,0.02,0.09), M.dark, 0.0235,0.06,0.02));
+  addSling(g, M.strap, [[0.02,0.03,-0.28],[0.038,0.0,0.02],[0.03,0.0,0.22]]);
+  return { g, gR:new THREE.Vector3(0,-0.075,-0.045), gL:new THREE.Vector3(0,0.02,0.245), leftMode:'vert' };
+}
+function wM4(M){
+  const g = new THREE.Group(), m = M.metal, p = M.poly;
+  g.add(mesh(B(0.046,0.055,0.17), m, 0,0.02,-0.015));
+  g.add(mesh(B(0.046,0.048,0.25), m, 0,0.075,0.015));
+  g.add(mesh(B(0.03,0.01,0.26), m, 0,0.105,0.01));
+  railRibs(g, m, 0.113, -0.10, 0.13, 12);
+  g.add(mesh(cz(C(0.024,0.028,0.05,24)), m, 0,0.06,0.15));
+  g.add(mesh(cz(C(0.027,0.027,0.17,28)), p, 0,0.058,0.245));
+  g.add(mesh(B(0.03,0.008,0.17), m, 0,0.088,0.245));
+  railRibs(g, m, 0.096, 0.19, 0.31, 8);
+  g.add(mesh(B(0.02,0.028,0.024), m, 0,0.088,0.335));
+  g.add(mesh(C(0.004,0.014,0.045,4), m, 0,0.125,0.335));
+  g.add(mesh(C(0.0025,0.0025,0.028,10), m, 0,0.152,0.335));
+  g.add(mesh(cz(C(0.0095,0.0095,0.14,16)), m, 0,0.062,0.40));
+  g.add(mesh(cz(C(0.011,0.011,0.05,16)), m, 0,0.062,0.49));
+  g.add(mesh(T(0.0115,0.002), M.dark, 0,0.062,0.478));
+  g.add(mesh(T(0.0115,0.002), M.dark, 0,0.062,0.502));
+  g.add(curvedMag(p, 3, 0.068, 0.06, 0.026, 0.055, 0,-0.02,0.045, 0.12));
+  g.add(mesh(B(0.03,0.095,0.05), p, 0,-0.055,-0.055, 0.42,0,0));
+  g.add(mesh(T(0.02,0.0035), m, 0,-0.008,-0.005, 0,Math.PI/2,0, 1,1,0.7));
+  g.add(mesh(B(0.006,0.028,0.008), m, 0,-0.004,-0.005));
+  g.add(mesh(cz(C(0.016,0.016,0.15,20)), m, 0,0.075,-0.165));
+  g.add(mesh(B(0.048,0.07,0.14), p, 0,0.068,-0.215));
+  g.add(mesh(B(0.05,0.02,0.10), p, 0,0.106,-0.21));
+  g.add(mesh(B(0.052,0.09,0.014), M.dark, 0,0.068,-0.29));
+  g.add(mesh(B(0.03,0.018,0.024), m, 0,0.12,-0.09));
+  g.add(mesh(B(0.036,0.008,0.028), m, 0,0.085,-0.105));
+  g.add(mesh(B(0.03,0.085,0.034), p, 0,-0.012,0.27, 0.15,0,0));
+  g.add(reflex(M, 0,0.118,0.03));
+  g.add(mesh(B(0.002,0.02,0.10), M.dark, 0.0235,0.065,0.02));
+  addSling(g, M.strap, [[0.024,0.04,-0.27],[0.04,0.0,0.02],[0.035,0.0,0.24]]);
+  return { g, gR:new THREE.Vector3(0,-0.08,-0.055), gL:new THREE.Vector3(0,-0.045,0.27), leftMode:'vert' };
+}
+function wAK(M){
+  const g = new THREE.Group(), m = M.metal, f = M.furn;
+  g.add(mesh(B(0.05,0.065,0.26), m, 0,0.05,0));
+  g.add(mesh(cz(C(0.027,0.027,0.19,24)), m, 0,0.078,-0.01, 0,0,0, 1,0.62,1));
+  g.add(mesh(B(0.034,0.09,0.05), f, 0,-0.055,-0.06, 0.45,0,0));
+  g.add(mesh(T(0.02,0.0035), m, 0,-0.008,-0.01, 0,Math.PI/2,0, 1,1,0.7));
+  g.add(mesh(B(0.006,0.026,0.008), m, 0,-0.004,-0.01));
+  g.add(curvedMag(f, 4, 0.06, 0.037, 0.026, 0.10, 0,-0.005,0.055, 0.18));
+  g.add(mesh(B(0.052,0.048,0.13), f, 0,0.05,0.20));
+  g.add(mesh(cz(C(0.023,0.023,0.11,20)), f, 0,0.10,0.19));
+  g.add(mesh(cz(C(0.013,0.013,0.16,14)), m, 0,0.10,0.26));
+  g.add(mesh(B(0.028,0.04,0.03), m, 0,0.085,0.345));
+  g.add(mesh(cz(C(0.009,0.009,0.20,14)), m, 0,0.06,0.44));
+  g.add(mesh(B(0.022,0.026,0.02), m, 0,0.082,0.545));
+  g.add(mesh(B(0.005,0.04,0.018), m, 0.011,0.115,0.545));
+  g.add(mesh(B(0.005,0.04,0.018), m, -0.011,0.115,0.545));
+  g.add(mesh(C(0.0025,0.0025,0.03,10), m, 0,0.128,0.545));
+  g.add(mesh(cz(C(0.0125,0.0125,0.05,16)), m, 0,0.06,0.585));
+  g.add(mesh(cz(C(0.0128,0.0128,0.008,16)), M.dark, 0,0.0615,0.613, 0.55,0,0));
+  g.add(mesh(B(0.028,0.006,0.055), m, 0,0.095,-0.045, 0.12,0,0));
+  g.add(mesh(B(0.03,0.02,0.02), m, 0,0.085,-0.02));
+  g.add(mesh(B(0.034,0.095,0.024), f, 0,0.05,-0.315));
+  g.add(mesh(B(0.028,0.018,0.21), f, 0,0.08,-0.215, 0.09,0,0));
+  g.add(mesh(B(0.02,0.014,0.19), f, 0,0.005,-0.20));
+  g.add(mesh(B(0.022,0.06,0.016), f, 0,0.045,-0.30));
+  g.add(reflex(M, 0,0.108,0.02));
+  g.add(mesh(B(0.002,0.018,0.09), M.dark, 0.0255,0.055,0.02));
+  addSling(g, M.strap, [[0.026,0.03,-0.29],[0.04,-0.01,0.0],[0.034,-0.02,0.19]]);
+  return { g, gR:new THREE.Vector3(0,-0.08,-0.06), gL:new THREE.Vector3(0,0.01,0.20), leftMode:'vert' };
+}
+function wHK(M){
+  const g = new THREE.Group(), m = M.metal, p = M.poly;
+  g.add(mesh(B(0.05,0.06,0.19), m, 0,0.02,-0.02));
+  g.add(mesh(B(0.052,0.055,0.30), m, 0,0.078,0.03));
+  g.add(mesh(B(0.03,0.01,0.30), m, 0,0.112,0.03));
+  railRibs(g, m, 0.12, -0.10, 0.17, 14);
+  g.add(mesh(cz(C(0.03,0.03,0.20,28)), p, 0,0.06,0.30));
+  g.add(mesh(B(0.03,0.008,0.20), m, 0,0.092,0.30));
+  railRibs(g, m, 0.10, 0.22, 0.39, 9);
+  g.add(mesh(B(0.024,0.02,0.024), m, 0,0.08,0.42));
+  g.add(mesh(cz(C(0.012,0.012,0.18,16)), m, 0,0.062,0.47));
+  g.add(mesh(cz(C(0.014,0.014,0.055,16)), m, 0,0.062,0.575));
+  g.add(mesh(T(0.0145,0.002), M.dark, 0,0.062,0.562));
+  g.add(mesh(T(0.0145,0.002), M.dark, 0,0.062,0.588));
+  g.add(mesh(cz(C(0.005,0.005,0.15,10)), m, 0.018,0.028,0.36));
+  g.add(mesh(cz(C(0.005,0.005,0.15,10)), m, -0.018,0.028,0.36));
+  g.add(mesh(B(0.06,0.185,0.028), m, 0,-0.095,0.04, 0.07,0,0));
+  g.add(mesh(B(0.064,0.014,0.034), M.dark, 0,-0.19,0.052, 0.07,0,0));
+  g.add(mesh(B(0.032,0.10,0.05), p, 0,-0.058,-0.06, 0.42,0,0));
+  g.add(mesh(T(0.02,0.0035), m, 0,-0.008,-0.01, 0,Math.PI/2,0, 1,1,0.7));
+  g.add(mesh(cz(C(0.018,0.018,0.14,20)), m, 0,0.075,-0.18));
+  g.add(mesh(B(0.05,0.11,0.11), p, 0,0.07,-0.26));
+  g.add(mesh(B(0.052,0.028,0.10), p, 0,0.132,-0.245));
+  g.add(mesh(C(0.01,0.01,0.03,12), m, -0.032,0.07,-0.26, 0,0,Math.PI/2));
+  // scope
+  g.add(mesh(B(0.03,0.035,0.11), m, 0,0.135,0.02));
+  g.add(mesh(T(0.018,0.005), m, 0,0.168,0.05));
+  g.add(mesh(T(0.018,0.005), m, 0,0.168,-0.05));
+  g.add(mesh(cz(C(0.016,0.016,0.22,24)), m, 0,0.168,0.01));
+  g.add(mesh(cz(C(0.024,0.02,0.06,24)), m, 0,0.168,0.135));
+  g.add(mesh(cz(C(0.021,0.019,0.05,24)), m, 0,0.168,-0.115));
+  g.add(mesh(cz(C(0.02,0.02,0.004,24)), M.lens, 0,0.168,0.164));
+  g.add(mesh(cz(C(0.0165,0.0165,0.004,24)), M.lens, 0,0.168,-0.139));
+  g.add(mesh(C(0.012,0.012,0.018,16), m, 0,0.19,0.01));
+  g.add(mesh(C(0.012,0.012,0.018,16), m, 0.021,0.168,0.01, 0,0,Math.PI/2));
+  addSling(g, M.strap, [[0.026,0.045,-0.30],[0.045,0.0,0.02],[0.04,0.0,0.28]]);
+  return { g, gR:new THREE.Vector3(0,-0.082,-0.06), gL:new THREE.Vector3(0,0.005,0.30), leftMode:'under' };
+}
+function wSVD(M){
+  const g = new THREE.Group(), m = M.metal, f = M.furn;
+  g.add(mesh(B(0.044,0.058,0.26), m, 0,0.055,0));
+  g.add(mesh(cz(C(0.024,0.024,0.22,20)), m, 0,0.082,-0.01, 0,0,0, 1,0.6,1));
+  g.add(mesh(B(0.03,0.085,0.045), f, 0,-0.05,-0.07, 0.4,0,0));
+  g.add(curvedMag(m, 4, 0.072, 0.03, 0.024, 0.085, 0, 0.0, 0.04, 0.15));
+  g.add(mesh(B(0.05,0.042,0.11), f, 0,0.05,0.26));
+  for(let i = 0; i < 3; i++) g.add(mesh(B(0.052,0.006,0.08), M.dark, 0,0.036+i*0.013,0.26));
+  g.add(mesh(cz(C(0.012,0.012,0.18,14)), m, 0,0.098,0.27));
+  g.add(mesh(B(0.024,0.034,0.026), m, 0,0.08,0.37));
+  g.add(mesh(cz(C(0.0085,0.0085,0.24,14)), m, 0,0.058,0.50));
+  g.add(mesh(B(0.02,0.024,0.018), m, 0,0.078,0.595));
+  g.add(mesh(B(0.005,0.036,0.016), m, 0.01,0.108,0.595));
+  g.add(mesh(B(0.005,0.036,0.016), m, -0.01,0.108,0.595));
+  g.add(mesh(C(0.0025,0.0025,0.028,10), m, 0,0.12,0.595));
+  g.add(mesh(cz(C(0.0105,0.0105,0.06,14)), m, 0,0.058,0.635));
+  for(let i = 0; i < 3; i++) g.add(mesh(B(0.022,0.005,0.008), M.dark, 0,0.058,0.618+i*0.014));
+  // PSO-1 scope
+  g.add(mesh(B(0.022,0.045,0.07), m, 0,0.09,0));
+  g.add(mesh(cz(C(0.015,0.015,0.26,24)), m, 0,0.155,-0.01));
+  g.add(mesh(cz(C(0.024,0.02,0.055,20)), m, 0,0.155,-0.155));
+  g.add(mesh(cz(C(0.019,0.016,0.045,20)), m, 0,0.155,0.135));
+  g.add(mesh(T(0.023,0.006), f, 0,0.155,-0.182));
+  g.add(mesh(cz(C(0.0175,0.0175,0.004,20)), M.lens, 0,0.155,0.157));
+  g.add(mesh(cz(C(0.015,0.015,0.004,20)), M.lens, 0,0.155,-0.181));
+  g.add(mesh(B(0.03,0.026,0.03), m, -0.027,0.155,0));
+  // skeleton stock with thumbhole
+  g.add(mesh(B(0.034,0.105,0.028), f, 0,0.045,-0.33));
+  g.add(mesh(B(0.03,0.03,0.09), f, 0,0.115,-0.255));
+  g.add(mesh(B(0.024,0.016,0.20), f, 0,0.105,-0.19, 0.21,0,0));
+  g.add(mesh(B(0.018,0.014,0.17), f, 0,0.01,-0.22));
+  g.add(mesh(B(0.02,0.05,0.016), f, 0,0.045,-0.305));
+  addSling(g, M.strap, [[0.024,0.03,-0.31],[0.04,-0.02,0.0],[0.034,-0.03,0.22]]);
+  return { g, gR:new THREE.Vector3(0,-0.078,-0.07), gL:new THREE.Vector3(0,0.0,0.26), leftMode:'under' };
+}
+const WEAPONS = {
+  smg:     { w:'MP5A5',           build: M => wMP5(M) },
+  assault: { w:{west:'M4A1 BLOCK II', east:'AK-74M'},    build:(M,f)=> f==='west' ? wM4(M) : wAK(M) },
+  marksman:{ w:{west:'HK417 DMR', east:'SVD-S'},          build:(M,f)=> f==='west' ? wHK(M) : wSVD(M) }
+};
+
+/* ============================== SOLDIER BUILDERS ============================== */
+function buildHand(M, side){
+  const g = new THREE.Group();
+  g.add(mesh(S(0.03,32,20), M.glove, 0,0.012,0, 0,0,0, 1.15,1.7,0.8));
+  for(let i = 0; i < 4; i++)
+    g.add(mesh(Cap(0.0085,0.03,8,14), M.glove, (i-1.5)*0.019, 0.062, 0.004, -1.05,0,0));
+  g.add(mesh(Cap(0.009,0.026,8,14), M.glove, -side*0.034, 0.028, 0.008, -0.5,0,-side*0.85));
+  g.add(mesh(C(0.034,0.037,0.05,24), M.boot, 0,-0.05,0));
+  return g;
+}
+function buildBoot(M){
+  const g = new THREE.Group();
+  g.add(mesh(B(0.104,0.026,0.27), M.sole, 0,-0.096,0.05));
+  g.add(mesh(S(0.048,28,18), M.boot, 0,-0.072,0.16, 0,0,0, 1.05,0.62,1.5));
+  g.add(mesh(S(0.046,28,18), M.boot, 0,-0.066,-0.055, 0,0,0, 1.0,0.72,1.0));
+  g.add(mesh(B(0.096,0.075,0.14), M.boot, 0,-0.045,0.015));
+  g.add(mesh(C(0.045,0.05,0.055,24), M.boot, 0,0.005,0));
+  for(let i = 0; i < 3; i++) g.add(mesh(B(0.05,0.006,0.014), M.sole, 0,-0.004,0.02+i*0.035));
+  return g;
+}
+function shellPad(M, r, tilt){
+  const g = new THREE.Group();
+  g.add(mesh(new THREE.SphereGeometry(r, 28, 18, 0, 6.28, 0, 1.6), M.gear, 0,0,0.01, tilt,0,0, 1,1,0.75));
+  g.add(mesh(B(0.185,0.02,0.012), M.strap, 0,0.05,-0.05));
+  g.add(mesh(B(0.185,0.02,0.012), M.strap, 0,-0.05,-0.05));
+  return g;
+}
+function buildHead(M){
+  const g = new THREE.Group();
+  g.add(mesh(S(0.092,48,32), M.bala, 0,0,0.004, 0,0,0, 0.95,1.08,1.0));
+  g.add(mesh(S(0.07,28,18), M.bala, 0,-0.045,0.02, 0,0,0, 0.82,0.9,0.95));
+  g.add(mesh(S(0.016,16,12), M.bala, 0,-0.005,0.093));
+  g.add(mesh(B(0.13,0.02,0.03), M.dark, 0,0.045,0.075));
+  if(st.faction === 'west'){
+    // ballistic sunglasses + electronic headset + FAST helmet
+    g.add(mesh(B(0.145,0.05,0.02), M.glass, 0,0.005,0.088));
+    g.add(mesh(B(0.15,0.01,0.024), M.dark, 0,0.036,0.088));
+    g.add(mesh(B(0.012,0.008,0.09), M.dark, 0.075,0.02,0.045));
+    g.add(mesh(B(0.012,0.008,0.09), M.dark, -0.075,0.02,0.045));
+    g.add(mesh(T(0.104,0.009,Math.PI), M.dark, 0,0.01,0));
+    g.add(mesh(C(0.038,0.038,0.028,24), M.dark, 0.096,-0.01,0.01, 0,0,Math.PI/2));
+    g.add(mesh(C(0.038,0.038,0.028,24), M.dark, -0.096,-0.01,0.01, 0,0,Math.PI/2));
+    g.add(mesh(S(0.115,48,28), M.camoH, 0,0.052,0.004, 0,0,0, 1.0,0.82,1.08));
+    g.add(mesh(tz(T(0.108,0.011)), M.camoH, 0,0.0,0.004, 0,0,0, 1.02,1,1.1));
+    for(const s of [1,-1]){
+      g.add(mesh(B(0.014,0.03,0.21), M.gear, s*0.105,0.045,0.005));
+      for(let i = 0; i < 3; i++) g.add(mesh(B(0.016,0.006,0.012), M.dark, s*0.107,0.038+i*0.014,0.03));
+    }
+    g.add(mesh(B(0.034,0.03,0.018), M.dark, 0,0.112,0.078, -0.35,0,0));
+    g.add(mesh(B(0.038,0.044,0.008), M.dark, 0,0.07,0.112, -0.15,0,0));
+  } else {
+    // 6B47-type helmet + stowed goggles
+    g.add(mesh(S(0.115,48,28), M.helmE, 0,0.052,0.004, 0,0,0, 1.02,0.78,1.04));
+    g.add(mesh(tz(T(0.108,0.011)), M.helmE, 0,0.005,0.004, 0,0,0, 1.03,1,1.06));
+    g.add(mesh(T(0.085,0.007,Math.PI), M.strap, 0,-0.005,0.01, 0,0,Math.PI));
+    g.add(mesh(tz(T(0.112,0.01)), M.strap, 0,0.055,-0.005, 0,0,0, 1.0,1,1.02));
+    for(const s of [1,-1]){
+      g.add(mesh(T(0.03,0.008), M.dark, s*0.034,0.075,0.095));
+      g.add(mesh(cz(C(0.027,0.027,0.006,24)), M.glass, s*0.034,0.075,0.097));
+    }
+    g.add(mesh(B(0.014,0.012,0.014), M.dark, 0,0.075,0.095));
+    g.add(mesh(B(0.026,0.03,0.012), M.dark, 0,0.105,0.09, -0.3,0,0));
+    g.add(mesh(B(0.012,0.024,0.14), M.gear, 0.104,0.03,0.01));
+    g.add(mesh(B(0.012,0.024,0.14), M.gear, -0.104,0.03,0.01));
+  }
+  return g;
+}
+function vestWestern(M, chest){
+  chest.add(mesh(B(0.34,0.42,0.17), M.camo, 0,0.21,0));
+  chest.add(mesh(B(0.27,0.30,0.045), M.camo, 0,0.23,0.10));
+  chest.add(mesh(B(0.28,0.09,0.02), M.camo, 0,0.385,0.105));
+  for(let i = -1; i <= 1; i++){
+    chest.add(mesh(B(0.078,0.125,0.05), M.pouch, i*0.092,0.16,0.135));
+    chest.add(mesh(B(0.082,0.028,0.052), M.pouch, i*0.092,0.228,0.135));
+    chest.add(mesh(B(0.082,0.012,0.054), M.dark, i*0.092,0.14,0.135));
+    chest.add(mesh(B(0.082,0.012,0.054), M.dark, i*0.092,0.185,0.135));
+  }
+  chest.add(mesh(B(0.10,0.085,0.035), M.pouch, 0,0.315,0.125));
+  chest.add(mesh(B(0.05,0.28,0.14), M.camo, 0.185,0.19,0));
+  chest.add(mesh(B(0.05,0.28,0.14), M.camo, -0.185,0.19,0));
+  chest.add(mesh(S(0.06,28,18), M.camo, 0.10,0.445,0, 0,0,0, 1,0.5,1.5));
+  chest.add(mesh(S(0.06,28,18), M.camo, -0.10,0.445,0, 0,0,0, 1,0.5,1.5));
+  chest.add(mesh(B(0.28,0.34,0.05), M.camo, 0,0.23,-0.11));
+  chest.add(mesh(B(0.24,0.28,0.11), M.camo, 0,0.20,-0.19));
+  chest.add(mesh(B(0.20,0.014,0.115), M.dark, 0,0.12,-0.19));
+  chest.add(mesh(B(0.20,0.014,0.115), M.dark, 0,0.28,-0.19));
+  chest.add(mesh(B(0.05,0.095,0.032), M.dark, 0.125,0.33,0.115, 0,0.1,0));
+  chest.add(mesh(C(0.0035,0.0035,0.44,10), M.dark, 0.155,0.50,-0.02, 0.28,0,-0.12));
+  chest.add(mesh(S(0.008,10,8), M.dark, 0.132,0.71,-0.08, 0.28,0,-0.12));
+  const hyd = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.16,0.06,-0.16), new THREE.Vector3(0.17,0.34,-0.10),
+    new THREE.Vector3(0.14,0.46,0.02), new THREE.Vector3(0.115,0.30,0.13),
+    new THREE.Vector3(0.10,0.10,0.14)]);
+  chest.add(mesh(new THREE.TubeGeometry(hyd, 32, 0.0065, 8), M.dark));
+  chest.add(mesh(new THREE.PlaneGeometry(0.11,0.028), M.tapeM, 0.09,0.33,0.112));
+  chest.add(mesh(new THREE.PlaneGeometry(0.05,0.038), M.patchM, -0.19,0.30,0.05, 0,1.35,0));
+}
+function vestEastern(M, chest){
+  for(const s of [1,-1]){
+    chest.add(mesh(B(0.05,0.34,0.018), M.gear, s*0.08,0.245,0.105));
+    chest.add(mesh(B(0.05,0.30,0.015), M.gear, s*0.08,0.245,-0.095));
+    chest.add(mesh(S(0.05,28,18), M.gear, s*0.08,0.44,0, 0,0,0, 1,0.45,1.5));
+    chest.add(mesh(B(0.095,0.15,0.055), M.pouch, s*0.08,0.09,0.135));
+    chest.add(mesh(B(0.098,0.03,0.057), M.pouch, s*0.08,0.17,0.135));
+    chest.add(mesh(B(0.014,0.14,0.058), M.strap, s*0.05,0.10,0.135));
+  }
+  for(const y of [0.13,0.23,0.33]) chest.add(mesh(B(0.30,0.032,0.014), M.gear, 0,y,0.108));
+  chest.add(mesh(B(0.05,0.09,0.03), M.dark, 0.10,0.30,0.125));
+  for(let i = 0; i < 3; i++) chest.add(mesh(T(0.012,0.004), M.dark, 0.10,0.235-i*0.022,0.128));
+  chest.add(mesh(cz(C(0.052,0.052,0.36,24)), M.gear, 0,0.40,-0.15));
+  chest.add(mesh(B(0.04,0.13,0.11), M.strap, 0,0.40,-0.15));
+  chest.add(mesh(B(0.22,0.20,0.10), M.gear, 0,0.16,-0.165));
+  chest.add(mesh(new THREE.PlaneGeometry(0.10,0.028), M.tapeM, -0.09,0.30,0.112));
+  chest.add(mesh(new THREE.PlaneGeometry(0.042,0.042), M.patchM, 0.155,0.325,0.112));
+}
+function buildSoldier(){
+  const M = mats;
+  const s = new THREE.Group();
+  const pelvis = grp(0,0.97,0); s.add(pelvis);
+  pelvis.add(mesh(S(0.15,44,28), M.camo, 0,0,0, 0,0,0, 1.28,0.75,0.92));
+  pelvis.add(mesh(S(0.11,32,20), M.camo, 0,-0.07,0.01, 0,0,0, 1.15,0.75,0.9));
+  // belt + pouches
+  pelvis.add(mesh(C(0.163,0.163,0.05,40), M.gear, 0,-0.03,0, 0,0,0, 1,1,0.85));
+  pelvis.add(mesh(B(0.05,0.035,0.015), M.dark, 0,-0.03,0.135));
+  if(st.faction === 'west'){
+    pelvis.add(mesh(B(0.06,0.09,0.045), M.pouch, 0.125,-0.055,0.075, 0,-0.45,0));
+    pelvis.add(mesh(B(0.06,0.09,0.045), M.pouch, -0.125,-0.055,0.075, 0,0.45,0));
+  } else {
+    pelvis.add(mesh(B(0.065,0.095,0.05), M.pouch, 0.135,-0.06,0.04, 0,-0.7,0));
+    pelvis.add(mesh(B(0.065,0.095,0.05), M.pouch, -0.135,-0.06,0.04, 0,0.7,0));
+    pelvis.add(mesh(B(0.06,0.08,0.04), M.pouch, 0,-0.06,-0.15));
+    // drop-leg panel
+    pelvis.add(mesh(B(0.085,0.15,0.05), M.pouch, -0.16,-0.20,0.05, 0,0,0.10));
+    pelvis.add(mesh(B(0.012,0.16,0.02), M.strap, -0.155,-0.10,0.06, 0,0,0.1));
+    pelvis.add(mesh(B(0.012,0.16,0.02), M.strap, -0.165,-0.10,0.02, 0,0,0.1));
+  }
+  const chest = grp(0,0.10,0); pelvis.add(chest);
+  chest.add(mesh(Cap(0.135,0.08,18,36), M.camo, 0,0.03,0, 0,0,0, 1.2,1,0.85));
+  chest.add(mesh(S(0.165,48,32), M.camo, 0,0.25,0.005, 0,0,0, 1.28,1.32,0.75));
+  chest.add(mesh(S(0.075,32,20), M.camo, 0.19,0.40,0, 0,0,0, 1.05,1.15,1.05));
+  chest.add(mesh(S(0.075,32,20), M.camo, -0.19,0.40,0, 0,0,0, 1.05,1.15,1.05));
+  chest.add(mesh(S(0.085,32,20), M.camo, 0,0.45,-0.01, 0,0,0, 1.7,0.62,0.85));
+  if(st.faction === 'west') vestWestern(M, chest); else vestEastern(M, chest);
+  // neck + head
+  const neck = grp(0,0.47,0); chest.add(neck);
+  neck.add(mesh(C(0.047,0.05,0.11,24), M.bala, 0,0,0));
+  const head = grp(0,0.09,0); neck.add(head);
+  head.add(buildHead(M));
+  // arms (side: +1 left, -1 right)
+  function arm(side){
+    const sh = grp(side*0.205,0.42,0); chest.add(sh);
+    sh.add(mesh(Cap(0.056,0.175,18,36), M.camo, 0,-0.148,0));
+    const el = grp(0,-0.295,0); sh.add(el);
+    el.add(mesh(S(0.053,28,20), M.camo, 0,0,0));
+    el.add(mesh(Cap(0.045,0.16,18,36), M.camo, 0,-0.13,0));
+    el.add(mesh(new THREE.SphereGeometry(0.06,24,16,0,6.28,0,1.6), M.gear, 0,0,-0.012, -1.45,0,0, 1,1,0.7));
+    const wr = grp(0,-0.265,0); el.add(wr);
+    const hand = buildHand(M, side); wr.add(hand);
+    return { sh, el, wr, hand };
+  }
+  const aL = arm(1), aR = arm(-1);
+  // legs
+  function leg(side){
+    const hip = grp(side*0.10,-0.05,0); pelvis.add(hip);
+    hip.add(mesh(Cap(0.088,0.245,20,40), M.camo, 0,-0.215,0));
+    const knee = grp(0,-0.43,0); hip.add(knee);
+    knee.add(mesh(S(0.082,32,22), M.camo, 0,0,0));
+    const kp = shellPad(M, 0.075, 1.35); knee.add(kp);
+    knee.add(mesh(Cap(0.062,0.27,20,36), M.camo, 0,-0.205,0));
+    const foot = grp(0,0,0); knee.add(foot);
+    foot.add(buildBoot(M));
+    return { hip, knee, foot };
+  }
+  const lL = leg(1), lR = leg(-1);
+  return { g:s, j:{
+    pelvis, chest, neck,
+    shL:aL.sh, elL:aL.el, wrL:aL.wr, handL:aL.hand,
+    shR:aR.sh, elR:aR.el, wrR:aR.wr, handR:aR.hand,
+    hipL:lL.hip, kneeL:lL.knee, footL:lL.foot,
+    hipR:lR.hip, kneeR:lR.knee, footR:lR.foot } };
+}
+
+/* ============================== IK SOLVER (2-bone) ============================== */
+const _p0=new THREE.Vector3(), _dir=new THREE.Vector3(), _pole=new THREE.Vector3(),
+      _n=new THREE.Vector3(), _U=new THREE.Vector3(), _M=new THREE.Vector3(),
+      _dB=new THREE.Vector3(), _k=new THREE.Vector3(), _e2=new THREE.Vector3(),
+      _e3=new THREE.Vector3(), _cr=new THREE.Vector3(),
+      _m4=new THREE.Matrix4(), _qw=new THREE.Quaternion(), _qp=new THREE.Quaternion();
+const _X = new THREE.Vector3(1,0,0);
+function solveLimb(root, mid, target, pole, L1, L2){
+  root.getWorldPosition(_p0);
+  _dir.subVectors(target, _p0);
+  let d = _dir.length();
+  const dmin = Math.abs(L1-L2)+0.02, dmax = L1+L2-0.004;
+  const dc = THREE.MathUtils.clamp(d, dmin, dmax);
+  if(d > 1e-6) _dir.multiplyScalar(1/d); else _dir.set(0,-1,0);
+  d = dc;
+  _pole.copy(pole).addScaledVector(_dir, -pole.dot(_dir));
+  if(_pole.lengthSq() < 1e-6) _pole.set(0,0,1);
+  _n.copy(_pole).normalize();
+  const a1 = Math.acos(THREE.MathUtils.clamp((L1*L1 + d*d - L2*L2)/(2*L1*d), -1, 1));
+  _U.copy(_dir).multiplyScalar(Math.cos(a1)).addScaledVector(_n, Math.sin(a1));
+  _M.copy(_p0).addScaledVector(_U, L1);
+  _dB.subVectors(target, _M);
+  if(_dB.lengthSq() < 1e-8) _dB.copy(_dir); else _dB.normalize();
+  _k.crossVectors(_U, _dB);
+  if(_k.lengthSq() < 1e-8) _k.set(1,0,0); else _k.normalize();
+  _e2.copy(_U).negate();
+  _e3.crossVectors(_k, _e2);
+  _m4.makeBasis(_k, _e2, _e3);
+  _qw.setFromRotationMatrix(_m4);
+  root.parent.getWorldQuaternion(_qp).invert();
+  root.quaternion.copy(_qp).multiply(_qw);
+  const beta = Math.atan2(_cr.crossVectors(_U,_dB).dot(_k), THREE.MathUtils.clamp(_U.dot(_dB),-1,1));
+  mid.quaternion.setFromAxisAngle(_X, beta);
+}
+
+/* ============================== RIG / SCENE PLUMBING ============================== */
+let soldier = null, j = null, weapon = null, gRo = null, gLo = null, wLeftMode = 'vert';
+const AX = (v,a) => new THREE.Quaternion().setFromAxisAngle(v,a);
+const VY = new THREE.Vector3(0,1,0), VX = new THREE.Vector3(1,0,0);
+const qGRIP_R = AX(VY, Math.PI/2).premultiply(AX(VX, 1.9));
+const qGRIP_L = AX(VY,-Math.PI/2).premultiply(AX(VX, 1.9));
+const qGRIP_U = AX(VX, 1.55);
+const qFree = new THREE.Quaternion().setFromEuler(new THREE.Euler(2.85, 0.12, 0.1));
+
+let cur = Object.assign({}, POSES.ease), tgt = POSES.ease;
+
+function rebuild(){
+  if(soldier){
+    soldier.traverse(o => { if(o.isMesh) o.geometry.dispose(); });
+    scene.remove(soldier);
+  }
+  makeMats();
+  const built = buildSoldier();
+  soldier = built.g; j = built.j;
+  // weapon
+  const def = WEAPONS[st.cls];
+  const w = def.build(mats, st.faction);
+  weapon = grp(); weapon.add(w.g);
+  gRo = new THREE.Object3D(); gRo.position.copy(w.gR); weapon.add(gRo);
+  gLo = new THREE.Object3D(); gLo.position.copy(w.gL); weapon.add(gLo);
+  wLeftMode = w.leftMode;
+  soldier.add(weapon);
+  matsAll.forEach(m => m.wireframe = st.wire);
+  scene.add(soldier);
+  cur = Object.assign({}, tgt);
+  updateHUDText();
+}
+
+/* ============================== FRAME / POSE APPLICATION ============================== */
+const _tv = new THREE.Vector3(), _pv = new THREE.Vector3(),
+      _qW = new THREE.Quaternion(), _qH = new THREE.Quaternion(),
+      _q1 = new THREE.Quaternion(), _e = new THREE.Euler(), _qf = new THREE.Quaternion(),
+      tR = new THREE.Vector3(), tL = new THREE.Vector3(), _off = new THREE.Vector3();
+function setHandOrient(hand, wrist, qDes){
+  wrist.getWorldQuaternion(_q1).invert();
+  hand.quaternion.copy(_q1).multiply(qDes);
+}
+function setFootOrient(foot, yaw, pit){
+  foot.parent.getWorldQuaternion(_q1).invert();
+  _qf.setFromEuler(_e.set(pit, yaw, 0, 'YXZ'));
+  foot.quaternion.copy(_q1).multiply(_qf);
+}
+function applyFrame(t){
+  const br = st.idle ? Math.sin(t*1.7)*0.012*cur.breath : 0;
+  const br2 = st.idle ? Math.cos(t*1.13)*0.006*cur.breath : 0;
+  const bob = st.idle ? Math.sin(t*1.7)*0.004*cur.breath : 0;
+  const swy = st.idle ? cur.sway : 0;
+  j.pelvis.position.set(cur.px, cur.py + bob, cur.pz);
+  j.pelvis.rotation.set(cur.prx, cur.pry, cur.prz);
+  j.chest.rotation.set(cur.crx + br, cur.cry + br2, cur.crz);
+  j.neck.rotation.set(cur.nrx + br*0.5, cur.nry, cur.nrz);
+  soldier.updateMatrixWorld(true);
+  // legs
+  _tv.set(cur.flx, cur.fly, cur.flz); _pv.set(cur.lPLx, cur.lPLy, cur.lPLz);
+  solveLimb(j.hipL, j.kneeL, _tv, _pv, 0.43, 0.41);
+  _tv.set(cur.frx, cur.fry, cur.frz); _pv.set(cur.lPRx, cur.lPRy, cur.lPRz);
+  solveLimb(j.hipR, j.kneeR, _tv, _pv, 0.43, 0.41);
+  soldier.updateMatrixWorld(true);
+  setFootOrient(j.footL, cur.flYaw, cur.flPit);
+  setFootOrient(j.footR, cur.frYaw, cur.frPit);
+  // weapon (with aiming micro-sway)
+  weapon.position.set(cur.wx, cur.wy, cur.wz);
+  weapon.rotation.set(
+    cur.wrx + Math.sin(t*1.31)*0.006*swy,
+    cur.wry + Math.sin(t*0.97)*0.005*swy,
+    cur.wrz + Math.cos(t*1.11)*0.004*swy);
+  soldier.updateMatrixWorld(true);
+  // arm targets from weapon grips
+  weapon.getWorldQuaternion(_qW);
+  gRo.getWorldPosition(tR);
+  _qH.copy(_qW).multiply(qGRIP_R);
+  tR.add(_off.set(0,0.032,0).applyQuaternion(_qH));
+  if(tgt.handL === 'gun'){
+    gLo.getWorldPosition(tL);
+    _qH.copy(_qW).multiply(wLeftMode === 'vert' ? qGRIP_L : qGRIP_U);
+    tL.add(_off.set(0,0.032,0).applyQuaternion(_qH));
+  } else {
+    tL.set(cur.hLx, cur.hLy, cur.hLz);
+    _qH.copy(qFree);
+  }
+  _pv.set(cur.aPLx, cur.aPLy, cur.aPLz);
+  solveLimb(j.shL, j.elL, tL, _pv, 0.295, 0.265);
+  _pv.set(cur.aPRx, cur.aPRy, cur.aPRz);
+  solveLimb(j.shR, j.elR, tR, _pv, 0.295, 0.265);
+  soldier.updateMatrixWorld(true);
+  // hand orientation
+  setHandOrient(j.handR, j.wrR, _qH.copy(_qW).multiply(qGRIP_R));
+  if(tgt.handL === 'gun')
+    setHandOrient(j.handL, j.wrL, _qH.copy(_qW).multiply(wLeftMode === 'vert' ? qGRIP_L : qGRIP_U));
+  else setHandOrient(j.handL, j.wrL, qFree);
+}
+
+/* ============================== MAIN LOOP ============================== */
+const clock = new THREE.Clock();
+let fpsN = 0, fpsT = 0, hudT = 0;
+const restCam = new THREE.Vector3(2.35, 1.55, 3.35);
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+
+function loop(){
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+  // pose damping
+  const f = 1 - Math.exp(-dt*6);
+  for(const k in tgt){ if(typeof tgt[k] === 'number') cur[k] += (tgt[k]-cur[k])*f; }
+  // intro camera ease
+  if(introT < 1){
+    introT += dt*0.7;
+    camera.position.lerp(restCam, 1 - Math.exp(-dt*2.4));
+  }
+  if(orbitHold > 0){ orbitHold -= dt; controls.autoRotate = false; }
+  else controls.autoRotate = st.orbit;
+  // camera framing follows pose
+  controls.target.y += (cur.camY - controls.target.y) * (1 - Math.exp(-dt*2.5));
+  applyFrame(t);
+  controls.update();
+  renderer.render(scene, camera);
+  // HUD
+  fpsN++; fpsT += dt; hudT += dt;
+  if(hudT > 0.4){
+    hudT = 0;
+    document.getElementById('hud-tri').textContent = renderer.info.render.triangles.toLocaleString('en-US');
+    document.getElementById('hud-call').textContent = renderer.info.render.calls;
+    document.getElementById('hud-fps').textContent = Math.round(fpsN/fpsT);
+    fpsN = 0; fpsT = 0;
+  }
+}
+
+/* ============================== UI ============================== */
+function updateHUDText(){
+  const camoTag = CAMO[st.faction].tag[st.env];
+  const wName = typeof WEAPONS[st.cls].w === 'string' ? WEAPONS[st.cls].w : WEAPONS[st.cls].w[st.faction];
+  document.getElementById('d-big').innerHTML =
+    (st.faction === 'west' ? 'WEST' : 'EAST') + ' <b>//</b> ' + camoTag;
+  document.getElementById('d-sm').textContent = wName + ' · ' + POSE_LABEL[st.pose];
+  document.getElementById('unit').textContent = st.faction === 'west' ? 'KORD-6 "CONDOR"' : 'SEKTOR-9 "VULKAN"';
+  const sp = SPECS[st.cls + '_' + st.faction[0]] || SPECS[st.cls];
+  document.getElementById('s-name').textContent = wName;
+  document.getElementById('s-cal').textContent = sp.cal;
+  document.getElementById('s-rate').textContent = sp.rate;
+  document.getElementById('s-mass').textContent = sp.mass;
+  document.getElementById('s-len').textContent = sp.len;
+  document.getElementById('s-act').textContent = sp.act;
+  document.getElementById('tag-smg').textContent = 'MP5A5';
+  document.getElementById('tag-assault').textContent = st.faction === 'west' ? 'M4A1' : 'AK-74M';
+  document.getElementById('tag-marksman').textContent = st.faction === 'west' ? 'HK417' : 'SVD-S';
+}
+function refreshSwatches(){
+  const style = st.faction === 'west' ? 'multi' : 'digital';
+  document.querySelectorAll('.camo').forEach(b => {
+    const env = b.dataset.env;
+    drawCamo(b.querySelector('canvas').getContext('2d'), style, CAMO[st.faction][env], 76);
+  });
+}
+function select(sel){ document.querySelectorAll(sel).forEach(b => b.classList.remove('on')); }
+document.getElementById('f-west').onclick = e => {
+  st.faction = 'west'; select('#rail .btn:not(.load)'); e.currentTarget.classList.add('on'); rebuild(); refreshSwatches();
+};
+document.getElementById('f-east').onclick = e => {
+  st.faction = 'east'; select('#rail .btn:not(.load)'); e.currentTarget.classList.add('on'); rebuild(); refreshSwatches();
+};
+document.querySelectorAll('.camo').forEach(b => b.onclick = () => {
+  st.env = b.dataset.env; select('.camo'); b.classList.add('on'); rebuild();
+});
+document.querySelectorAll('.load').forEach(b => b.onclick = () => {
+  st.cls = b.dataset.cls; select('.load'); b.classList.add('on'); rebuild();
+});
+document.querySelectorAll('#posebar button').forEach(b => b.onclick = () => {
+  st.pose = b.dataset.pose; tgt = POSES[st.pose]; select('#posebar button'); b.classList.add('on');
+  updateHUDText();
+});
+function wireToggle(id, key, fn){
+  const el = document.getElementById(id);
+  el.onclick = () => { st[key] = !st[key]; el.classList.toggle('on', st[key]); if(fn) fn(); };
+}
+wireToggle('t-orbit', 'orbit');
+wireToggle('t-idle', 'idle');
+wireToggle('t-wire', 'wire', () => matsAll.forEach(m => m.wireframe = st.wire));
+document.getElementById('burger').onclick = () => document.getElementById('rail').classList.toggle('open');
+window.addEventListener('pointerdown', () => document.getElementById('rail').classList.remove('open'), { once:false });
+
+/* ============================== BOOT ============================== */
+refreshSwatches();
+resize();
+rebuild();
+loop();
+</script>
+</body>
+</html>

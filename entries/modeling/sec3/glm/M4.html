@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M4 WORKBENCH — Modular Carbine Configurator</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0c0e;--panel:rgba(16,17,20,.93);--line:#2a2c33;--txt:#c8c3b7;--dim:#6d6a62;--acc:#d9982f;--red:#c8402a}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'IBM Plex Mono',monospace}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt)}
+#viewport{position:fixed;inset:0}
+#viewport canvas{display:block;touch-action:none;cursor:grab}
+#viewport.nv canvas{filter:sepia(1) hue-rotate(62deg) saturate(5) brightness(1.22) contrast(1.18)}
+#grain{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .35s;z-index:5;mix-blend-mode:screen;
+background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E")}
+body.nv #grain{opacity:.14;animation:grain .3s steps(3) infinite}
+@keyframes grain{0%{background-position:0 0}50%{background-position:120px 70px}100%{background-position:60px 160px}}
+#topbar{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;padding:0 20px;z-index:11;justify-content:space-between;background:rgba(11,12,14,.72);backdrop-filter:blur(8px);border-bottom:1px solid rgba(42,44,51,.6)}
+#brand h1{font:700 16px 'Chakra Petch';letter-spacing:.18em;color:#e9e5db}
+#brand h1 b{color:var(--acc)}
+#brand .sub{font-size:9px;letter-spacing:.3em;color:var(--dim);margin-top:2px}
+#specs{display:flex;gap:22px;font-size:11px;color:var(--dim);letter-spacing:.08em}
+#specs b{color:var(--txt);font-weight:600}
+#specs span,#specs button{display:flex;align-items:center}
+#fmode{background:#1a1b1f;border:1px solid var(--line);color:var(--acc);font:500 10px 'IBM Plex Mono';letter-spacing:.1em;padding:5px 10px;cursor:pointer}
+#fmode:hover{border-color:var(--acc)}
+#tbtns{display:none;gap:6px}
+#tbtns button{background:#1a1b1f;border:1px solid var(--line);color:var(--txt);font:500 10px 'IBM Plex Mono';padding:5px 8px;cursor:pointer}
+.panel{position:fixed;top:70px;bottom:96px;width:288px;background:var(--panel);border:1px solid var(--line);overflow-y:auto;z-index:10;backdrop-filter:blur(6px)}
+.panel.off{display:none}
+#catalog{left:18px}
+#mountedPanel{right:18px;width:262px}
+.panel::-webkit-scrollbar{width:4px}
+.panel::-webkit-scrollbar-thumb{background:var(--line)}
+.sec{padding:13px 16px 9px;border-bottom:1px solid var(--line)}
+.sec h3{font:600 11px 'Chakra Petch';letter-spacing:.26em;color:var(--txt);margin-bottom:4px}
+.sec h3 i{font-style:normal;color:var(--acc);margin-right:8px}
+.crow{display:flex;align-items:center;gap:8px;margin:7px 0}
+.clab{font-size:10px;letter-spacing:.1em;color:var(--dim);flex:1;white-space:nowrap}
+.wtag{font-size:9px;color:var(--dim);letter-spacing:.05em}
+.cbtns{display:flex;gap:4px}
+button{background:#1a1b1f;border:1px solid var(--line);color:var(--txt);font:500 10px 'IBM Plex Mono';letter-spacing:.06em;padding:5px 8px;cursor:pointer;text-transform:uppercase}
+button:hover{border-color:var(--acc);color:#fff}
+button.on{background:var(--acc);border-color:var(--acc);color:#0b0c0e;font-weight:600}
+button:disabled{opacity:.32;cursor:default}
+button:disabled:hover{border-color:var(--line);color:var(--txt)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{display:flex;align-items:center;gap:6px}
+.chips .dot{width:9px;height:9px;border:1px solid #000;display:inline-block}
+.phead{position:sticky;top:0;background:var(--panel);font:600 11px 'Chakra Petch';letter-spacing:.24em;padding:13px 16px;border-bottom:1px solid var(--line);color:var(--txt)}
+.phead span{color:var(--acc)}
+#mountedList{padding:4px 14px 14px}
+.mrow{border:1px solid var(--line);margin:8px 0;padding:9px 10px;background:#141518}
+.mrow.sel{border-color:var(--acc)}
+.mrow.sel .mname{color:var(--acc)}
+.mhead{display:flex;align-items:center;gap:6px}
+.mname{font-size:10px;letter-spacing:.08em;flex:1;color:var(--txt)}
+select{background:#1a1b1f;border:1px solid var(--line);color:var(--txt);font:500 9px 'IBM Plex Mono';padding:3px 4px;text-transform:uppercase;outline:none}
+.rlab{font-size:8px;color:var(--dim);letter-spacing:.22em;margin-top:7px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--line);margin:6px 0 2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;background:var(--acc);cursor:ew-resize;border:none}
+input[type=range]::-moz-range-thumb{width:9px;height:9px;background:var(--acc);cursor:ew-resize;border:none;border-radius:0}
+.mbtns{display:flex;gap:4px;margin-top:8px}
+.mbtn{flex:1;padding:4px 4px;font-size:9px}
+.mdel{flex:0 0 28px}
+#actionbar{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:11}
+#actionbar button{padding:10px 20px;font-size:11px;letter-spacing:.12em}
+#hints{position:fixed;left:20px;bottom:18px;font-size:9px;color:var(--dim);line-height:2;letter-spacing:.12em;z-index:9;text-transform:uppercase}
+kbd{border:1px solid var(--line);padding:0 4px;color:var(--txt);font-size:9px}
+#adsHud{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);text-align:center;z-index:12;display:none;width:280px}
+#adsMag{font:700 36px 'Chakra Petch';color:var(--acc);letter-spacing:.04em;text-shadow:0 0 1px #000}
+#adsCtl{margin-top:8px}
+#adsCtl button{padding:6px 14px}
+#adsHint{font-size:9px;color:var(--dim);letter-spacing:.24em;margin-top:10px}
+#toast{position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-8px);background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--acc);padding:8px 16px;font-size:10px;letter-spacing:.14em;opacity:0;transition:.25s;z-index:30;pointer-events:none;text-transform:uppercase}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+body.ads #catalog,body.ads #mountedPanel,body.ads #actionbar,body.ads #hints{opacity:0;pointer-events:none;transition:.3s}
+@media(max-width:1120px){#tbtns{display:flex}}
+@media(max-width:980px){.panel{width:252px;top:auto;max-height:46vh;bottom:60px}#hints{display:none}#brand .sub{display:none}}
+</style>
+</head>
+<body>
+<div id="viewport"></div>
+<div id="grain"></div>
+<header id="topbar">
+  <div id="brand">
+    <h1>M4 <b>//</b> WORKBENCH</h1>
+    <div class="sub">MODULAR CARBINE CONFIGURATOR — 5.56×45 NATO</div>
+  </div>
+  <div id="tbtns"><button data-p="catalog">PARTS</button><button data-p="mountedPanel">GEAR</button></div>
+  <div id="specs">
+    <span>WEIGHT <b id="specW">—</b></span>
+    <span>LENGTH <b id="specL">—</b></span>
+    <button id="fmode">MODE: SEMI</button>
+  </div>
+</header>
+<aside id="catalog" class="panel"></aside>
+<aside id="mountedPanel" class="panel">
+  <div class="phead">MOUNTED HARDWARE <span id="mcount">0</span></div>
+  <div id="mountedList"></div>
+</aside>
+<div id="actionbar">
+  <button id="aimBtn">AIM — F</button>
+  <button id="nvBtn">NIGHT VISION — N</button>
+  <button id="rvBtn">RESET VIEW — R</button>
+</div>
+<div id="hints">
+  LMB DRAG — ORBIT · DRAG PART ALONG RAIL<br>
+  DROP PART ON ANOTHER RAIL TO REMOUNT<br>
+  SCROLL — ZOOM / OPTIC MAGNIFICATION<br>
+  <kbd>F</kbd> AIM · <kbd>N</kbd> NV · <kbd>R</kbd> VIEW · CLICK PART — SELECT
+</div>
+<div id="adsHud"><div id="adsMag">1.0×</div><div id="adsCtl"></div><div id="adsHint">EXIT — F / ESC / CLICK</div></div>
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+/* ================= DOM ================= */
+const viewport=document.getElementById('viewport'), catEl=document.getElementById('catalog'),
+mountedList=document.getElementById('mountedList'), mcount=document.getElementById('mcount'),
+specW=document.getElementById('specW'), specL=document.getElementById('specL'),
+aimBtn=document.getElementById('aimBtn'), nvBtn=document.getElementById('nvBtn'), rvBtn=document.getElementById('rvBtn'),
+fmodeBtn=document.getElementById('fmode'), adsHud=document.getElementById('adsHud'),
+adsMag=document.getElementById('adsMag'), adsCtl=document.getElementById('adsCtl'),
+toastEl=document.getElementById('toast'), tbtns=[...document.querySelectorAll('#tbtns button')];
+
+/* ================= DATA =================
+   Rifle space: bore axis = +X (muzzle), +Y up, +Z = shooter's right. Metres. x=0 is the upper receiver face. */
+const D=Math.PI/180;
+const RT=0.038;   // rail top above bore
+const SH=0.040;   // sight line above rail top
+const BARRELS={
+  b103:{label:'10.3"',len:0.262,w:0.48},
+  b145:{label:'14.5"',len:0.368,w:0.64},
+  b16:{label:'16"',len:0.406,w:0.70}
+};
+const HGS={
+  quad7:{label:'RIS 7"',len:0.178,w:0.31,type:'quad'},
+  mlok10:{label:'M-LOK 10"',len:0.254,w:0.27,type:'mlok'},
+  mlok13:{label:'M-LOK 13"',len:0.330,w:0.34,type:'mlok'}
+};
+const MUZZLES={
+  a2:{label:'A2',name:'A2 BIRDCAGE',len:0.057,w:0.07},
+  comp:{label:'COMP',name:'COMPENSATOR',len:0.062,w:0.10},
+  supp:{label:'SUPP',name:'SUPPRESSOR',len:0.170,w:0.48}
+};
+const STOCKS={
+  car:{label:'CAR-15',w:0.24,d:0.034,rear:-0.181,
+    pts:[[0.02,0.026],[-0.165,0.03],[-0.172,0.02],[-0.172,-0.088],[-0.16,-0.095],[-0.10,-0.04],[-0.02,-0.022],[0.02,-0.02]],
+    pad:[0.008,0.122,0.038,-0.176,-0.032]},
+  sop:{label:'SOPMOD',w:0.39,d:0.036,rear:-0.187,
+    pts:[[0.025,0.03],[-0.08,0.038],[-0.17,0.036],[-0.176,0.026],[-0.176,-0.092],[-0.164,-0.1],[-0.11,-0.05],[-0.03,-0.03],[0.025,-0.024]],
+    pad:[0.01,0.13,0.042,-0.181,-0.032]},
+  prs:{label:'PRS',w:0.62,d:0.042,rear:-0.218,
+    pts:[[0.03,0.032],[-0.06,0.032],[-0.07,0.05],[-0.19,0.05],[-0.2,0.042],[-0.205,-0.1],[-0.19,-0.108],[-0.15,-0.06],[-0.05,-0.04],[0.03,-0.03]],
+    pad:[0.012,0.15,0.046,-0.211,-0.03]}
+};
+const SPOS={0:{label:'1'},1:{label:'2'},2:{label:'3'},3:{label:'4'}};
+const MAGS={
+  stanag:{label:'STANAG',name:'STANAG 30RD',w:0.49,len:0.172,curve:0.020},
+  pmag:{label:'PMAG',name:'PMAG 30RD',w:0.47,len:0.176,curve:0.022},
+  p40:{label:'PMAG 40',name:'PMAG 40RD',w:0.62,len:0.232,curve:0.034}
+};
+const GRIPS={
+  a2:{label:'A2',w:0.07,d:0.028,pts:[[0.014,0],[-0.024,0],[-0.054,-0.098],[-0.05,-0.108],[-0.02,-0.11],[-0.012,-0.1],[0.002,-0.06],[0.012,-0.048],[0.006,-0.038],[0.016,-0.02]]},
+  erg:{label:'ERGO',w:0.09,d:0.03,pts:[[0.016,0],[-0.038,0.002],[-0.046,-0.008],[-0.032,-0.012],[-0.06,-0.1],[-0.056,-0.112],[-0.02,-0.114],[-0.008,-0.1],[0.004,-0.05],[0.016,-0.012]]}
+};
+const FINISH={blk:{label:'BLK',c:0x1f2022},fde:{label:'FDE',c:0x8a7350},od:{label:'OD',c:0x4a5136},gry:{label:'GRY',c:0x575b60}};
+const BASE_W=1.52; // receivers, BCG, buffer, trigger group
+const ATT={
+  rds:  {name:'RED DOT 1×',grp:'OPTICS',w:0.24,len:0.07,rails:['top'],kind:'optic',mag:1,ret:'dot',eye:0.11,at:-0.02,abs:1,build:bRDS},
+  holo: {name:'HOLO SIGHT 1×',grp:'OPTICS',w:0.32,len:0.10,rails:['top'],kind:'optic',mag:1,ret:'holo',eye:0.11,at:-0.005,abs:1,build:bHolo},
+  acog: {name:'PRISM 4×32',grp:'OPTICS',w:0.45,len:0.15,rails:['top'],kind:'optic',mag:4,ret:'chev',eye:0.05,at:-0.08,abs:1,build:bAcog},
+  lpvo: {name:'LPVO 1–6×24',grp:'OPTICS',w:0.68,len:0.26,rails:['top'],kind:'optic',mag:6,ret:'duplex',eye:0.09,at:-0.035,abs:1,build:bLPVO},
+  mag3x:{name:'MAGNIFIER 3×',grp:'OPTICS',w:0.34,len:0.11,rails:['top'],kind:'magnifier',mag:3,eye:0.07,at:-0.17,abs:1,build:bMag3x},
+  buisR:{name:'BUIS REAR',grp:'IRON SIGHTS',w:0.08,len:0.04,rails:['top'],kind:'irons',eye:0.08,at:-0.17,abs:1,build:bBuisR},
+  buisF:{name:'BUIS FRONT',grp:'IRON SIGHTS',w:0.06,len:0.03,rails:['top'],kind:'post',at:1,build:bBuisF},
+  vfg:  {name:'VERTICAL GRIP',grp:'UNDERBARREL',w:0.09,len:0.04,rails:['bottom'],kind:'grip',at:0.55,build:bVFG},
+  afg:  {name:'ANGLED GRIP',grp:'UNDERBARREL',w:0.07,len:0.09,rails:['bottom'],kind:'grip',at:0.3,build:bAFG},
+  bipod:{name:'BIPOD',grp:'UNDERBARREL',w:0.36,len:0.06,rails:['bottom'],kind:'bipod',at:1,build:bBipod},
+  light:{name:'WEAPONLIGHT',grp:'DEVICES',w:0.15,len:0.12,rails:['right','left','top','bottom'],kind:'light',at:1,build:bLight},
+  peq:  {name:'LASER / IR',grp:'DEVICES',w:0.22,len:0.10,rails:['top','left','right'],kind:'laser',at:1,build:bPEQ}
+};
+const RAIL_ORDER=['top','right','left','bottom'];
+const MODES=['SAFE','SEMI','BURST'], SEL_ANG=[0,Math.PI/2,Math.PI];
+
+/* ================= STATE ================= */
+const cfg={barrel:'b145',hg:'quad7',muzzle:'a2',stock:'car',spos:1,mag:'stanag',grip:'a2',rec:'blk',furn:'blk'};
+let atts=[], nextId=1, selId=null, fireMode=1, nv=false, ads=false, adsZoom=1, adsSight=null, quiet=false;
+const geo={front:0.4,rear:-0.4};
+const view={az:0.6,el:0.2,r:1.2,tx:0,ty:-0.02};
+
+/* ================= RENDERER / SCENE ================= */
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+viewport.appendChild(renderer.domElement);
+const overlay=document.createElement('canvas');
+overlay.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;opacity:0';
+viewport.appendChild(overlay);
+const octx=overlay.getContext('2d');
+
+const scene=new THREE.Scene();
+const BG_DAY=new THREE.Color(0x16181b), BG_NV=new THREE.Color(0x050607);
+scene.background=BG_DAY.clone();
+scene.fog=new THREE.FogExp2(0x16181b,0.0075);
+const camera=new THREE.PerspectiveCamera(36,1,0.01,600);
+const ghost=new THREE.PerspectiveCamera();
+const hemi=new THREE.HemisphereLight(0xdfe6ee,0x2a2620,0.6); scene.add(hemi);
+const key=new THREE.DirectionalLight(0xfff1dd,1.15);
+key.position.set(0.75,1.8,1.1); key.target.position.set(0.05,0,0);
+key.castShadow=true; key.shadow.mapSize.set(2048,2048); key.shadow.bias=-0.0004;
+Object.assign(key.shadow.camera,{left:-0.9,right:0.9,top:0.9,bottom:-0.9,near:0.1,far:5});
+scene.add(key,key.target);
+const rim=new THREE.DirectionalLight(0x9db8d8,0.55); rim.position.set(-1.2,0.8,-1.4); scene.add(rim);
+const amb=new THREE.AmbientLight(0xffffff,0.12); scene.add(amb);
+
+const mat={
+  rec:new THREE.MeshStandardMaterial({roughness:.5,metalness:.4}),
+  furn:new THREE.MeshStandardMaterial({roughness:.78,metalness:.05}),
+  steel:new THREE.MeshStandardMaterial({color:0x2b2c2e,roughness:.45,metalness:.6}),
+  park:new THREE.MeshStandardMaterial({color:0x252628,roughness:.7,metalness:.4}),
+  opt:new THREE.MeshStandardMaterial({color:0x1e1f21,roughness:.5,metalness:.45}),
+  poly:new THREE.MeshStandardMaterial({color:0x1a1b1d,roughness:.85,metalness:.02}),
+  dark:new THREE.MeshStandardMaterial({color:0x070708,roughness:1,metalness:0}),
+  magMetal:new THREE.MeshStandardMaterial({color:0x3a3c3e,roughness:.55,metalness:.55}),
+  amber:new THREE.MeshStandardMaterial({color:0x553300,emissive:0xd9982f,emissiveIntensity:.8}),
+  glass:new THREE.MeshStandardMaterial({color:0x5a8aa6,roughness:.05,metalness:.3,transparent:true,opacity:.35,side:THREE.DoubleSide,depthWrite:false})
+};
+function applyFinish(){mat.rec.color.setHex(FINISH[cfg.rec].c);mat.furn.color.setHex(FINISH[cfg.furn].c);}
+
+/* ================= GEOMETRY HELPERS ================= */
+const GC={};
+function gBox(w,h,d){const k='b'+w+'|'+h+'|'+d;return GC[k]||(GC[k]=new THREE.BoxGeometry(w,h,d));}
+function gCyl(ax,rB,rF,len,seg){ // rB at the -axis end, rF at the +axis end
+  const k='c'+ax+rB+'|'+rF+'|'+len+'|'+seg;if(GC[k])return GC[k];
+  const g=new THREE.CylinderGeometry(rF,rB,len,seg||20);
+  if(ax==='x')g.rotateZ(-Math.PI/2);else if(ax==='z')g.rotateX(Math.PI/2);
+  return GC[k]=g;}
+function gCirc(r){const k='o'+r;if(GC[k])return GC[k];const g=new THREE.CircleGeometry(r,28);g.rotateY(Math.PI/2);return GC[k]=g;}
+function gPlane(w,h){const k='p'+w+'|'+h;if(GC[k])return GC[k];const g=new THREE.PlaneGeometry(w,h);g.rotateY(Math.PI/2);return GC[k]=g;}
+function gTorus(r,t){const k='t'+r+'|'+t;if(GC[k])return GC[k];const g=new THREE.TorusGeometry(r,t,8,24);g.rotateY(Math.PI/2);return GC[k]=g;}
+function M(geom,m,x,y,z){const o=new THREE.Mesh(geom,m);o.position.set(x||0,y||0,z||0);return o;}
+function box(p,w,h,d,m,x,y,z,rz){const o=M(gBox(w,h,d),m,x,y,z);if(rz)o.rotation.z=rz;p.add(o);return o;}
+function cyl(p,ax,rB,rF,len,m,x,y,z,seg){const o=M(gCyl(ax,rB,rF,len,seg),m,x,y,z);p.add(o);return o;}
+function lens(p,r,x,y,z){const o=M(gCirc(r),mat.glass,x,y,z);o.userData.glass=true;p.add(o);return o;}
+function extr(p,pts,depth,m,x,y,z){
+  const k='e'+JSON.stringify(pts)+depth;let g=GC[k];
+  if(!g){const s=new THREE.Shape();pts.forEach((q,i)=>i?s.lineTo(q[0],q[1]):s.moveTo(q[0],q[1]));
+    g=new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:true,bevelThickness:0.0015,bevelSize:0.0015,bevelSegments:1,steps:1});
+    g.translate(0,0,-depth/2);GC[k]=g;}
+  const o=M(g,m,x,y,z);p.add(o);return o;}
+// Picatinny section from x0..x1 sitting on a surface `surf` above the bore, rotated about X to the given side
+function pic(p,x0,x1,surf,rot){
+  const g=new THREE.Group();g.rotation.x=rot;p.add(g);
+  const L=x1-x0,c=(x0+x1)/2;
+  box(g,L,0.005,0.016,mat.rec,c,surf+0.0025,0);
+  const n=Math.max(1,Math.floor(L/0.01)),im=new THREE.InstancedMesh(gBox(0.0053,0.005,0.021),mat.rec,n),m4=new THREE.Matrix4(),s0=c-(n-1)*0.005;
+  for(let i=0;i<n;i++){m4.makeTranslation(s0+i*0.01,surf+0.0075,0);im.setMatrixAt(i,m4);}
+  im.instanceMatrix.needsUpdate=true;g.add(im);return g;}
+
+/* ================= RIFLE ================= */
+let rifle=null;
+function buildRifle(){
+  if(rifle)scene.remove(rifle);
+  rifle=new THREE.Group();
+  const B=BARRELS[cfg.barrel],HG=HGS[cfg.hg],MZ=MUZZLES[cfg.muzzle],S=STOCKS[cfg.stock];
+  // upper receiver
+  box(rifle,0.18,0.048,0.03,mat.rec,-0.09,0.004,0);
+  pic(rifle,-0.174,-0.004,0.028,0);
+  box(rifle,0.055,0.014,0.002,mat.dark,-0.1,0.006,0.0155);            // ejection port
+  box(rifle,0.012,0.012,0.006,mat.rec,-0.136,0.016,0.017);              // brass deflector
+  cyl(rifle,'x',0.0065,0.0065,0.028,mat.rec,-0.158,0.012,0.019,14);     // forward assist
+  box(rifle,0.02,0.008,0.012,mat.rec,-0.188,0.022,0);                   // charging handle
+  box(rifle,0.008,0.006,0.05,mat.rec,-0.196,0.022,0);
+  // lower receiver
+  box(rifle,0.16,0.034,0.029,mat.rec,-0.09,-0.037,0);
+  box(rifle,0.064,0.05,0.034,mat.rec,-0.055,-0.05,0);                   // magwell
+  cyl(rifle,'z',0.005,0.005,0.004,mat.steel,-0.03,-0.04,0.018,12);      // mag release
+  box(rifle,0.018,0.012,0.003,mat.rec,-0.012,-0.03,-0.016);             // bolt catch
+  [-0.02,-0.155].forEach(x=>{[-1,1].forEach(s=>cyl(rifle,'z',0.0038,0.0038,0.003,mat.steel,x,-0.03,s*0.0152,12));});
+  box(rifle,0.058,0.004,0.016,mat.rec,-0.087,-0.073,0);                 // trigger guard
+  box(rifle,0.004,0.02,0.012,mat.rec,-0.058,-0.063,0);
+  box(rifle,0.004,0.02,0.004,mat.steel,-0.083,-0.062,0,0.25);           // trigger
+  const selP=new THREE.Group();selP.position.set(-0.136,-0.034,-0.0158);rifle.add(selP);
+  cyl(selP,'z',0.0045,0.0045,0.003,mat.steel,0,0,-0.0005,14);
+  box(selP,0.02,0.005,0.0025,mat.steel,0.009,0,-0.002);
+  selP.rotation.z=SEL_ANG[fireMode];rifle.userData.sel=selP;
+  extr(rifle,GRIPS[cfg.grip].pts,GRIPS[cfg.grip].d,mat.furn,-0.108,-0.054,0);
+  buildMag(rifle);
+  // buffer tube + stock
+  cyl(rifle,'x',0.0165,0.0165,0.21,mat.rec,-0.285,0.004,0,20);
+  cyl(rifle,'x',0.021,0.021,0.008,mat.park,-0.186,0.004,0,8);
+  const sx=-0.30-cfg.spos*0.022,sg=new THREE.Group();sg.position.x=sx;rifle.add(sg);
+  extr(sg,S.pts,S.d,mat.furn,0,0,0);
+  box(sg,S.pad[0],S.pad[1],S.pad[2],mat.poly,S.pad[3],S.pad[4],0);
+  box(sg,0.03,0.006,0.012,mat.poly,-0.02,-0.024,0);
+  if(cfg.stock==='sop')[-1,1].forEach(s=>{cyl(sg,'x',0.013,0.013,0.11,mat.furn,-0.065,-0.006,s*0.024,16);cyl(sg,'x',0.0135,0.0135,0.006,mat.poly,-0.007,-0.006,s*0.024,16);});
+  if(cfg.stock==='prs')[-1,1].forEach(s=>cyl(sg,'z',0.008,0.008,0.008,mat.steel,-0.06,0.035,s*0.025,14));
+  // barrel, gas block
+  cyl(rifle,'x',0.0095,0.0095,B.len,mat.park,B.len/2,0,0,18);
+  cyl(rifle,'x',0.013,0.013,0.04,mat.park,0.02,0,0,18);
+  box(rifle,0.02,0.024,0.024,mat.park,0.185,0.004,0);
+  // handguard
+  if(HG.type==='quad'){
+    box(rifle,HG.len,0.056,0.056,mat.rec,HG.len/2,0,0);
+    [0,Math.PI/2,-Math.PI/2,Math.PI].forEach(r=>pic(rifle,0.004,HG.len-0.004,0.028,r));
+  }else{
+    const k='oct'+HG.len;let g=GC[k];
+    if(!g){g=new THREE.CylinderGeometry(0.031,0.031,HG.len,8);g.rotateY(Math.PI/8);g.rotateZ(-Math.PI/2);GC[k]=g;}
+    rifle.add(M(g,mat.rec,HG.len/2,0,0));
+    pic(rifle,0.004,HG.len-0.004,0.028,0);
+    for(let x=0.03;x<HG.len-0.03;x+=0.04){
+      box(rifle,0.032,0.007,0.002,mat.dark,x,0,0.0284);box(rifle,0.032,0.007,0.002,mat.dark,x,0,-0.0284);
+      box(rifle,0.032,0.002,0.007,mat.dark,x,-0.0284,0);}
+  }
+  // muzzle device
+  const mx=B.len;
+  if(cfg.muzzle==='a2'){
+    cyl(rifle,'x',0.011,0.011,MZ.len,mat.park,mx+MZ.len/2,0,0,18);
+    [-1.05,0,1.05].forEach(a=>{const g=new THREE.Group();g.rotation.x=a;g.position.x=mx;rifle.add(g);box(g,0.03,0.002,0.004,mat.dark,0.03,0.0103,0);});
+  }else if(cfg.muzzle==='comp'){
+    cyl(rifle,'x',0.012,0.012,MZ.len,mat.park,mx+MZ.len/2,0,0,8);
+    [0.016,0.028,0.04].forEach(o=>{box(rifle,0.006,0.002,0.012,mat.dark,mx+o,0.0118,0);box(rifle,0.007,0.012,0.002,mat.dark,mx+o,0,0.0118);box(rifle,0.007,0.012,0.002,mat.dark,mx+o,0,-0.0118);});
+  }else{
+    cyl(rifle,'x',0.016,0.02,0.02,mat.park,mx+0.01,0,0,24);
+    cyl(rifle,'x',0.02,0.02,0.14,mat.park,mx+0.09,0,0,24);
+    cyl(rifle,'x',0.02,0.017,0.01,mat.park,mx+0.165,0,0,24);
+    rifle.add(M(gCirc(0.006),mat.dark,mx+0.1705,0,0));
+  }
+  geo.front=mx+MZ.len;geo.rear=sx+S.rear;
+  rifle.traverse(o=>{if(o.isMesh&&!o.userData.glass)o.castShadow=true;});
+  scene.add(rifle);
+}
+function buildMag(p){
+  const G=MAGS[cfg.mag],n=10,hw=0.029,L=G.len,c=G.curve,pts=[];
+  for(let i=0;i<=n;i++){const t=i/n;pts.push([+(c*t*t-hw).toFixed(5),+(-L*t).toFixed(5)]);}
+  for(let i=n;i>=0;i--){const t=i/n;pts.push([+(c*t*t+hw).toFixed(5),+(-L*t).toFixed(5)]);}
+  const poly=cfg.mag!=='stanag',depth=poly?0.024:0.022,m=poly?mat.furn:mat.magMetal;
+  const g=new THREE.Group();g.position.set(-0.0555,-0.03,0);p.add(g);
+  extr(g,pts,depth,m,0,0,0);
+  box(g,0.066,0.012,depth+0.008,poly?mat.furn:mat.poly,c,-L-0.004,0,Math.atan(2*c/L));
+}
+
+/* ================= RAILS ================= */
+function railDefs(){
+  const HG=HGS[cfg.hg],s=HG.type==='quad'?RT:0.0286,x1=HG.len-0.004;
+  return{
+    top:{label:'TOP',y:RT,z:0,rot:0,x0:-0.174,x1},
+    right:{label:'RIGHT',y:0,z:s,rot:Math.PI/2,x0:0.006,x1},
+    left:{label:'LEFT',y:0,z:-s,rot:-Math.PI/2,x0:0.006,x1},
+    bottom:{label:'BOTTOM',y:-s,z:0,rot:Math.PI,x0:0.006,x1}};
+}
+function fits(R,rail,x,len,selfId){
+  if(x-len/2<R.x0-1e-6||x+len/2>R.x1+1e-6)return false;
+  return atts.every(a=>a.id===selfId||a.rail!==rail||Math.abs(a.x-x)>=(ATT[a.type].len+len)/2+0.002);}
+// nearest free position (snapped to 5 mm) within maxD of `want`, or null
+function findFree(rail,want,len,selfId,maxD){
+  const R=railDefs()[rail],lo=R.x0+len/2,hi=R.x1-len/2;if(hi<lo-1e-9)return null;
+  const lim=maxD===undefined?1:maxD,c=Math.min(hi,Math.max(lo,Math.round(want/0.005)*0.005));
+  for(let d=0;d<=lim+1e-9;d+=0.005){
+    for(const s of d?[-1,1]:[1]){const x=c+s*d;if(x>=lo-1e-9&&x<=hi+1e-9&&fits(R,rail,x,len,selfId))return x;}
+    if(c-d<lo&&c+d>hi)break;}
+  for(const x of[lo,hi])if(Math.abs(x-c)<=lim&&fits(R,rail,x,len,selfId))return x;
+  return null;}
+
+/* ================= ATTACHMENT BUILDERS (mount surface at y=0, footprint centred on x=0, outward = +Y) ================= */
+function bRDS(g){
+  box(g,0.046,0.008,0.024,mat.opt,0,0.004,0);
+  box(g,0.032,0.018,0.02,mat.opt,0,0.017,0);
+  cyl(g,'x',0.0175,0.0175,0.05,mat.opt,0,SH,0,24);
+  cyl(g,'x',0.0195,0.0195,0.012,mat.opt,0.027,SH,0,24);
+  cyl(g,'x',0.0195,0.0195,0.01,mat.opt,-0.026,SH,0,24);
+  lens(g,0.0165,0.0335,SH,0);lens(g,0.0165,-0.031,SH,0);
+  cyl(g,'y',0.0075,0.0075,0.014,mat.opt,0.003,SH+0.021,0,16);
+  cyl(g,'z',0.0075,0.0075,0.014,mat.opt,0.003,SH,0.021,16);
+  box(g,0.016,0.01,0.006,mat.opt,-0.012,0.012,0.015);
+}
+function bHolo(g){
+  box(g,0.10,0.01,0.032,mat.opt,0,0.005,0);
+  box(g,0.10,0.014,0.034,mat.opt,0,0.017,0);
+  [-1,1].forEach(s=>box(g,0.07,0.038,0.004,mat.opt,-0.012,0.043,s*0.0185));
+  box(g,0.07,0.004,0.041,mat.opt,-0.012,0.064,0);
+  box(g,0.026,0.024,0.034,mat.opt,0.037,0.036,0);
+  [-0.046,0.022].forEach(x=>{const o=M(gPlane(0.033,0.036),mat.glass,x,0.043,0);o.userData.glass=true;g.add(o);});
+  [-1,1].forEach(s=>box(g,0.004,0.008,0.008,mat.poly,-0.052,0.017,s*0.008));
+}
+function bAcog(g){
+  box(g,0.09,0.01,0.03,mat.opt,0,0.005,0);
+  box(g,0.07,0.03,0.034,mat.opt,-0.005,SH-0.006,0);
+  cyl(g,'x',0.0175,0.0175,0.04,mat.opt,-0.055,SH,0,22);
+  cyl(g,'x',0.018,0.0245,0.045,mat.opt,0.052,SH,0,24);
+  lens(g,0.016,-0.0755,SH,0);lens(g,0.022,0.0748,SH,0);
+  box(g,0.06,0.004,0.008,mat.amber,-0.005,SH+0.011,0);
+  cyl(g,'z',0.007,0.007,0.008,mat.opt,0.0,SH,0.019,14);
+}
+function bLPVO(g){
+  box(g,0.12,0.01,0.026,mat.opt,0.005,0.005,0);
+  [-0.04,0.05].forEach(x=>{box(g,0.014,0.024,0.014,mat.opt,x,0.018,0);cyl(g,'x',0.0185,0.0185,0.014,mat.opt,x,SH,0,24);});
+  cyl(g,'x',0.015,0.015,0.13,mat.opt,0.005,SH,0,24);
+  cyl(g,'x',0.021,0.016,0.065,mat.opt,-0.0975,SH,0,24);
+  cyl(g,'x',0.016,0.021,0.06,mat.opt,0.1,SH,0,24);
+  cyl(g,'x',0.0215,0.0215,0.012,mat.poly,-0.07,SH,0,24);
+  box(g,0.006,0.012,0.006,mat.opt,-0.07,SH+0.025,0);
+  cyl(g,'y',0.011,0.011,0.016,mat.opt,0.01,SH+0.022,0,16);
+  cyl(g,'z',0.011,0.011,0.016,mat.opt,0.01,SH,0.022,16);
+  lens(g,0.019,-0.1305,SH,0);lens(g,0.019,0.1305,SH,0);
+}
+function bMag3x(g){
+  box(g,0.05,0.01,0.03,mat.opt,0.02,0.005,0);
+  const piv=new THREE.Group();piv.position.set(0.02,0.012,0.017);g.add(piv);
+  box(piv,0.028,0.018,0.006,mat.opt,0,0.012,-0.002);
+  const t=new THREE.Group();t.position.set(-0.02,SH-0.012,-0.017);piv.add(t);
+  cyl(t,'x',0.0165,0.0165,0.09,mat.opt,0,0,0,22);
+  cyl(t,'x',0.019,0.0175,0.025,mat.opt,-0.042,0,0,22);
+  lens(t,0.015,0.0455,0,0);lens(t,0.016,-0.0545,0,0);
+  g.userData.flip=piv;
+}
+function bBuisR(g){
+  box(g,0.04,0.008,0.024,mat.opt,0,0.004,0);
+  box(g,0.008,0.04,0.022,mat.opt,0.004,0.028,0);
+  g.add(M(gTorus(0.0036,0.0013),mat.opt,-0.001,SH,0));
+  cyl(g,'z',0.006,0.006,0.006,mat.opt,0.004,0.02,0.014,14);
+}
+function bBuisF(g){
+  box(g,0.03,0.008,0.024,mat.opt,0,0.004,0);
+  [-1,1].forEach(s=>box(g,0.022,0.03,0.003,mat.opt,0,0.022,s*0.0095));
+  box(g,0.016,0.006,0.016,mat.opt,0,0.011,0);
+  box(g,0.0028,0.026,0.0028,mat.steel,0,SH-0.013,0);
+}
+function bVFG(g){
+  box(g,0.04,0.01,0.026,mat.poly,0,0.005,0);
+  cyl(g,'y',0.0165,0.015,0.1,mat.furn,0,0.06,0,20);
+  cyl(g,'y',0.0158,0.0158,0.006,mat.poly,0,0.112,0,20);
+}
+function bAFG(g){extr(g,[[0.045,0],[-0.045,0],[-0.045,0.026],[-0.036,0.03],[0.04,0.008]],0.026,mat.furn,0,0,0);}
+let beamGeo=null,laserGeo=null;
+function bLight(g){
+  box(g,0.03,0.012,0.026,mat.opt,-0.02,0.006,0);
+  cyl(g,'x',0.0125,0.0125,0.1,mat.opt,-0.005,0.026,0,20);
+  cyl(g,'x',0.0125,0.0165,0.025,mat.opt,0.0575,0.026,0,22);
+  box(g,0.012,0.008,0.008,mat.poly,-0.06,0.026,0);
+  const lm=new THREE.MeshStandardMaterial({color:0x777777,emissive:0xfff2d6,emissiveIntensity:0,roughness:.2});
+  g.add(M(gCirc(0.0145),lm,0.0702,0.026,0));
+  const spot=new THREE.SpotLight(0xfff4e2,0,60,0.22,0.45,1);spot.position.set(0.07,0.026,0);
+  const tg=new THREE.Object3D();tg.position.set(1.07,0.026,0);g.add(spot,tg);spot.target=tg;
+  if(!beamGeo){beamGeo=new THREE.ConeGeometry(0.35,4,24,1,true);beamGeo.rotateZ(Math.PI/2);beamGeo.translate(2,0,0);}
+  const beam=M(beamGeo,new THREE.MeshBasicMaterial({color:0xfff2d6,transparent:true,opacity:0.04,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}),0.07,0.026,0);
+  beam.userData.fx=true;beam.visible=false;g.add(beam);
+  Object.assign(g.userData,{spot,lensMat:lm,beam});
+}
+function bPEQ(g){
+  box(g,0.06,0.008,0.026,mat.opt,0,0.004,0);
+  box(g,0.1,0.032,0.042,mat.furn,0,0.024,0);
+  [-1,1].forEach(s=>{cyl(g,'x',0.0065,0.0065,0.006,mat.dark,0.051,0.03,s*0.011,14);g.add(M(gCirc(0.0055),mat.glass,0.0545,0.03,s*0.011));});
+  [-1,1].forEach(s=>cyl(g,'y',0.006,0.006,0.006,mat.poly,-0.02,0.043,s*0.01,14));
+  if(!laserGeo){laserGeo=new THREE.CylinderGeometry(0.0012,0.0012,150,6,1,true);laserGeo.rotateZ(-Math.PI/2);laserGeo.translate(75,0,0);}
+  const laser=M(laserGeo,new THREE.MeshBasicMaterial({color:0xff2a1a,transparent:true,opacity:0.45,blending:THREE.AdditiveBlending,depthWrite:false}),0.055,0.03,0.011);
+  laser.userData.fx=true;laser.visible=false;g.add(laser);g.userData.laser=laser;
+}
+function bBipod(g){
+  box(g,0.05,0.012,0.03,mat.opt,0,0.006,0);
+  box(g,0.03,0.018,0.052,mat.opt,0,0.02,0);
+  const legs=[];
+  [-1,1].forEach(s=>{const p=new THREE.Group();p.position.set(0,0.024,s*0.024);p.userData.s=s;g.add(p);
+    cyl(p,'x',0.0055,0.0055,0.1,mat.opt,0.05,0,0,12);
+    cyl(p,'x',0.004,0.004,0.08,mat.steel,0.125,0,0,10);
+    cyl(p,'x',0.007,0.007,0.012,mat.poly,0.168,0,0,12);legs.push(p);});
+  g.userData.legs=legs;
+}
+
+/* ================= ATTACHMENT MANAGEMENT ================= */
+const attGroup=new THREE.Group();scene.add(attGroup);
+const attObj={};
+function makeAttMesh(a){
+  if(attObj[a.id])attGroup.remove(attObj[a.id]);
+  const g=new THREE.Group();g.userData.attId=a.id;ATT[a.type].build(g,a);
+  g.traverse(o=>{if(o.isMesh&&!o.userData.fx&&!o.userData.glass)o.castShadow=true;});
+  attObj[a.id]=g;attGroup.add(g);placeAtt(a);syncAtt(a);
+}
+function placeAtt(a){const r=railDefs()[a.rail],g=attObj[a.id];g.position.set(a.x,r.y,r.z);g.rotation.set(r.rot,0,0);}
+function syncAtt(a){
+  const u=attObj[a.id].userData;
+  if(u.spot){u.spot.intensity=a.on?2.4:0;u.lensMat.emissiveIntensity=a.on?2.2:0;u.beam.visible=a.on;}
+  if(u.laser)u.laser.material.color.setHex(a.mode===2?0xc4ffd2:0xff2a1a);
+}
+function mount(type){
+  const A=ATT[type],R=railDefs();
+  for(const rail of A.rails){
+    const r=R[rail],want=A.abs?A.at:r.x0+(r.x1-r.x0)*A.at,x=findFree(rail,want,A.len,null);
+    if(x===null)continue;
+    const a={id:nextId++,type,rail,x,on:false,mode:0,flip:true,deploy:false};
+    atts.push(a);makeAttMesh(a);
+    if(!quiet){selId=a.id;refresh();toast(A.name+' → '+r.label+' RAIL');}
+    return a;
+  }
+  toast('NO ROOM ON RAILS FOR '+A.name);return null;
+}
+function removeAtt(id){
+  const a=atts.find(q=>q.id===id);if(!a)return;
+  atts=atts.filter(q=>q.id!==id);attGroup.remove(attObj[id]);delete attObj[id];
+  if(selId===id)selId=null;refresh();toast(ATT[a.type].name+' REMOVED');
+}
+// after a handguard / barrel change: keep every part on a rail if there is still room
+function revalidate(){
+  const old=atts,gone=[];atts=[];
+  for(const a of old){
+    atts.push(a);const A=ATT[a.type];let x=findFree(a.rail,a.x,A.len,a.id);
+    if(x===null)for(const r of A.rails){x=findFree(r,a.x,A.len,a.id);if(x!==null){a.rail=r;break;}}
+    if(x===null){atts.pop();gone.push(a);}else a.x=x;
+  }
+  gone.forEach(a=>{attGroup.remove(attObj[a.id]);delete attObj[a.id];if(selId===a.id)selId=null;});
+  if(gone.length)toast('NO ROOM — REMOVED '+gone.map(a=>ATT[a.type].name).join(', '));
+}
+function partBox(g,out){
+  out.makeEmpty();g.updateMatrixWorld(true);const b=new THREE.Box3();
+  g.traverse(o=>{if(o.isMesh&&!o.userData.fx){if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();b.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld);out.union(b);}});
+  return out;
+}
+const selB3=new THREE.Box3(),selHelper=new THREE.Box3Helper(selB3,0xd9982f);
+selHelper.material.depthTest=false;selHelper.material.transparent=true;selHelper.renderOrder=10;selHelper.visible=false;scene.add(selHelper);
+
+/* ================= SIGHTS / ADS ================= */
+function activeSight(){
+  const top=atts.filter(a=>a.rail==='top').sort((a,b)=>a.x-b.x);
+  const optic=top.find(a=>ATT[a.type].kind==='optic');
+  if(optic){
+    const magn=(optic.type==='rds'||optic.type==='holo')?top.find(a=>a.type==='mag3x'&&a.flip&&a.x<optic.x):null;
+    return{kind:'optic',att:optic,magn:magn||null};
+  }
+  const rear=top.find(a=>a.type==='buisR');
+  return rear?{kind:'irons',att:rear,magn:null}:null;
+}
+function sightMag(s){
+  if(!s)return 1;let m=s.att.type==='lpvo'?adsZoom:(ATT[s.att.type].mag||1);
+  if(s.magn)m*=3;return m;
+}
+function enterAds(){
+  const s=activeSight();
+  if(!s){toast('MOUNT AN OPTIC OR REAR BUIS TO AIM');return;}
+  if(s.kind==='irons'&&!atts.some(a=>a.type==='buisF'&&a.rail==='top'))toast('NO FRONT SIGHT POST MOUNTED');
+  ads=true;adsSight=s;document.body.classList.add('ads');aimBtn.classList.add('on');adsHud.style.display='block';
+  buildAdsCtl();
+}
+function exitAds(){ads=false;document.body.classList.remove('ads');aimBtn.classList.remove('on');adsHud.style.display='none';}
+function buildAdsCtl(){
+  adsCtl.innerHTML='';const s=activeSight();if(!s)return;
+  if(s.att.type==='lpvo')[1,2,4,6].forEach(z=>{const b=document.createElement('button');b.textContent=z+'×';b.dataset.z=z;
+    b.onclick=()=>{adsZoom=z;syncAdsCtl();};adsCtl.appendChild(b);});
+  if(s.att.type==='rds'||s.att.type==='holo'){
+    const mg=atts.find(a=>a.type==='mag3x'&&a.rail==='top'&&a.x<s.att.x);
+    if(mg){const b=document.createElement('button');b.dataset.mg=mg.id;
+      b.onclick=()=>{mg.flip=!mg.flip;syncAdsCtl();renderMounted();};adsCtl.appendChild(b);}
+  }
+  syncAdsCtl();
+}
+function syncAdsCtl(){
+  adsCtl.querySelectorAll('button').forEach(b=>{
+    if(b.dataset.z)b.classList.toggle('on',Math.abs(adsZoom-b.dataset.z)<0.05);
+    if(b.dataset.mg){const mg=atts.find(a=>a.id===+b.dataset.mg);b.textContent='MAGNIFIER: '+(mg&&mg.flip?'IN':'OUT');b.classList.toggle('on',!!(mg&&mg.flip));}
+  });
+}
+function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function drawOverlay(s,mag){
+  const c=octx,W=overlay.width,H=overlay.height,cx=W/2,cy=H/2,m=Math.min(W,H);
+  c.clearRect(0,0,W,H);if(!s)return;
+  const ret=s.kind==='irons'?'peep':ATT[s.att.type].ret,red='#ff3322';
+  let clipR=0;
+  c.save();
+  if(ret==='peep'){
+    const g=c.createRadialGradient(cx,cy,m*0.1,cx,cy,m*0.2);g.addColorStop(0,'rgba(4,4,5,0)');g.addColorStop(1,'rgba(4,4,5,1)');
+    c.fillStyle=g;c.fillRect(0,0,W,H);
+    c.strokeStyle='rgba(60,62,66,.5)';c.lineWidth=m*0.01;c.beginPath();c.arc(cx,cy,m*0.12,0,7);c.stroke();
+  }else if(s.magn||ret==='chev'||ret==='duplex'){
+    const R=ret==='duplex'?m*(0.47-0.012*(mag-1)):m*0.4;
+    const g=c.createRadialGradient(cx,cy,R*0.9,cx,cy,R);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.85)');
+    c.fillStyle=g;c.beginPath();c.arc(cx,cy,R,0,7);c.fill();
+    c.fillStyle='#000';c.beginPath();c.rect(0,0,W,H);c.arc(cx,cy,R-0.5,0,Math.PI*2,true);c.fill();
+    clipR=R;
+    c.strokeStyle='#26282c';c.lineWidth=m*0.014;c.beginPath();c.arc(cx,cy,R+m*0.007,0,7);c.stroke();
+  }else if(ret==='holo'){
+    const w=m*0.62,h=m*0.46,lw=m*0.05;
+    c.fillStyle='rgba(120,170,200,.05)';roundRect(c,cx-w/2,cy-h/2,w,h,m*0.03);c.fill();
+    c.strokeStyle='rgba(16,17,19,.96)';c.lineWidth=lw;roundRect(c,cx-w/2-lw/2,cy-h/2-lw/2,w+lw,h+lw,m*0.04);c.stroke();
+  }else{
+    const R=m*0.34,lw=m*0.07;
+    c.fillStyle='rgba(120,170,200,.05)';c.beginPath();c.arc(cx,cy,R,0,7);c.fill();
+    c.strokeStyle='rgba(16,17,19,.96)';c.lineWidth=lw;c.beginPath();c.arc(cx,cy,R+lw/2,0,7);c.stroke();
+  }
+  if(clipR){c.beginPath();c.arc(cx,cy,clipR,0,Math.PI*2);c.clip();}
+  const glow=col=>{c.shadowColor=col;c.shadowBlur=m*0.012;};
+  if(ret==='dot'){
+    glow(red);c.fillStyle=red;c.beginPath();c.arc(cx,cy,m*0.0035*(s.magn?2.4:1),0,7);c.fill();
+  }else if(ret==='holo'){
+    const k=s.magn?3:1,r=m*0.075*k,t=m*0.012*k;
+    glow(red);c.strokeStyle=c.fillStyle=red;c.lineWidth=m*0.003*(s.magn?1.8:1);
+    c.beginPath();c.arc(cx,cy,r,0,7);c.stroke();
+    c.beginPath();[[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx,dy])=>{c.moveTo(cx+dx*r,cy+dy*r);c.lineTo(cx+dx*(r+t),cy+dy*(r+t));});c.stroke();
+    c.beginPath();c.arc(cx,cy,m*0.0028*(s.magn?2:1),0,7);c.fill();
+  }else if(ret==='chev'){
+    const R=m*0.4;c.strokeStyle='#0b0b0b';c.lineWidth=m*0.0028;
+    c.beginPath();c.moveTo(cx-R,cy);c.lineTo(cx-m*0.06,cy);c.moveTo(cx+m*0.06,cy);c.lineTo(cx+R,cy);c.moveTo(cx,cy+m*0.04);c.lineTo(cx,cy+R*0.62);c.stroke();
+    [0.09,0.13,0.17,0.21].forEach((o,i)=>{const hw=m*(0.03-i*0.005);c.beginPath();c.moveTo(cx-hw,cy+m*o);c.lineTo(cx+hw,cy+m*o);c.stroke();});
+    glow(red);c.strokeStyle=red;c.lineWidth=m*0.0055;const a=m*0.02;
+    c.beginPath();c.moveTo(cx-a,cy+a*1.15);c.lineTo(cx,cy);c.lineTo(cx+a,cy+a*1.15);c.stroke();
+  }else if(ret==='duplex'){
+    const R=m*0.5,f=m*0.13;c.strokeStyle='#070707';c.lineWidth=m*0.009;
+    c.beginPath();[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{c.moveTo(cx+dx*R,cy+dy*R);c.lineTo(cx+dx*f,cy+dy*f);});c.stroke();
+    c.lineWidth=m*0.0018;c.beginPath();c.moveTo(cx-f,cy);c.lineTo(cx+f,cy);c.moveTo(cx,cy-f);c.lineTo(cx,cy+f);c.stroke();
+    glow(red);c.fillStyle=c.strokeStyle=red;c.beginPath();c.arc(cx,cy,m*0.003,0,7);c.fill();
+    if(mag<2.5){c.lineWidth=m*0.0028;c.beginPath();c.arc(cx,cy,m*0.045,0,7);c.stroke();}
+  }
+  c.restore();
+}
+
+/* ================= RANGE ENVIRONMENT ================= */
+function boardTex(t){
+  const cv=document.createElement('canvas');cv.width=256;cv.height=128;const x=cv.getContext('2d');
+  x.fillStyle='#d9982f';x.fillRect(0,0,256,128);x.fillStyle='#111';x.font='bold 80px "Chakra Petch",sans-serif';
+  x.textAlign='center';x.textBaseline='middle';x.fillText(t,128,68);return new THREE.CanvasTexture(cv);
+}
+function buildRange(){
+  const env=new THREE.Group();scene.add(env);
+  const wood=new THREE.MeshStandardMaterial({color:0x2c2722,roughness:.9});
+  const top=M(gBox(2.2,0.05,1.0),wood,0.05,-0.345,0);top.receiveShadow=true;env.add(top);
+  const pad=M(gBox(1.3,0.004,0.52),new THREE.MeshStandardMaterial({color:0x131416,roughness:1}),0.05,-0.318,0);pad.receiveShadow=true;env.add(pad);
+  [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(([a,b])=>env.add(M(gBox(0.07,0.83,0.07),wood,0.05+a,-0.785,b*0.42)));
+  const gr=new THREE.Mesh(new THREE.PlaneGeometry(460,60),new THREE.MeshStandardMaterial({color:0x25261f,roughness:1}));
+  gr.rotation.x=-Math.PI/2;gr.position.set(220,-1.2,0);env.add(gr);
+  const berm=new THREE.MeshStandardMaterial({color:0x2e2b22,roughness:1});
+  [-1,1].forEach(s=>env.add(M(gBox(420,2.2,3),berm,215,-0.1,s*16)));
+  env.add(M(gBox(3,8,40),berm,250,2.6,0));
+  const steel=new THREE.MeshStandardMaterial({color:0xd8d1c2,roughness:.6,metalness:.1});
+  const wood2=new THREE.MeshStandardMaterial({color:0x3b342a,roughness:.9});
+  const ipsc=[[-0.23,-0.38],[0.23,-0.38],[0.23,0.12],[0.15,0.24],[0.075,0.24],[0.075,0.38],[-0.075,0.38],[-0.075,0.24],[-0.15,0.24],[-0.23,0.12]];
+  [[25,-1.6,'ipsc'],[50,0,'gong'],[100,1.5,'ipsc'],[150,-2.8,'gong'],[200,3,'ipsc']].forEach(([d,z,t])=>{
+    if(t==='gong'){
+      env.add(M(gCyl('x',0.5,0.5,0.025,32),steel,d,0.06,z));
+      [-1,1].forEach(s=>{env.add(M(gBox(0.08,1.9,0.08),wood2,d+0.2,-0.25,z+s*0.75));env.add(M(gBox(0.01,0.15,0.01),wood2,d+0.05,0.62,z+s*0.3));});
+      env.add(M(gBox(0.08,0.08,1.6),wood2,d+0.2,0.7,z));
+    }else{
+      const g=new THREE.Group();g.position.set(d,0.06,z);g.rotation.y=Math.PI/2;env.add(g);
+      extr(g,ipsc,0.012,steel,0,0,0);
+      [-1,1].forEach(s=>env.add(M(gBox(0.05,0.82,0.05),wood2,d+0.03,-0.79,z+s*0.15)));
+    }
+    const b=new THREE.Mesh(new THREE.PlaneGeometry(0.8,0.4),new THREE.MeshBasicMaterial({map:boardTex(d+' M')}));
+    b.position.set(d-2,-0.85,z-1.4);b.rotation.y=-Math.PI/2;env.add(b);
+    env.add(M(gBox(0.04,0.3,0.04),wood2,d-1.98,-1.1,z-1.4));
+  });
+}
+
+/* ================= UI: CATALOG ================= */
+const catBtns=[],infoEls={};
+function sec(n,title){const s=document.createElement('div');s.className='sec';s.innerHTML='<h3><i>'+n+'</i>'+title+'</h3>';catEl.appendChild(s);return s;}
+function crow(parent,lab){const r=document.createElement('div');r.className='crow';r.innerHTML='<span class="clab">'+lab+'</span>';parent.appendChild(r);return r;}
+function choiceRow(parent,lab,keyName,table,chips){
+  const r=crow(parent,lab),cb=document.createElement('div');cb.className=chips?'chips':'cbtns';
+  Object.keys(table).forEach(k=>{const b=document.createElement('button');
+    if(chips)b.innerHTML='<span class="dot" style="background:#'+table[k].c.toString(16).padStart(6,'0')+'"></span>'+table[k].label;
+    else b.textContent=table[k].label;
+    b.onclick=()=>setCfg(keyName,k);cb.appendChild(b);catBtns.push({b,key:keyName,val:k});});
+  r.appendChild(cb);
+}
+function info(parent,id){const d=document.createElement('div');d.className='wtag';d.style.margin='2px 0 4px';parent.appendChild(d);infoEls[id]=d;}
+function buildCatalog(){
+  catEl.innerHTML='';
+  let s=sec('01','BARREL');choiceRow(s,'LENGTH','barrel',BARRELS);info(s,'barrel');
+  s=sec('02','HANDGUARD');choiceRow(s,'TYPE','hg',HGS);info(s,'hg');
+  s=sec('03','MUZZLE');choiceRow(s,'DEVICE','muzzle',MUZZLES);info(s,'muzzle');
+  s=sec('04','STOCK');choiceRow(s,'TYPE','stock',STOCKS);choiceRow(s,'POSITION','spos',SPOS);info(s,'stock');
+  s=sec('05','MAGAZINE');choiceRow(s,'TYPE','mag',MAGS);info(s,'mag');
+  s=sec('06','GRIP');choiceRow(s,'TYPE','grip',GRIPS);info(s,'grip');
+  s=sec('07','FINISH');choiceRow(s,'RECEIVER','rec',FINISH,true);choiceRow(s,'FURNITURE','furn',FINISH,true);
+  const groups={};Object.keys(ATT).forEach(t=>(groups[ATT[t].grp]=groups[ATT[t].grp]||[]).push(t));
+  let n=8;
+  for(const gname in groups){
+    s=sec(String(n++).padStart(2,'0'),gname);
+    groups[gname].forEach(t=>{const A=ATT[t],r=crow(s,A.name);
+      r.insertAdjacentHTML('beforeend','<span class="wtag">'+A.w.toFixed(2)+' KG</span>');
+      const cb=document.createElement('div');cb.className='cbtns';const b=document.createElement('button');
+      b.textContent='MOUNT';b.onclick=()=>mount(t);cb.appendChild(b);r.appendChild(cb);});
+  }
+}
+function hgOk(k){return HGS[k].len<=BARRELS[cfg.barrel].len-0.005;}
+function setCfg(keyName,val){
+  if(keyName==='spos')val=+val;
+  if(cfg[keyName]===val)return;
+  if(keyName==='hg'&&!hgOk(val))return;
+  cfg[keyName]=val;
+  if(keyName==='barrel'&&!hgOk(cfg.hg)){
+    cfg.hg=Object.keys(HGS).filter(hgOk).sort((a,b)=>HGS[b].len-HGS[a].len)[0];
+    toast('HANDGUARD → '+HGS[cfg.hg].label+' TO FIT BARREL');
+  }
+  applyFinish();
+  if(keyName!=='rec'&&keyName!=='furn'){
+    buildRifle();
+    if(keyName==='barrel'||keyName==='hg')revalidate();
+    atts.forEach(placeAtt);
+  }
+  refresh();
+}
+function updateCatalog(){
+  catBtns.forEach(({b,key:k,val})=>{b.classList.toggle('on',String(cfg[k])===String(val));if(k==='hg')b.disabled=!hgOk(val);});
+  const B=BARRELS[cfg.barrel],HG=HGS[cfg.hg],MZ=MUZZLES[cfg.muzzle],S=STOCKS[cfg.stock],G=MAGS[cfg.mag];
+  infoEls.barrel.textContent=Math.round(B.len*1000)+' MM · '+B.w.toFixed(2)+' KG';
+  infoEls.hg.textContent=(HG.type==='quad'?'PICATINNY × 4 RAILS':'TOP RAIL + M-LOK SLOTS')+' · '+HG.w.toFixed(2)+' KG';
+  infoEls.muzzle.textContent=MZ.name+' · +'+Math.round(MZ.len*1000)+' MM · '+MZ.w.toFixed(2)+' KG';
+  infoEls.stock.textContent=S.label+' · POSITION '+(cfg.spos+1)+'/4 · '+S.w.toFixed(2)+' KG';
+  infoEls.mag.textContent=G.name+' · LOADED '+G.w.toFixed(2)+' KG';
+  infoEls.grip.textContent=GRIPS[cfg.grip].label+' GRIP · '+GRIPS[cfg.grip].w.toFixed(2)+' KG';
+}
+function updateSpecs(){
+  let w=BASE_W+BARRELS[cfg.barrel].w+HGS[cfg.hg].w+MUZZLES[cfg.muzzle].w+STOCKS[cfg.stock].w+MAGS[cfg.mag].w+GRIPS[cfg.grip].w;
+  atts.forEach(a=>w+=ATT[a.type].w);
+  specW.textContent=w.toFixed(2)+' KG';
+  specL.textContent=Math.round((geo.front-geo.rear)*1000)+' MM';
+}
+
+/* ================= UI: MOUNTED HARDWARE ================= */
+let rowRefs={};
+function toggleDef(a){
+  switch(a.type){
+    case 'light':return{t:a.on?'LIGHT: ON':'LIGHT: OFF',on:a.on,f:()=>{a.on=!a.on;}};
+    case 'peq':return{t:'LASER: '+['OFF','VIS','IR'][a.mode],on:a.mode>0,f:()=>{a.mode=(a.mode+1)%3;if(a.mode===2&&!nv)toast('IR LASER — VISIBLE UNDER NIGHT VISION ONLY');}};
+    case 'mag3x':return{t:a.flip?'FLIPPED IN':'FLIPPED OUT',on:a.flip,f:()=>{a.flip=!a.flip;}};
+    case 'bipod':return{t:a.deploy?'DEPLOYED':'STOWED',on:a.deploy,f:()=>{a.deploy=!a.deploy;}};
+  }
+  return null;
+}
+function railRange(a){const r=railDefs()[a.rail],len=ATT[a.type].len;return{r,lo:r.x0+len/2,hi:r.x1-len/2};}
+function updateRow(a){
+  const ref=rowRefs[a.id];if(!ref)return;const{r,lo,hi}=railRange(a);
+  ref.range.value=hi>lo?Math.round((a.x-lo)/(hi-lo)*1000):0;
+  ref.lab.textContent=r.label+' RAIL · '+Math.round((a.x-r.x0)*1000)+' MM';
+}
+function moveTo(a,want,maxD){const x=findFree(a.rail,want,ATT[a.type].len,a.id,maxD);if(x!==null){a.x=x;placeAtt(a);}updateRow(a);}
+function renderMounted(){
+  mountedList.innerHTML='';rowRefs={};mcount.textContent=atts.length;
+  if(!atts.length){mountedList.innerHTML='<div class="rlab" style="margin-top:12px;line-height:1.7">NOTHING MOUNTED — ADD HARDWARE FROM THE PARTS CATALOG</div>';return;}
+  const list=atts.slice().sort((a,b)=>RAIL_ORDER.indexOf(a.rail)-RAIL_ORDER.indexOf(b.rail)||a.x-b.x);
+  for(const a of list){
+    const A=ATT[a.type],row=document.createElement('div');row.className='mrow'+(a.id===selId?' sel':'');row.dataset.id=a.id;
+    row.addEventListener('pointerdown',()=>{if(selId!==a.id){selId=a.id;refreshSel();}});
+    const head=document.createElement('div');head.className='mhead';
+    head.innerHTML='<span class="mname">'+A.name+'</span>';
+    const sel=document.createElement('select');
+    A.rails.forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=railDefs()[r].label;sel.appendChild(o);});
+    sel.value=a.rail;sel.disabled=A.rails.length<2;
+    sel.onchange=()=>{
+      const x=findFree(sel.value,a.x,A.len,a.id);
+      if(x===null){toast('NO ROOM ON '+railDefs()[sel.value].label+' RAIL');sel.value=a.rail;return;}
+      a.rail=sel.value;a.x=x;placeAtt(a);renderMounted();};
+    head.appendChild(sel);row.appendChild(head);
+    const lab=document.createElement('div');lab.className='rlab';row.appendChild(lab);
+    const range=document.createElement('input');range.type='range';range.min=0;range.max=1000;
+    range.oninput=()=>{const{lo,hi}=railRange(a);moveTo(a,lo+range.value/1000*(hi-lo),0.06);};
+    row.appendChild(range);
+    const btns=document.createElement('div');btns.className='mbtns';
+    const mk=(t,cls,fn)=>{const b=document.createElement('button');b.className='mbtn'+(cls?' '+cls:'');b.textContent=t;b.onclick=fn;btns.appendChild(b);return b;};
+    mk('◀ 10',null,()=>moveTo(a,a.x-0.01,0.004));
+    mk('10 ▶',null,()=>moveTo(a,a.x+0.01,0.004));
+    const td=toggleDef(a);
+    if(td){const b=mk(td.t,td.on?'on':null,()=>{td.f();syncAtt(a);renderMounted();if(ads)buildAdsCtl();});b.style.flex='1.6';}
+    mk('✕','mdel',()=>removeAtt(a.id));
+    row.appendChild(btns);mountedList.appendChild(row);
+    rowRefs[a.id]={range,lab};updateRow(a);
+  }
+}
+function refreshSel(){mountedList.querySelectorAll('.mrow').forEach(r=>r.classList.toggle('sel',+r.dataset.id===selId));}
+function refresh(){updateCatalog();updateSpecs();renderMounted();}
+
+/* ================= MISC UI ================= */
+let toastTimer=0;
+function toast(msg){toastEl.textContent=msg;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),1800);}
+function setNV(on){
+  nv=on;viewport.classList.toggle('nv',on);document.body.classList.toggle('nv',on);nvBtn.classList.toggle('on',on);
+  scene.background.copy(on?BG_NV:BG_DAY);scene.fog.color.copy(on?BG_NV:BG_DAY);
+  hemi.intensity=on?0.22:0.6;key.intensity=on?0.15:1.15;rim.intensity=on?0.12:0.55;amb.intensity=on?0.08:0.12;
+  toast('NIGHT VISION — '+(on?'ON':'OFF'));
+}
+function vfov(minDeg){const a=camera.aspect;return a>=1?minDeg:2*Math.atan(Math.tan(minDeg*D/2)/a)/D;}
+function fitR(){
+  const vf=vfov(36)*D,hf=2*Math.atan(Math.tan(vf/2)*camera.aspect),len=geo.front-geo.rear;
+  const frac=innerWidth>=980?Math.max(0.4,(innerWidth-600)/innerWidth):0.92;
+  return Math.min(3,Math.max(len/(2*frac*Math.tan(hf/2)),0.42/(2*0.7*Math.tan(vf/2))));
+}
+function resetView(){if(ads)exitAds();view.az=0.6;view.el=0.2;view.r=fitR();view.tx=(geo.front+geo.rear)/2;view.ty=-0.02;}
+function resize(){
+  const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();
+  const d=Math.min(devicePixelRatio,2);overlay.width=Math.round(w*d);overlay.height=Math.round(h*d);
+}
+function syncTbtns(){tbtns.forEach(b=>b.classList.toggle('on',!document.getElementById(b.dataset.p).classList.contains('off')));}
+tbtns.forEach(b=>b.onclick=()=>{
+  const p=document.getElementById(b.dataset.p),show=p.classList.contains('off');
+  if(show&&innerWidth<760)document.querySelectorAll('.panel').forEach(x=>x.classList.add('off'));
+  p.classList.toggle('off',!show);syncTbtns();});
+aimBtn.onclick=()=>ads?exitAds():enterAds();
+nvBtn.onclick=()=>setNV(!nv);
+rvBtn.onclick=resetView;
+fmodeBtn.onclick=()=>{fireMode=(fireMode+1)%3;fmodeBtn.textContent='MODE: '+MODES[fireMode];toast('SELECTOR → '+MODES[fireMode]);};
+addEventListener('keydown',e=>{
+  const tag=e.target.tagName;if(tag==='INPUT'||tag==='SELECT'||e.ctrlKey||e.metaKey||e.altKey)return;
+  const k=e.key.toLowerCase();
+  if(k==='f')ads?exitAds():enterAds();
+  else if(k==='escape'){if(ads)exitAds();else{selId=null;refreshSel();}}
+  else if(k==='n')setNV(!nv);
+  else if(k==='r')resetView();
+  else if((k==='delete'||k==='backspace')&&selId&&!ads){e.preventDefault();removeAtt(selId);}
+});
+addEventListener('resize',resize);
+
+/* ================= POINTER: ORBIT / PICK / DRAG ALONG RAILS ================= */
+const ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),cvs=renderer.domElement;
+let drag=null;
+function setRay(e){const r=cvs.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);}
+function pick(e){
+  setRay(e);
+  for(const h of ray.intersectObjects(attGroup.children,true)){
+    if(h.object.userData.fx)continue;
+    let o=h.object;while(o&&o.userData.attId===undefined)o=o.parent;
+    if(o)return atts.find(a=>a.id===o.userData.attId)||null;
+  }
+  return null;
+}
+// closest approach between the pointer ray and a rail line (x, R.y, R.z)
+function rayRail(R){
+  const O=ray.ray.origin,d=ray.ray.direction,wx=O.x,wy=O.y-R.y,wz=O.z-R.z;
+  const b=d.x,dw=d.x*wx+d.y*wy+d.z*wz,den=1-b*b;if(den<1e-6)return null;
+  const t=(b*wx-dw)/den,s=(wx-b*dw)/den;if(t<0)return null;
+  const px=wx+t*d.x-s,py=wy+t*d.y,pz=wz+t*d.z;
+  return{s,dist:Math.sqrt(px*px+py*py+pz*pz)};
+}
+function dragPart(e){
+  setRay(e);const a=drag.att,A=ATT[a.type],R=railDefs();let cur=null,best=null;
+  for(const rn of A.rails){const r=rayRail(R[rn]);if(!r)continue;r.rail=rn;if(rn===a.rail)cur=r;if(!best||r.dist<best.dist)best=r;}
+  if(!best)return;
+  if(best.rail!==a.rail&&best.dist<0.035*view.r&&(!cur||best.dist<cur.dist*0.55)){
+    const x=findFree(best.rail,best.s,A.len,a.id,0.04);
+    if(x!==null){a.rail=best.rail;a.x=x;drag.off=0;placeAtt(a);drag.remount=true;toast(A.name+' → '+R[best.rail].label+' RAIL');return;}
+  }
+  if(cur)moveTo(a,cur.s+drag.off,0.05);
+}
+cvs.addEventListener('pointerdown',e=>{
+  if(e.button!==0)return;
+  if(ads){exitAds();return;}
+  cvs.setPointerCapture(e.pointerId);
+  const a=pick(e);
+  drag={x:e.clientX,y:e.clientY,moved:false};
+  if(a){
+    drag.mode='part';drag.att=a;selId=a.id;refreshSel();
+    setRay(e);const r=rayRail(railDefs()[a.rail]);drag.off=r?a.x-r.s:0;cvs.style.cursor='grabbing';
+  }else{drag.mode='orbit';cvs.style.cursor='grabbing';}
+});
+cvs.addEventListener('pointermove',e=>{
+  if(!drag){if(!ads)cvs.style.cursor=pick(e)?'pointer':'grab';return;}
+  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(Math.abs(dx)+Math.abs(dy)>3)drag.moved=true;
+  if(drag.mode==='orbit'){view.az-=dx*0.0065;view.el=Math.min(1.35,Math.max(-1.25,view.el+dy*0.005));drag.x=e.clientX;drag.y=e.clientY;}
+  else if(drag.moved)dragPart(e);
+});
+function endDrag(){
+  if(!drag)return;
+  if(drag.mode==='orbit'&&!drag.moved){selId=null;refreshSel();}
+  if(drag.mode==='part'&&drag.remount)renderMounted();
+  drag=null;cvs.style.cursor='grab';
+}
+cvs.addEventListener('pointerup',endDrag);
+cvs.addEventListener('pointercancel',endDrag);
+cvs.addEventListener('wheel',e=>{
+  e.preventDefault();
+  if(ads){if(adsSight&&adsSight.att.type==='lpvo'){adsZoom=Math.min(6,Math.max(1,adsZoom*Math.exp(-e.deltaY*0.0015)));syncAdsCtl();}return;}
+  view.r=Math.min(3.2,Math.max(0.25,view.r*Math.exp(e.deltaY*0.001)));
+},{passive:false});
+
+/* ================= MAIN LOOP ================= */
+const desP=new THREE.Vector3(),tgt=new THREE.Vector3();
+let adsBlend=0,lastT=performance.now();
+function frame(now){
+  requestAnimationFrame(frame);
+  let dt=(now-lastT)/1000;lastT=now;if(!(dt>0))dt=1/60;dt=Math.min(dt,0.05);
+  const ease=r=>Math.min(1,dt*r);
+  const sel=rifle.userData.sel;sel.rotation.z+=(SEL_ANG[fireMode]-sel.rotation.z)*ease(14);
+  for(const a of atts){
+    const u=attObj[a.id].userData;
+    if(u.flip)u.flip.rotation.x+=((a.flip?0:1.45)-u.flip.rotation.x)*ease(10);
+    if(u.legs)u.legs.forEach(p=>{p.rotation.z+=((a.deploy?Math.PI/2:0)-p.rotation.z)*ease(8);p.rotation.x+=((a.deploy?p.userData.s*0.3:0)-p.rotation.x)*ease(8);});
+    if(u.laser){u.laser.visible=a.mode===1||(a.mode===2&&nv);u.laser.material.opacity=nv?0.8:0.45;}
+    if(u.beam)u.beam.material.opacity=nv?0.14:0.035;
+  }
+  if(ads){adsSight=activeSight();if(!adsSight)exitAds();}
+  adsBlend+=((ads?1:0)-adsBlend)*ease(ads?7:9);
+  const mag=ads?sightMag(adsSight):1;
+  let fovT;
+  if(ads){
+    const s=adsSight,A=ATT[s.att.type];
+    const ex=s.magn?s.magn.x-ATT.mag3x.len/2-ATT.mag3x.eye:s.att.x-A.len/2-A.eye;
+    desP.set(ex,RT+SH,0);tgt.set(ex+10,RT+SH,0);
+    fovT=vfov(2*Math.atan(Math.tan(20*D)/mag)/D);
+  }else{
+    const ce=Math.cos(view.el);
+    tgt.set(view.tx,view.ty,0);
+    desP.set(view.tx+view.r*ce*Math.sin(view.az),view.ty+view.r*Math.sin(view.el),view.r*ce*Math.cos(view.az));
+    fovT=vfov(36);
+  }
+  ghost.position.copy(desP);ghost.lookAt(tgt);
+  const k=1-Math.exp(-dt*(ads?10:16));
+  camera.position.lerp(desP,k);camera.quaternion.slerp(ghost.quaternion,k);
+  camera.fov+=(fovT-camera.fov)*k;camera.updateProjectionMatrix();
+  // in ADS hide the sight being looked through and anything behind it; fold the front post under magnification
+  const hide=ads&&adsBlend>0.6;
+  for(const a of atts){
+    let v=true;
+    if(hide&&a.rail==='top'){if(a.x<=adsSight.att.x+1e-6)v=false;if(a.type==='buisF'&&mag>1.01)v=false;}
+    attObj[a.id].visible=v;
+  }
+  overlay.style.opacity=hide?Math.min(1,(adsBlend-0.6)/0.35):0;
+  if(hide){drawOverlay(adsSight,mag);adsMag.textContent=mag.toFixed(1)+'×';}
+  const so=selId&&!ads&&attObj[selId];
+  if(so){partBox(so,selB3).expandByScalar(0.004);}
+  selHelper.visible=!!so;
+  renderer.render(scene,camera);
+}
+
+/* ================= BOOT ================= */
+applyFinish();
+buildRange();
+buildRifle();
+buildCatalog();
+quiet=true;['rds','buisF','light','vfg'].forEach(mount);quiet=false;
+if(innerWidth<980)document.querySelectorAll('.panel').forEach(p=>p.classList.add('off'));
+syncTbtns();
+resize();
+refresh();
+resetView();
+{const ce=Math.cos(view.el);camera.position.set(view.tx+view.r*ce*Math.sin(view.az),view.ty+view.r*Math.sin(view.el),view.r*ce*Math.cos(view.az));camera.lookAt(view.tx,view.ty,0);camera.fov=vfov(36);camera.updateProjectionMatrix();}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

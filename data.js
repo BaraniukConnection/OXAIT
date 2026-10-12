@@ -32,8 +32,30 @@ window.OXAIT = {
       title: { uk: "Геймдев", en: "Game Dev" },
       rounds: [
         { id: "q1",   code: "Q/1",   title: { uk: "Кваліфікаційний раунд", en: "Qualification Round" }, cover: "assets/img/poster-q1.webp" },
-        { id: "sec1", code: "sec-1", title: { uk: "Перша секція",          en: "Section One" }, cover: "assets/img/poster-sec1.webp" },
-        { id: "results", code: "★", title: { uk: "Перший етап — Висновки", en: "Stage One — Conclusions" }, type: "article",
+        { id: "sec1", code: "sec-1", title: { uk: "Перша секція",          en: "Section One" }, cover: "assets/img/poster-sec1.webp" }
+      ]
+    },
+    {
+      id: "software", icon: "terminal",
+      title: { uk: "Розробка ПЗ", en: "Software Dev" },
+      rounds: [
+        { id: "sec2", code: "sec-2", title: { uk: "Друга секція", en: "Section Two" }, stages: 2, cover: "assets/img/poster-q2.webp" }
+      ]
+    },
+    {
+      id: "modeling", icon: "deployed_code",
+      title: { uk: "3D-моделювання", en: "3D Modeling" },
+      rounds: [
+        { id: "q3",   code: "Q/3",   title: { uk: "Кваліфікаційний раунд", en: "Qualification Round" }, cover: "assets/img/poster-q3.webp" },
+        { id: "sec3", code: "sec-3", title: { uk: "Третя секція",          en: "Section Three" }, cover: "assets/img/poster-sec3.webp" }
+      ]
+    },
+    {
+      // Висновки — окрема вкладка; about — етап, з якого беруться підсумки для карток учасників
+      id: "conclusions", icon: "emoji_events",
+      title: { uk: "Висновки", en: "Conclusions" },
+      rounds: [
+        { id: "stage1", code: "★", title: { uk: "Перший етап — Висновки", en: "Stage One — Conclusions" }, type: "article", about: "gamedev",
           image: "assets/img/results-gamedev.webp",
           // Стаття: блоки тексту; who — учасники, про яких блок (аватар і колір беруться з participants)
           article: [
@@ -56,21 +78,6 @@ window.OXAIT = {
               uk: ["Grok, вибув ще при відборі, коли витратив майже півгодини на змійку, і вперся в ліміт, на безкоштовній основі його немає для чого використовувати в плані роботи."],
               en: ["Grok dropped out back in qualification, after spending almost half an hour on the Snake and hitting its limit. On the free tier there's no point using it for work."] } }
           ] }
-      ]
-    },
-    {
-      id: "software", icon: "terminal",
-      title: { uk: "Розробка ПЗ", en: "Software Dev" },
-      rounds: [
-        { id: "sec2", code: "sec-2", title: { uk: "Друга секція", en: "Section Two" }, stages: 2, cover: "assets/img/poster-q2.webp" }
-      ]
-    },
-    {
-      id: "modeling", icon: "deployed_code",
-      title: { uk: "3D-моделювання", en: "3D Modeling" },
-      rounds: [
-        { id: "q3",   code: "Q/3",   title: { uk: "Кваліфікаційний раунд", en: "Qualification Round" }, cover: "assets/img/poster-q3.webp" },
-        { id: "sec3", code: "sec-3", title: { uk: "Третя секція",          en: "Section Three" }, cover: "assets/img/poster-q3.webp" }
       ]
     }
   ],
@@ -152,6 +159,22 @@ window.OXAIT = {
         grok:    { status: "out" }
       }
     },
-    "modeling/sec3":  { entries: { grok: { status: "out" } } }
+    "modeling/sec3": {
+      order: ["claude", "chatgpt", "glm", "gemini", "qwen", "grok"],
+      groups: [
+        { uk: "Етап I · Літак",                 en: "Stage I · Fighter Jet",       match: "fighter|strix|kestrel" },
+        { uk: "Етап II · Деталізований солдат", en: "Stage II · Detailed Soldier", match: "soldier|pmc|operator" },
+        { uk: "Етап III · Гвинтівка",           en: "Stage III · Rifle" }
+      ],
+      entries: {
+        claude:  { pills: [[true, true, true], [true, true, true], [true, true, true]] },
+        chatgpt: { pills: [[true, true, false], [true, true, false], [true, true, false]] },
+        // M4.html — версія, виправлена з Claude поза турніром; у заліку — власна M4-GLM
+        glm:     { pills: [[true, false, false], [true, false, false], [false, false, false]], hide: ["m4"] },
+        gemini:  { status: "out" },
+        qwen:    { status: "out" },
+        grok:    { status: "out" }
+      }
+    }
   }
 };

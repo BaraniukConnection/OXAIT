@@ -104,6 +104,7 @@
       // Проєкти: з entries/manifest.js (tools/sync_entries.py) + вручну з data.js
       const projects = [...(M[key]?.[id] || []), ...(e.outputs || []), ...(e.output ? [e.output] : [])]
         .map((o, i) => ({ ...o, id: o.id || String(i + 1), title: o.title || `${i + 1}` }))
+        .filter(o => !(e.hide || []).includes(o.id))  // hide — проєкти поза заліком
         .map(o => ({ ...o, group: byStage ? stageOfProject(o) : null }))
         .sort((a, b) => (a.group ?? 0) - (b.group ?? 0));
       return { p: byId[id], pills, total: pills.flat().some(v => v !== null && v !== "") ? nums.reduce((a, b) => a + b, 0) : null, out: e.status === "out", projects, note: e.note || null };
@@ -226,9 +227,10 @@
 
   let revealer;
   function renderReport(s, r) {
-    // Підсумки учасника в інших раундах цього етапу
-    const rounds = s.rounds.filter(x => x.type !== "article");
-    const standings = rounds.map(x => ({ x, entries: roundData(`${s.id}/${x.id}`).entries }));
+    // Підсумки учасника в раундах етапу, про який стаття (about), або поточного
+    const src = stageOf(r.about) || s;
+    const rounds = src.rounds.filter(x => x.type !== "article");
+    const standings = rounds.map(x => ({ x, entries: roundData(`${src.id}/${x.id}`).entries }));
     const chips = id => standings.map(({ x, entries }) => {
       const e = entries.find(y => y.p.id === id);
       if (!e) return "";
@@ -257,7 +259,7 @@
       <div class="report-grid">
         <figure class="report-figure hud">
           <img src="${esc(r.image)}" alt="${esc(L(r.title))}">
-          <figcaption><span class="overline">OXAIT · ${esc(L(s.title))}</span><h2>${esc(L(r.title))}</h2></figcaption>
+          <figcaption><span class="overline">OXAIT · ${esc(L(src.title))}</span><h2>${esc(L(r.title))}</h2></figcaption>
         </figure>
         <div class="report-body">${blocks}</div>
       </div>`;
