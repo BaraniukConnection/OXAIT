@@ -171,6 +171,123 @@ window.OXAIT_ENTRIES = {
       }
     ]
   },
+  "modeling/q3": {
+    "chatgpt": [
+      {
+        "type": "iframe",
+        "title": "BLOCK — Soldier Studio",
+        "src": "entries/modeling/q3/chatgpt/block-soldier.html",
+        "size": 27642,
+        "id": "blocksoldier"
+      },
+      {
+        "type": "iframe",
+        "title": "VANTA / R-01 — Concept studio",
+        "src": "entries/modeling/q3/chatgpt/futuristic-sportcar.html",
+        "size": 27065,
+        "id": "futuristicsportcar"
+      },
+      {
+        "type": "iframe",
+        "title": "BASTION / X-07 — 3D Tank Studio",
+        "src": "entries/modeling/q3/chatgpt/futuristic-tank.html",
+        "size": 25640,
+        "id": "futuristictank"
+      }
+    ],
+    "claude": [
+      {
+        "type": "iframe",
+        "title": "Blocky Soldier",
+        "src": "entries/modeling/q3/claude/blocky-soldier.html",
+        "size": 49980,
+        "id": "blockysoldier"
+      },
+      {
+        "type": "iframe",
+        "title": "AX-9 Vector",
+        "src": "entries/modeling/q3/claude/futuristic-sportcar.html",
+        "size": 39802,
+        "id": "futuristicsportcar"
+      },
+      {
+        "type": "iframe",
+        "title": "VX-7 Spectre Tank",
+        "src": "entries/modeling/q3/claude/futuristic_tank.html",
+        "size": 34725,
+        "id": "futuristictank"
+      }
+    ],
+    "gemini": [
+      {
+        "type": "iframe",
+        "title": "Blocky Tactical Soldier 3D Showcase",
+        "src": "entries/modeling/q3/gemini/blocky_3d_soldier_viewer.html",
+        "size": 47620,
+        "id": "blocky3dsoldierviewer"
+      },
+      {
+        "type": "iframe",
+        "title": "APEX-X // Low-Poly Futuristic Sports Car Simulator",
+        "src": "entries/modeling/q3/gemini/cybervehicle_simulator.html",
+        "size": 33197,
+        "id": "cybervehiclesimulator"
+      },
+      {
+        "type": "iframe",
+        "title": "Futuristic Tank 3D Viewer",
+        "src": "entries/modeling/q3/gemini/futuristic_tank_3d_viewer.html",
+        "size": 32789,
+        "id": "futuristictank3dviewer"
+      }
+    ],
+    "qwen": [
+      {
+        "type": "iframe",
+        "title": "Blocy Soldier 3D Viewer",
+        "src": "entries/modeling/q3/qwen/soldier.html",
+        "size": 6659,
+        "id": "soldier"
+      },
+      {
+        "type": "iframe",
+        "title": "Low Poly Futuristic Sports Car",
+        "src": "entries/modeling/q3/qwen/sportcar.html",
+        "size": 15668,
+        "id": "sportcar"
+      },
+      {
+        "type": "iframe",
+        "title": "Low Poly Futuristic Tank",
+        "src": "entries/modeling/q3/qwen/Tank.html",
+        "size": 8930,
+        "id": "tank"
+      }
+    ],
+    "glm": [
+      {
+        "type": "iframe",
+        "title": "UNIT-07 \"BLOCKY\" — Field Inspection",
+        "src": "entries/modeling/q3/glm/3D%20soldier.html",
+        "size": 38400,
+        "id": "3dsoldier"
+      },
+      {
+        "type": "iframe",
+        "title": "SAROS GT-9 · Low-Poly Concept",
+        "src": "entries/modeling/q3/glm/sportCar.html",
+        "size": 32793,
+        "id": "sportcar"
+      },
+      {
+        "type": "iframe",
+        "title": "SABERCAT VX-9 — Low-Poly Hover Tank",
+        "src": "entries/modeling/q3/glm/tank.html",
+        "size": 35431,
+        "id": "tank"
+      }
+    ]
+  },
   "gamedev/sec1": {
     "claude": [
       {

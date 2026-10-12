@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APEX-X // Low-Poly Futuristic Sports Car Simulator</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            cyan: '#00f0ff',
+                            purple: '#b000ff',
+                            pink: '#ff007f',
+                            dark: '#0a0b10',
+                            card: '#121526',
+                            border: '#1f293d'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Three.js and OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0b10;
+            color: #f3f4f6;
+            overflow: hidden;
+            user-select: none;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(18, 21, 38, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .glass-button {
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-button:hover {
+            background: rgba(0, 240, 255, 0.25);
+            border-color: rgba(0, 240, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+        }
+        .glass-button.active {
+            background: rgba(0, 240, 255, 0.4);
+            border-color: #00f0ff;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.8);
+        }
+        /* Custom Scrollbar for panels */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(10, 11, 16, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 240, 255, 0.4);
+            border-radius: 2px;
+        }
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+        .hud-overlay {
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .interactive {
+            pointer-events: auto;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; filter: drop-shadow(0 0 12px #00f0ff); }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 3s infinite;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen">
+
+    <div id="canvas-container"></div>
+
+    <div class="hud-overlay w-full h-full flex flex-col justify-between p-4 md:p-6 pointer-events-none">
+        
+        <!-- Top Header & Specs Bar -->
+        <header class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="glass-panel px-5 py-3 rounded-xl interactive flex items-center gap-4">
+                <div class="w-3 h-3 rounded-full bg-cyber-cyan animate-ping"></div>
+                <div>
+                    <h1 class="font-orbitron font-extrabold text-lg md:text-xl tracking-wider text-cyber-cyan">APEX-X // V-9.4</h1>
+                    <p class="text-xs text-gray-400">Cybernetic Low-Poly Supercar Simulator</p>
+                </div>
+            </div>
+
+            <!-- Real-time Stats Dashboard -->
+            <div class="glass-panel px-6 py-3 rounded-xl interactive hidden lg:flex items-center gap-8 font-orbitron text-xs">
+                <div>
+                    <span class="text-gray-400 block">TOP SPEED</span>
+                    <span id="speed-display" class="text-cyber-cyan font-bold text-sm">340 KM/H</span>
+                </div>
+                <div class="w-px h-8 bg-cyber-border"></div>
+                <div>
+                    <span class="text-gray-400 block">POLY COUNT</span>
+                    <span class="text-purple-400 font-bold text-sm">3,842 TRIS</span>
+                </div>
+                <div class="w-px h-8 bg-cyber-border"></div>
+                <div>
+                    <span class="text-gray-400 block">FPS</span>
+                    <span id="fps-counter" class="text-green-400 font-bold text-sm">60</span>
+                </div>
+                <div class="w-px h-8 bg-cyber-border"></div>
+                <div>
+                    <span class="text-gray-400 block">SYSTEM STATUS</span>
+                    <span class="text-cyber-cyan font-bold text-sm animate-pulse">OPTIMIZED</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Middle Area (Floating Controls & Camera View Selector) -->
+        <div class="flex-1 flex items-center justify-between pointer-events-none my-4">
+            
+            <!-- Left Panel: Customizer & Toggles -->
+            <div class="glass-panel p-4 md:p-5 rounded-2xl interactive flex flex-col gap-5 w-72 md:w-80 max-h-[75vh] overflow-y-auto">
+                <div>
+                    <h2 class="font-orbitron font-bold text-sm text-cyber-cyan flex items-center gap-2 mb-3">
+                        <i class="fa-solid fa-palette"></i> Paint Customizer
+                    </h2>
+                    <div class="grid grid-cols-5 gap-2" id="paint-colors">
+                        <button onclick="setCarColor(0x00f0ff)" class="w-full h-9 rounded-lg bg-cyan-400 border-2 border-white/40 hover:scale-105 transition" title="Metallic Cyan"></button>
+                        <button onclick="setCarColor(0xb000ff)" class="w-full h-9 rounded-lg bg-purple-600 border-2 border-transparent hover:scale-105 transition" title="Neon Purple"></button>
+                        <button onclick="setCarColor(0x111115)" class="w-full h-9 rounded-lg bg-neutral-900 border-2 border-transparent hover:scale-105 transition" title="Matte Black"></button>
+                        <button onclick="setCarColor(0xccff00)" class="w-full h-9 rounded-lg bg-lime-400 border-2 border-transparent hover:scale-105 transition" title="Electric Lime"></button>
+                        <button onclick="setCarColor(0xff0033)" class="w-full h-9 rounded-lg bg-red-600 border-2 border-transparent hover:scale-105 transition" title="Crimson Red"></button>
+                    </div>
+                </div>
+
+                <hr class="border-cyber-border">
+
+                <div>
+                    <h2 class="font-orbitron font-bold text-sm text-cyber-cyan flex items-center gap-2 mb-3">
+                        <i class="fa-solid fa-bolt"></i> Neon Underglow
+                    </h2>
+                    <div class="grid grid-cols-5 gap-2" id="underglow-colors">
+                        <button onclick="setUnderglowColor(0x00f0ff)" class="w-full h-9 rounded-lg bg-cyan-400 border-2 border-white/40 hover:scale-105 transition"></button>
+                        <button onclick="setUnderglowColor(0xb000ff)" class="w-full h-9 rounded-lg bg-purple-600 border-2 border-transparent hover:scale-105 transition"></button>
+                        <button onclick="setUnderglowColor(0xff007f)" class="w-full h-9 rounded-lg bg-pink-500 border-2 border-transparent hover:scale-105 transition"></button>
+                        <button onclick="setUnderglowColor(0x00ff66)" class="w-full h-9 rounded-lg bg-emerald-400 border-2 border-transparent hover:scale-105 transition"></button>
+                        <button onclick="setUnderglowColor(0xffaa00)" class="w-full h-9 rounded-lg bg-amber-500 border-2 border-transparent hover:scale-105 transition"></button>
+                    </div>
+                </div>
+
+                <hr class="border-cyber-border">
+
+                <div>
+                    <h2 class="font-orbitron font-bold text-sm text-cyber-cyan flex items-center gap-2 mb-3">
+                        <i class="fa-solid fa-sliders"></i> Systems & Animation
+                    </h2>
+                    <div class="flex flex-col gap-2.5">
+                        <button id="btn-hover" onclick="toggleHoverMode()" class="glass-button px-4 py-2.5 rounded-xl text-xs font-orbitron font-semibold flex items-center justify-between">
+                            <span>MODE: WHEEL DRIVE</span>
+                            <i class="fa-solid fa-car"></i>
+                        </button>
+                        <button id="btn-doors" onclick="toggleDoors()" class="glass-button px-4 py-2.5 rounded-xl text-xs font-orbitron font-semibold flex items-center justify-between">
+                            <span>DOORS: CLOSED</span>
+                            <i class="fa-solid fa-door-closed"></i>
+                        </button>
+                        <button id="btn-lights" onclick="toggleHeadlights()" class="glass-button active px-4 py-2.5 rounded-xl text-xs font-orbitron font-semibold flex items-center justify-between">
+                            <span>HEADLIGHTS: ON</span>
+                            <i class="fa-solid fa-lightbulb"></i>
+                        </button>
+                        <button id="btn-autorotate" onclick="toggleAutoRotate()" class="glass-button px-4 py-2.5 rounded-xl text-xs font-orbitron font-semibold flex items-center justify-between">
+                            <span>AUTO-ROTATE: OFF</span>
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Camera Preset Views -->
+            <div class="glass-panel p-4 rounded-2xl interactive flex flex-col gap-2.5 w-44 hidden md:flex">
+                <h2 class="font-orbitron font-bold text-xs text-cyber-cyan mb-1 flex items-center gap-2">
+                    <i class="fa-solid fa-video"></i> Camera Views
+                </h2>
+                <button onclick="setCameraView('isometric')" class="glass-button text-left px-3 py-2 rounded-lg text-xs font-orbitron">Isometric</button>
+                <button onclick="setCameraView('front')" class="glass-button text-left px-3 py-2 rounded-lg text-xs font-orbitron">Front Angle</button>
+                <button onclick="setCameraView('rear')" class="glass-button text-left px-3 py-2 rounded-lg text-xs font-orbitron">Rear Spoiler</button>
+                <button onclick="setCameraView('side')" class="glass-button text-left px-3 py-2 rounded-lg text-xs font-orbitron">Side Profile</button>
+                <button onclick="setCameraView('driver')" class="glass-button text-left px-3 py-2 rounded-lg text-xs font-orbitron">Cockpit / Driver</button>
+            </div>
+        </div>
+
+        <!-- Bottom Footer: Mobile Camera Views & Quick Notice -->
+        <footer class="flex flex-col md:flex-row items-center justify-between gap-3">
+            <div class="glass-panel px-4 py-2 rounded-xl interactive flex md:hidden gap-2 overflow-x-auto w-full justify-center">
+                <button onclick="setCameraView('isometric')" class="glass-button px-3 py-1.5 rounded-lg text-[10px] font-orbitron">Isometric</button>
+                <button onclick="setCameraView('front')" class="glass-button px-3 py-1.5 rounded-lg text-[10px] font-orbitron">Front</button>
+                <button onclick="setCameraView('rear')" class="glass-button px-3 py-1.5 rounded-lg text-[10px] font-orbitron">Rear</button>
+                <button onclick="setCameraView('driver')" class="glass-button px-3 py-1.5 rounded-lg text-[10px] font-orbitron">Cockpit</button>
+            </div>
+
+            <div class="glass-panel px-4 py-2 rounded-xl interactive text-[11px] text-gray-400 flex items-center gap-2 mx-auto md:mx-0">
+                <i class="fa-solid fa-circle-info text-cyber-cyan"></i>
+                <span>Use mouse/touch to orbit, pinch/scroll to zoom around the cyber-car.</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        // --- SCENE SETUP & VARIABLES ---
+        let scene, camera, renderer, controls;
+        let carGroup, bodyMesh, cockpitMesh, spoilerMesh, underglowLight;
+        let wheels = [], leftDoor, rightDoor, exhaustFlames = [];
+        let showroomParticles;
+        
+        // State management
+        const state = {
+            carColor: 0x00f0ff,
+            underglowColor: 0x00f0ff,
+            hoverMode: false,
+            doorsOpen: false,
+            headlightsOn: true,
+            autoRotate: false,
+            speed: 0
+        };
+
+        let targetCameraPos = new THREE.Vector3(6, 3, 6);
+        let targetCameraTarget = new THREE.Vector3(0, 0.5, 0);
+        let isTransitioningCamera = false;
+
+        // --- INITIALIZATION ---
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0b10);
+            scene.fog = new THREE.FogExp2(0x0a0b10, 0.035);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(6, 3, 6);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.appendChild(renderer.domElement);
+
+            // Orbit Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 - 0.05; // Don't go below floor
+            controls.minDistance = 2;
+            controls.maxDistance = 25;
+            controls.target.set(0, 0.5, 0);
+
+            // Lighting
+            setupLighting();
+
+            // Showroom Environment
+            setupShowroom();
+
+            // Procedural Low-Poly Sports Car
+            buildProceduralCar();
+
+            // Event Listeners
+            window.addEventListener('resize', onWindowResize);
+
+            // Start animation loop
+            animate();
+        }
+
+        // --- LIGHTING SETUP ---
+        function setupLighting() {
+            const ambientLight = new THREE.AmbientLight(0x1a2238, 1.5);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
+            dirLight.position.set(10, 15, 10);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.bias = -0.0001;
+            scene.add(dirLight);
+
+            // Colored rim lights for showroom atmosphere
+            const purpleLight = new THREE.PointLight(0xb000ff, 4, 20);
+            purpleLight.position.set(-8, 4, -8);
+            scene.add(purpleLight);
+
+            const cyanLight = new THREE.PointLight(0x00f0ff, 4, 20);
+            cyanLight.position.set(8, 4, 8);
+            scene.add(cyanLight);
+        }
+
+        // --- SHOWROOM ENVIRONMENT ---
+        function setupShowroom() {
+            // Reflective Grid Floor
+            const gridHelper = new THREE.GridHelper(40, 40, 0x00f0ff, 0x1f293d);
+            gridHelper.position.y = -0.01;
+            scene.add(gridHelper);
+
+            const floorGeo = new THREE.PlaneGeometry(60, 60);
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: 0x0d0e15,
+                roughness: 0.2,
+                metalness: 0.8
+            });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -0.02;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Floating neon particles
+            const particleCount = 200;
+            const particleGeo = new THREE.BufferGeometry();
+            const particlePositions = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                particlePositions[i] = (Math.random() - 0.5) * 30;
+                particlePositions[i + 1] = Math.random() * 8;
+                particlePositions[i + 2] = (Math.random() - 0.5) * 30;
+            }
+
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+            const particleMat = new THREE.PointsMaterial({
+                color: 0x00f0ff,
+                size: 0.08,
+                transparent: true,
+                opacity: 0.7
+            });
+            showroomParticles = new THREE.Points(particleGeo, particleMat);
+            scene.add(showroomParticles);
+        }
+
+        // --- PROCEDURAL LOW-POLY SPORTS CAR ---
+        function buildProceduralCar() {
+            carGroup = new THREE.Group();
+
+            // Materials
+            const bodyMaterial = new THREE.MeshStandardMaterial({
+                color: state.carColor,
+                roughness: 0.3,
+                metalness: 0.9,
+                flatShading: true
+            });
+
+            const darkCarbonMaterial = new THREE.MeshStandardMaterial({
+                color: 0x151821,
+                roughness: 0.6,
+                metalness: 0.5,
+                flatShading: true
+            });
+
+            const glassMaterial = new THREE.MeshPhysicalMaterial({
+                color: 0x051224,
+                roughness: 0.1,
+                metalness: 0.9,
+                transparent: true,
+                opacity: 0.65,
+                flatShading: true
+            });
+
+            const rimMaterial = new THREE.MeshStandardMaterial({
+                color: 0x00f0ff,
+                emissive: 0x00f0ff,
+                emissiveIntensity: 0.6,
+                roughness: 0.2,
+                metalness: 0.9,
+                flatShading: true
+            });
+
+            const tireMaterial = new THREE.MeshStandardMaterial({
+                color: 0x111115,
+                roughness: 0.9,
+                metalness: 0.1,
+                flatShading: true
+            });
+
+            // 1. Main Chassis & Lower Body Wedge
+            const bodyGeo = new THREE.BoxGeometry(2.1, 0.45, 4.4);
+            bodyMesh = new THREE.Mesh(bodyGeo, bodyMaterial);
+            bodyMesh.position.y = 0.45;
+            bodyMesh.castShadow = true;
+            bodyMesh.receiveShadow = true;
+            carGroup.add(bodyMesh);
+
+            // Front Nose Wedge
+            const noseGeo = new THREE.BoxGeometry(2.0, 0.3, 1.4);
+            const noseMesh = new THREE.Mesh(noseGeo, bodyMaterial);
+            noseMesh.position.set(0, 0.38, 2.1);
+            noseMesh.rotation.x = -0.15;
+            noseMesh.castShadow = true;
+            carGroup.add(noseMesh);
+
+            // Rear Deck
+            const rearGeo = new THREE.BoxGeometry(2.05, 0.5, 1.5);
+            const rearMesh = new THREE.Mesh(rearGeo, bodyMaterial);
+            rearMesh.position.set(0, 0.55, -1.3);
+            rearMesh.castShadow = true;
+            carGroup.add(rearMesh);
+
+            // 2. Cockpit Canopy (Low-Poly Cyberpunk Jet Style)
+            const canopyGeo = new THREE.ConeGeometry(1.1, 1.1, 4);
+            cockpitMesh = new THREE.Mesh(canopyGeo, glassMaterial);
+            cockpitMesh.scale.set(0.9, 0.6, 1.8);
+            cockpitMesh.position.set(0, 0.85, 0.1);
+            cockpitMesh.rotation.y = Math.PI / 4;
+            cockpitMesh.castShadow = true;
+            carGroup.add(cockpitMesh);
+
+            // 3. Hinged Doors (Left & Right)
+            leftDoor = createDoor(bodyMaterial, glassMaterial, 'left');
+            rightDoor = createDoor(bodyMaterial, glassMaterial, 'right');
+            carGroup.add(leftDoor);
+            carGroup.add(rightDoor);
+
+            // 4. Massive Rear Spoiler
+            const spoilerGroup = new THREE.Group();
+            const strutGeo = new THREE.BoxGeometry(0.1, 0.4, 0.2);
+            const leftStrut = new THREE.Mesh(strutGeo, darkCarbonMaterial);
+            leftStrut.position.set(-0.7, 0.75, -2.0);
+            const rightStrut = leftStrut.clone();
+            rightStrut.position.x = 0.7;
+
+            const wingGeo = new THREE.BoxGeometry(2.2, 0.1, 0.6);
+            spoilerMesh = new THREE.Mesh(wingGeo, bodyMaterial);
+            spoilerMesh.position.set(0, 0.95, -2.0);
+            spoilerMesh.rotation.x = 0.1;
+            spoilerMesh.castShadow = true;
+
+            spoilerGroup.add(leftStrut, rightStrut, spoilerMesh);
+            carGroup.add(spoilerGroup);
+
+            // 5. Wheels (4x)
+            const wheelPositions = [
+                [-1.1, 0.35, 1.3],   // Front Left
+                [ 1.1, 0.35, 1.3],   // Front Right
+                [-1.1, 0.35, -1.3],  // Rear Left
+                [ 1.1, 0.35, -1.3]   // Rear Right
+            ];
+
+            wheelPositions.forEach((pos, idx) => {
+                const wheelGroup = new THREE.Group();
+                wheelGroup.position.set(...pos);
+
+                // Tire
+                const tireGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.35, 16);
+                const tire = new THREE.Mesh(tireGeo, tireMaterial);
+                tire.rotation.z = Math.PI / 2;
+                tire.castShadow = true;
+                wheelGroup.add(tire);
+
+                // Glowing Rim
+                const rimGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.37, 6);
+                const rim = new THREE.Mesh(rimGeo, rimMaterial);
+                rim.rotation.z = Math.PI / 2;
+                wheelGroup.add(rim);
+
+                wheels.push(wheelGroup);
+                carGroup.add(wheelGroup);
+            });
+
+            // 6. Neon Strip Underglow
+            const underglowGeo = new THREE.BoxGeometry(1.8, 0.05, 3.8);
+            const underglowMat = new THREE.MeshBasicMaterial({ color: state.underglowColor });
+            const underglowMesh = new THREE.Mesh(underglowGeo, underglowMat);
+            underglowMesh.position.set(0, 0.12, 0);
+            carGroup.add(underglowMesh);
+
+            underglowLight = new THREE.PointLight(state.underglowColor, 3, 5);
+            underglowLight.position.set(0, 0.05, 0);
+            carGroup.add(underglowLight);
+
+            // 7. Headlights & Taillights
+            const headlightGeo = new THREE.BoxGeometry(0.5, 0.12, 0.15);
+            const headlightMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+            
+            const leftHeadlight = new THREE.Mesh(headlightGeo, headlightMat);
+            leftHeadlight.position.set(-0.75, 0.4, 2.25);
+            const rightHeadlight = leftHeadlight.clone();
+            rightHeadlight.position.x = 0.75;
+            carGroup.add(leftHeadlight, rightHeadlight);
+
+            // Taillights bar
+            const taillightGeo = new THREE.BoxGeometry(1.9, 0.08, 0.15);
+            const taillightMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
+            const taillight = new THREE.Mesh(taillightGeo, taillightMat);
+            taillight.position.set(0, 0.6, -2.22);
+            carGroup.add(taillight);
+
+            // 8. Exhaust Pipes & Blue Flame Particles
+            const exhaustGeo = new THREE.CylinderGeometry(0.12, 0.15, 0.4, 8);
+            const exhaustMat = new THREE.MeshStandardMaterial({ color: 0x333339, metalness: 0.8 });
+            
+            const leftExhaust = new THREE.Mesh(exhaustGeo, exhaustMat);
+            leftExhaust.rotation.x = Math.PI / 2;
+            leftExhaust.position.set(-0.4, 0.35, -2.25);
+
+            const rightExhaust = leftExhaust.clone();
+            rightExhaust.position.x = 0.4;
+            carGroup.add(leftExhaust, rightExhaust);
+
+            // Exhaust Flames
+            const flameGeo = new THREE.ConeGeometry(0.1, 0.6, 6);
+            const flameMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.8 });
+            
+            const leftFlame = new THREE.Mesh(flameGeo, flameMat);
+            leftFlame.rotation.x = -Math.PI / 2;
+            leftFlame.position.set(-0.4, 0.35, -2.6);
+            
+            const rightFlame = leftFlame.clone();
+            rightFlame.position.x = 0.4;
+            
+            carGroup.add(leftFlame, rightFlame);
+            exhaustFlames.push(leftFlame, rightFlame);
+
+            carGroup.position.y = 0.2;
+            scene.add(carGroup);
+        }
+
+        function createDoor(bodyMat, glassMat, side) {
+            const doorGroup = new THREE.Group();
+            const sign = side === 'left' ? -1 : 1;
+
+            const doorPanelGeo = new THREE.BoxGeometry(0.1, 0.38, 1.8);
+            const doorPanel = new THREE.Mesh(doorPanelGeo, bodyMat);
+            doorPanel.position.set(sign * 1.05, 0.55, 0.1);
+            doorPanel.rotation.y = sign * 0.1;
+            doorPanel.castShadow = true;
+            doorGroup.add(doorPanel);
+
+            doorGroup.userData = { side: side, isOpen: false, targetRot: 0 };
+            return doorGroup;
+        }
+
+        // --- INTERACTION & CONTROLLERS ---
+        function setCarColor(hexColor) {
+            state.carColor = hexColor;
+            bodyMesh.material.color.setHex(hexColor);
+            spoilerMesh.material.color.setHex(hexColor);
+            // Update active state in UI
+            event.target.parentElement.querySelectorAll('button').forEach(b => b.style.borderColor = 'transparent');
+            event.target.style.borderColor = 'rgba(255,255,255,0.8)';
+        }
+
+        function setUnderglowColor(hexColor) {
+            state.underglowColor = hexColor;
+            underglowLight.color.setHex(hexColor);
+            event.target.parentElement.querySelectorAll('button').forEach(b => b.style.borderColor = 'transparent');
+            event.target.style.borderColor = 'rgba(255,255,255,0.8)';
+        }
+
+        function toggleHoverMode() {
+            state.hoverMode = !state.hoverMode;
+            const btn = document.getElementById('btn-hover');
+            if (state.hoverMode) {
+                btn.classList.add('active');
+                btn.querySelector('span').innerText = "MODE: HOVER";
+                btn.querySelector('i').className = "fa-solid fa-plane";
+            } else {
+                btn.classList.remove('active');
+                btn.querySelector('span').innerText = "MODE: WHEEL DRIVE";
+                btn.querySelector('i').className = "fa-solid fa-car";
+            }
+        }
+
+        function toggleDoors() {
+            state.doorsOpen = !state.doorsOpen;
+            const btn = document.getElementById('btn-doors');
+            if (state.doorsOpen) {
+                btn.classList.add('active');
+                btn.querySelector('span').innerText = "DOORS: OPEN";
+                btn.querySelector('i').className = "fa-solid fa-door-open";
+            } else {
+                btn.classList.remove('active');
+                btn.querySelector('span').innerText = "DOORS: CLOSED";
+                btn.querySelector('i').className = "fa-solid fa-door-closed";
+            }
+        }
+
+        function toggleHeadlights() {
+            state.headlightsOn = !state.headlightsOn;
+            const btn = document.getElementById('btn-lights');
+            if (state.headlightsOn) {
+                btn.classList.add('active');
+                btn.querySelector('span').innerText = "HEADLIGHTS: ON";
+            } else {
+                btn.classList.remove('active');
+                btn.querySelector('span').innerText = "HEADLIGHTS: OFF";
+            }
+        }
+
+        function toggleAutoRotate() {
+            state.autoRotate = !state.autoRotate;
+            const btn = document.getElementById('btn-autorotate');
+            if (state.autoRotate) {
+                btn.classList.add('active');
+                btn.querySelector('span').innerText = "AUTO-ROTATE: ON";
+            } else {
+                btn.classList.remove('active');
+                btn.querySelector('span').innerText = "AUTO-ROTATE: OFF";
+            }
+        }
+
+        function setCameraView(view) {
+            isTransitioningCamera = true;
+            controls.enabled = false;
+
+            switch(view) {
+                case 'isometric':
+                    targetCameraPos.set(6, 3, 6);
+                    targetCameraTarget.set(0, 0.5, 0);
+                    break;
+                case 'front':
+                    targetCameraPos.set(0, 1.2, 5);
+                    targetCameraTarget.set(0, 0.5, 0);
+                    break;
+                case 'rear':
+                    targetCameraPos.set(0, 1.5, -5);
+                    targetCameraTarget.set(0, 0.5, 0);
+                    break;
+                case 'side':
+                    targetCameraPos.set(6, 1.5, 0);
+                    targetCameraTarget.set(0, 0.5, 0);
+                    break;
+                case 'driver':
+                    targetCameraPos.set(-0.2, 1.1, 0.2);
+                    targetCameraTarget.set(0, 0.9, 1.5);
+                    break;
+            }
+
+            setTimeout(() => {
+                controls.enabled = true;
+                isTransitioningCamera = false;
+            }, 1000);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- ANIMATION LOOP ---
+        let clock = new THREE.Clock();
+        let frameCount = 0;
+        let lastTime = performance.now();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+            const delta = clock.getDelta();
+
+            // FPS Counter
+            frameCount++;
+            const currentTime = performance.now();
+            if (currentTime - lastTime >= 1000) {
+                document.getElementById('fps-counter').innerText = Math.round((frameCount * 1000) / (currentTime - lastTime));
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+
+            // Auto-rotate scene if enabled
+            if (state.autoRotate && !isTransitioningCamera) {
+                carGroup.rotation.y += 0.005;
+            }
+
+            // Smooth Camera transition for presets
+            if (isTransitioningCamera) {
+                camera.position.lerp(targetCameraPos, 0.08);
+                controls.target.lerp(targetCameraTarget, 0.08);
+            }
+
+            // Hover mode suspension & wheel tilt
+            const targetY = state.hoverMode ? 0.7 + Math.sin(elapsedTime * 4) * 0.15 : 0.2;
+            carGroup.position.y += (targetY - carGroup.position.y) * 0.1;
+
+            if (state.hoverMode) {
+                wheels.forEach((wheel, idx) => {
+                    wheel.rotation.z += (Math.PI / 2 - wheel.rotation.z) * 0.1;
+                });
+            } else {
+                wheels.forEach((wheel, idx) => {
+                    wheel.rotation.z += (0 - wheel.rotation.z) * 0.1;
+                    wheel.rotation.x += 0.05; // Wheel spin simulation
+                });
+            }
+
+            // Door open/close animation
+            const targetDoorAngle = state.doorsOpen ? 1.1 : 0;
+            leftDoor.rotation.z += (targetDoorAngle - leftDoor.rotation.z) * 0.1;
+            rightDoor.rotation.z += (-targetDoorAngle - rightDoor.rotation.z) * 0.1;
+
+            // Exhaust flame flicker
+            exhaustFlames.forEach((flame, idx) => {
+                flame.scale.y = 0.8 + Math.sin(elapsedTime * 30 + idx) * 0.3;
+                flame.visible = state.headlightsOn;
+            });
+
+            // Showroom particles floating
+            if (showroomParticles) {
+                const positions = showroomParticles.geometry.attributes.position.array;
+                for (let i = 1; i < positions.length; i += 3) {
+                    positions[i] -= 0.01;
+                    if (positions[i] < 0) positions[i] = 8;
+                }
+                showroomParticles.geometry.attributes.position.needsUpdate = true;
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Run initialization on load
+        window.onload = init;
+    </script>
+</body>
+</html>

@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>SABERCAT VX-9 — Low-Poly Hover Tank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#d6d2c6; --dim:#8b887d; --amber:#ffa64d; --red:#ff5a45;
+    --hair:rgba(255,255,255,.14);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:#15161a}
+  body{cursor:none;font-family:'IBM Plex Mono',monospace;color:var(--ink)}
+  canvas{display:block;opacity:0;transition:opacity 1.2s ease}
+  canvas.on{opacity:1}
+
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
+  #vignette{position:fixed;inset:0;pointer-events:none;z-index:4;
+    box-shadow:inset 0 0 190px rgba(0,0,0,.62)}
+
+  /* ---- title plate ---- */
+  #plate{position:absolute;top:26px;left:28px;border-left:2px solid var(--amber);
+    padding-left:16px;animation:rise .9s .15s ease both}
+  #plate .tag{font-size:10px;letter-spacing:.32em;color:var(--dim);text-transform:uppercase}
+  #plate h1{font-family:'Chakra Petch',sans-serif;font-size:30px;font-weight:700;
+    letter-spacing:.05em;color:var(--ink);margin:4px 0 6px;line-height:1}
+  #plate h1 span{color:var(--amber)}
+  #plate .status{font-size:10px;letter-spacing:.14em;color:var(--dim)}
+  #plate .status i{display:inline-block;width:7px;height:7px;background:var(--amber);
+    margin-right:8px;vertical-align:1px;animation:blink 2.1s infinite}
+  #plate .status.warn i{background:var(--red);animation-duration:.5s}
+  #plate .status.warn span{color:var(--red)}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* ---- readouts ---- */
+  #readout{position:absolute;left:28px;bottom:26px;font-size:11px;animation:rise .9s .3s ease both}
+  #readout .row{display:flex;align-items:center;gap:10px;margin-top:9px}
+  #readout label{width:44px;font-size:9px;letter-spacing:.25em;color:var(--dim)}
+  #readout span{min-width:52px;color:var(--ink)}
+  #readout small{color:var(--dim);font-size:9px}
+  #ammoCells i{display:inline-block;width:15px;height:9px;border:1px solid var(--hair);
+    margin-right:4px;vertical-align:-1px}
+  #ammoCells i.on{background:var(--amber);border-color:var(--amber)}
+  #ammoCells.cycle i{animation:blink .4s infinite}
+  .bar{width:112px;height:6px;border:1px solid var(--hair)}
+  .bar i{display:block;height:100%;width:18%;background:var(--amber);transition:width .12s linear}
+  .bar i.hot{background:var(--red)}
+
+  #hints{position:absolute;right:28px;bottom:26px;font-size:10px;letter-spacing:.18em;
+    color:var(--dim);text-align:right;line-height:1.9;animation:rise .9s .45s ease both}
+  #hints b{color:var(--ink);font-weight:500}
+
+  #sndBtn{position:absolute;right:28px;top:28px;pointer-events:auto;cursor:none;
+    background:transparent;border:1px solid var(--hair);color:var(--dim);
+    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;
+    padding:7px 13px 6px}
+  #sndBtn:hover{color:var(--amber);border-color:var(--amber)}
+
+  /* ---- crosshair cursor ---- */
+  #xh{position:fixed;left:-100px;top:-100px;z-index:9;pointer-events:none;
+    width:34px;height:34px;transform:translate(-50%,-50%);transition:width .1s,height .1s}
+  #xh::before,#xh::after{content:'';position:absolute;background:var(--amber)}
+  #xh::before{left:50%;top:0;width:1px;height:100%;transform:translateX(-.5px)}
+  #xh::after{top:50%;left:0;height:1px;width:100%;transform:translateY(-.5px)}
+  #xh .ring{position:absolute;inset:8px;border:1px solid var(--amber);border-radius:50%;
+    transition:transform .12s ease}
+  #xh .gap{position:absolute;inset:0;background:#15161a;border-radius:50%;width:8px;height:8px;
+    left:50%;top:50%;transform:translate(-50%,-50%)}
+  #xh.kick{width:48px;height:48px}
+  #xh.blocked::before,#xh.blocked::after,#xh.blocked .ring{background:var(--red);border-color:var(--red)}
+
+  @media (max-width:640px){
+    #plate h1{font-size:22px} #hints{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div id="vignette"></div>
+<div id="hud">
+  <div id="plate">
+    <div class="tag">Class-IV Hover Platform // Railgun Testbed</div>
+    <h1>SABERCAT <span>VX-9</span></h1>
+    <div class="status" id="statusBox"><i></i><span id="statusTxt">REACTOR IGNITION…</span></div>
+  </div>
+  <div id="readout">
+    <div class="row"><label>VEL</label><span id="rVel">0.0</span><small>m/s</small></div>
+    <div class="row"><label>HDG</label><span id="rHdg">000</span><small>deg</small></div>
+    <div class="row"><label>AMMO</label><span id="ammoCells"></span></div>
+    <div class="row"><label>CORE</label><div class="bar"><i id="heatBar"></i></div><span id="rHeat">18%</span></div>
+  </div>
+  <div id="hints">
+    <b>W A S D</b> — drive<br>
+    <b>DRAG</b> — orbit &nbsp;·&nbsp; <b>SCROLL</b> — zoom<br>
+    <b>CLICK / SPACE</b> — fire railgun
+  </div>
+  <button id="sndBtn">SND OFF</button>
+</div>
+<div id="xh"><span class="ring"></span><span class="gap"></span></div>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ============================== CORE SETUP ============================== */
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x15161a);
+scene.fog = new THREE.Fog(0x15161a, 55, 165);
+
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 500);
+camera.position.set(11, 6.2, 12.5);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 2, 0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.minDistance = 6; controls.maxDistance = 46;
+controls.maxPolarAngle = 1.47;
+
+/* ============================== LIGHTING ============================== */
+// low warm "sun" for a dusk rim-light mood, cool fill from the opposite side
+const sun = new THREE.DirectionalLight(0xffb070, 2.6);
+sun.position.set(-46, 30, -34);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -30; sun.shadow.camera.right = 30;
+sun.shadow.camera.top = 30;  sun.shadow.camera.bottom = -30;
+sun.shadow.camera.far = 140;
+sun.shadow.bias = -0.0004;
+scene.add(sun, sun.target);
+
+scene.add(new THREE.HemisphereLight(0x44525e, 0x2a251d, 0.85));
+const fill = new THREE.DirectionalLight(0x5a6a80, 0.5);
+fill.position.set(24, 14, 30);
+scene.add(fill);
+
+// visible sun disc on the horizon
+function radialTex(stops){
+  const s = 128, cv = document.createElement('canvas'); cv.width = cv.height = s;
+  const c = cv.getContext('2d');
+  const g = c.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+  stops.forEach(([o, a]) => g.addColorStop(o, `rgba(255,255,255,${a})`));
+  c.fillStyle = g; c.fillRect(0, 0, s, s);
+  return new THREE.CanvasTexture(cv);
+}
+const softTex  = radialTex([[0,1],[0.35,0.55],[1,0]]);
+const discTex  = radialTex([[0,0.9],[0.55,0.35],[1,0]]);
+
+const sunSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: softTex, color: 0xff9455, transparent:true, opacity:0.9,
+  blending: THREE.AdditiveBlending, depthWrite:false, fog:false }));
+sunSprite.scale.setScalar(38);
+sunSprite.position.set(-120, 15, -85);
+scene.add(sunSprite);
+
+/* ============================== MATERIALS ============================== */
+const mat = {
+  hull:  new THREE.MeshStandardMaterial({ color:0x535a61, flatShading:true, roughness:0.72, metalness:0.3 }),
+  armor: new THREE.MeshStandardMaterial({ color:0x63684e, flatShading:true, roughness:0.82, metalness:0.18 }),
+  dark:  new THREE.MeshStandardMaterial({ color:0x272a2e, flatShading:true, roughness:0.6,  metalness:0.5 }),
+  gun:   new THREE.MeshStandardMaterial({ color:0x3a3f46, flatShading:true, roughness:0.45, metalness:0.65 }),
+  rock:  new THREE.MeshStandardMaterial({ color:0x55524a, flatShading:true, roughness:0.95, metalness:0.05 }),
+  mono:  new THREE.MeshStandardMaterial({ color:0x3b3e45, flatShading:true, roughness:0.7,  metalness:0.3 }),
+};
+// individually animated emissives
+const glowMat = {
+  rail:   new THREE.MeshStandardMaterial({ color:0x201408, emissive:0xff8c30, emissiveIntensity:2.4, roughness:0.4 }),
+  muzz:   new THREE.MeshStandardMaterial({ color:0x201408, emissive:0xffa040, emissiveIntensity:2.4, roughness:0.4 }),
+  lens:   new THREE.MeshStandardMaterial({ color:0x201408, emissive:0xffa64d, emissiveIntensity:1.8, roughness:0.4 }),
+  exhaust:new THREE.MeshStandardMaterial({ color:0x201408, emissive:0xff7a26, emissiveIntensity:1.0, roughness:0.4 }),
+  skidL:  new THREE.MeshStandardMaterial({ color:0x201408, emissive:0xff8c30, emissiveIntensity:1.4, roughness:0.4 }),
+  skidR:  new THREE.MeshStandardMaterial({ color:0x201408, emissive:0xff8c30, emissiveIntensity:1.4, roughness:0.4 }),
+};
+const slitMat = new THREE.MeshStandardMaterial({ color:0x201408, emissive:0xffa64d, emissiveIntensity:1.6, roughness:0.4 });
+
+/* ============================== GEOMETRY HELPERS ============================== */
+// triangular prism ("wedge") — the building block of the faceted armor.
+// vertical wall sits at +X, slope descends toward -X.
+function wedgeGeo(w, h, d){
+  const x = w/2, z = d/2;
+  const A=[-x,0,-z], B=[x,0,-z], C=[x,h,-z], D=[-x,0,z], E=[x,0,z], F=[x,h,z];
+  const p = [];
+  const T = (a,b,c) => p.push(...a, ...b, ...c);
+  T(A,C,B); T(D,E,F);            // end caps
+  T(A,B,E); T(A,E,D);            // bottom
+  T(B,C,F); T(B,F,E);            // wall
+  T(A,D,F); T(A,F,C);            // slope
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
+  g.computeVertexNormals();
+  return g;
+}
+const B = (w,h,d) => new THREE.BoxGeometry(w,h,d);
+const C = (rt,rb,h,s) => new THREE.CylinderGeometry(rt,rb,h,s);
+
+function add(parent, geo, material, x,y,z, rx=0, ry=0, rz=0){
+  const m = new THREE.Mesh(geo, material);
+  m.position.set(x,y,z); m.rotation.set(rx,ry,rz);
+  parent.add(m);
+  return m;
+}
+
+/* ============================== TERRAIN ============================== */
+function terrainH(x, z){
+  const d = Math.hypot(x, z);
+  const flat = THREE.MathUtils.smoothstep(d, 7, 26);   // keep the arena centre level
+  return flat * (
+    Math.sin(x*0.09 + 1.3) * Math.cos(z*0.11 - 0.6) * 2.2 +
+    Math.sin(x*0.21 - 0.4) * Math.sin(z*0.17 + 2.1) * 0.9 +
+    Math.cos(x*0.43) * Math.sin(z*0.39) * 0.35
+  );
+}
+const ground = (() => {
+  const g = new THREE.PlaneGeometry(170, 170, 96, 96);
+  g.rotateX(-Math.PI/2);
+  const pos = g.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
+  const lo = new THREE.Color(0x37342d), mid = new THREE.Color(0x4c483d), hi = new THREE.Color(0x635f4e);
+  const tmp = new THREE.Color();
+  for (let i = 0; i < pos.count; i++){
+    const x = pos.getX(i), z = pos.getZ(i);
+    const y = terrainH(x, z);
+    pos.setY(i, y);
+    const k = THREE.MathUtils.clamp((y + 2.4) / 5.4, 0, 1);
+    tmp.copy(lo).lerp(mid, k * 2).lerp(hi, Math.max(0, k - 0.5) * 1.6);
+    const j = 0.92 + Math.random() * 0.16;           // subtle per-facet jitter
+    colors[i*3] = tmp.r*j; colors[i*3+1] = tmp.g*j; colors[i*3+2] = tmp.b*j;
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({
+    vertexColors:true, flatShading:true, roughness:1, metalness:0 }));
+  m.receiveShadow = true;
+  scene.add(m);
+  return m;
+})();
+
+/* rocks + monolith landmarks */
+const colliders = [ground];
+(function scatter(){
+  const rockGeo = new THREE.IcosahedronGeometry(1, 0);
+  for (let i = 0; i < 46; i++){
+    const a = Math.random() * Math.PI * 2, r = 15 + Math.random() * 58;
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    const s = 0.5 + Math.random() * 2.1;
+    const m = new THREE.Mesh(rockGeo, mat.rock);
+    m.position.set(x, terrainH(x, z) + s * 0.25, z);
+    m.scale.set(s * (0.7 + Math.random()*0.6), s * (0.55 + Math.random()*0.7), s * (0.7 + Math.random()*0.6));
+    m.rotation.set(Math.random()*0.4, Math.random()*Math.PI*2, Math.random()*0.4);
+    m.castShadow = m.receiveShadow = true;
+    scene.add(m); colliders.push(m);
+  }
+  for (let i = 0; i < 6; i++){
+    const a = i / 6 * Math.PI * 2 + Math.random() * 0.8, r = 22 + Math.random() * 34;
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    const h = 8 + Math.random() * 8;
+    const m = new THREE.Mesh(B(1.4 + Math.random(), h, 1.2 + Math.random()*0.8), mat.mono);
+    m.position.set(x, terrainH(x, z) + h/2 - 0.5, z);
+    m.rotation.set((Math.random()-0.5)*0.1, Math.random()*Math.PI, (Math.random()-0.5)*0.08);
+    m.castShadow = m.receiveShadow = true;
+    scene.add(m); colliders.push(m);
+  }
+  // one landmark monolith with a lit slit
+  const px = -19, pz = 13, ph = 13;
+  const mono = new THREE.Mesh(B(2.2, ph, 1.6), mat.mono);
+  mono.position.set(px, terrainH(px, pz) + ph/2 - 0.5, pz);
+  mono.rotation.y = 0.5;
+  mono.castShadow = mono.receiveShadow = true;
+  add(mono, B(0.09, ph*0.42, 0.07), slitMat, 0, 1.2, 0.83);
+  scene.add(mono); colliders.push(mono);
+})();
+
+/* floating dust motes */
+const motes = (() => {
+  const N = 240, posArr = new Float32Array(N*3), spd = new Float32Array(N);
+  for (let i = 0; i < N; i++){
+    posArr[i*3]   = (Math.random()-0.5)*90;
+    posArr[i*3+1] = Math.random()*11 + 0.4;
+    posArr[i*3+2] = (Math.random()-0.5)*90;
+    spd[i] = 0.15 + Math.random()*0.4;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({
+    size:0.22, map:softTex, color:0xcfa27a, transparent:true, opacity:0.38,
+    depthWrite:false, blending:THREE.AdditiveBlending }));
+  scene.add(p);
+  return { p, posArr, spd, N };
+})();
+
+/* ============================== THE TANK ============================== */
+const HOVER = 1.42;
+const tank = new THREE.Group();          // world position + heading
+const body = new THREE.Group();          // bob / lean applied here
+tank.add(body);
+scene.add(tank);
+
+/* --- hull --- */
+add(body, B(3.1, 1.05, 5.7), mat.hull, 0, 0.15, 0);                       // chassis
+add(body, wedgeGeo(3.1, 1.05, 2.0), mat.hull, 0, -0.37, 3.85, 0, Math.PI/2, 0);  // glacis
+add(body, wedgeGeo(3.1, 1.0, 1.6),  mat.hull, 0, -0.4, -3.65, 0, -Math.PI/2, 0); // rear
+add(body, wedgeGeo(1.05, 1.15, 5.2), mat.armor,  1.55, -0.35, 0);         // right skirt
+add(body, wedgeGeo(1.05, 1.15, 5.2), mat.armor, -1.55, -0.35, 0, 0, Math.PI, 0); // left skirt
+add(body, B(2.3, 0.4, 3.6), mat.armor, 0, 0.85, 0.25);                    // deck
+add(body, wedgeGeo(0.75, 0.55, 3.2), mat.armor,  1.5, 0.6, 0.25, 0, Math.PI, 0); // right cheek
+add(body, wedgeGeo(0.75, 0.55, 3.2), mat.armor, -1.5, 0.6, 0.25);         // left cheek
+for (const s of [-1, 1]) for (let i = 0; i < 3; i++)                      // skirt intake slats
+  add(body, B(0.07, 0.5, 0.7), mat.dark, s*2.09, 0.12, -1.3 + i*0.85);
+
+/* --- engine deck --- */
+add(body, B(2.2, 0.3, 1.3), mat.dark, 0, 0.85, -2.15);
+for (let i = 0; i < 5; i++) add(body, B(0.05, 0.36, 1.1), mat.dark, -0.8 + i*0.4, 1.12, -2.15);
+for (let i = 0; i < 3; i++)
+  add(body, B(0.55, 0.05, 0.3), glowMat.exhaust, -0.8 + i*0.8, 0.18, -3.72, 0.55, 0, 0);
+
+/* --- hover skids --- */
+for (const s of [-1, 1]){
+  add(body, B(1.1, 0.6, 4.6), mat.hull, s*1.35, -0.5, 0.15);              // connector
+  const pont = C(0.5, 0.66, 5.4, 6); pont.rotateX(Math.PI/2); pont.scale(1.25, 0.85, 1);
+  add(body, pont, mat.dark, s*1.4, -0.95, 0.15);
+  const nose = new THREE.ConeGeometry(0.62, 1.0, 6); nose.rotateX(Math.PI/2);  nose.scale(1.25, 0.85, 1);
+  add(body, nose, mat.dark, s*1.4, -0.95, 3.35);
+  const tail = new THREE.ConeGeometry(0.62, 1.0, 6); tail.rotateX(-Math.PI/2); tail.scale(1.25, 0.85, 1);
+  add(body, tail, mat.dark, s*1.4, -0.95, -3.05);
+}
+add(body, B(0.55, 0.07, 4.2), glowMat.skidL, -1.4, -1.28, 0.15);
+add(body, B(0.55, 0.07, 4.2), glowMat.skidR,  1.4, -1.28, 0.15);
+const glowDisc = add(body, new THREE.CircleGeometry(3.4, 28),
+  new THREE.MeshBasicMaterial({ map:discTex, color:0xff8c30, transparent:true, opacity:0,
+    blending:THREE.AdditiveBlending, depthWrite:false }),
+  0, -1.31, 0.15, -Math.PI/2, 0, 0);
+glowDisc.renderOrder = 2;
+
+/* --- turret --- */
+const turret = new THREE.Group(); turret.position.set(0, 1.05, 0.35); body.add(turret);
+add(turret, C(1.05, 1.15, 0.16, 8), mat.dark, 0, 0.08, 0);
+add(turret, C(1.02, 1.28, 0.72, 7), mat.armor, 0, 0.52, 0, 0, 0.35, 0);
+add(turret, new THREE.ConeGeometry(1.02, 0.55, 7), mat.armor, 0, 1.15, 0, 0, 0.35, 0);
+add(turret, C(0.26, 0.32, 0.2, 6), mat.dark, -0.45, 1.42, -0.35);         // cupola
+add(turret, B(0.5, 0.06, 0.55), mat.hull, -0.45, 1.54, -0.35, 0.06, 0.3, 0);
+add(turret, wedgeGeo(0.55, 0.7, 1.5), mat.armor,  0.95, 0.5, 0.75, 0, -0.3, 0);  // cheeks
+add(turret, wedgeGeo(0.55, 0.7, 1.5), mat.armor, -0.95, 0.5, 0.75, 0, Math.PI+0.3, 0);
+
+// sensor mast + whip antennas
+add(turret, B(0.14, 0.55, 0.14), mat.dark, -0.6, 1.35, 0.15);
+add(turret, B(0.3, 0.18, 0.24),  mat.dark, -0.6, 1.66, 0.15);
+add(turret, B(0.18, 0.07, 0.04), glowMat.lens, -0.6, 1.66, 0.285);
+add(turret, C(0.012, 0.012, 1.7, 4), mat.dark, -0.78, 1.95, -0.75, -0.1, 0, 0.08);
+add(turret, C(0.012, 0.012, 1.2, 4), mat.dark, -0.6, 1.75, -0.95, 0.08, 0, -0.06);
+
+// smoke launchers (3 per side, angled up-out)
+for (const s of [-1, 1]) for (let i = 0; i < 3; i++)
+  add(turret, C(0.07, 0.07, 0.36, 6), mat.gun,
+    s*1.12, 0.85, -0.5 + i*0.27, 0.42, 0, -s*0.6);
+
+// bustle stowage + rack
+add(turret, B(0.65, 0.32, 0.8), mat.dark, 0.3, 1.12, -0.85, 0, 0.1, 0);
+add(turret, B(0.4, 0.28, 0.6),  mat.dark, -0.4, 1.1, -0.9, 0, -0.15, 0);
+add(turret, B(1.7, 0.04, 0.04), mat.dark, 0, 0.95, -1.28);
+for (const x of [-0.8, -0.27, 0.27, 0.8])
+  add(turret, B(0.04, 0.5, 0.04), mat.dark, x, 0.7, -1.28);
+
+/* --- railgun --- */
+add(turret, B(0.85, 0.72, 0.7), mat.gun, 0.42, 0.55, 1.1);                // mantlet block
+add(turret, wedgeGeo(0.95, 0.62, 0.55), mat.armor, 0.42, 0.5, 1.58, 0, Math.PI/2, 0);
+
+const pitchG = new THREE.Group(); pitchG.position.set(0.42, 0.55, 1.35); turret.add(pitchG);
+add(pitchG, B(0.13, 0.15, 3.9), mat.gun,  0.18, 0, 1.95);                 // rails
+add(pitchG, B(0.13, 0.15, 3.9), mat.gun, -0.18, 0, 1.95);
+add(pitchG, B(0.21, 0.07, 3.7), glowMat.rail, 0, 0.02, 1.95);             // accelerator gap
+for (let i = 0; i < 5; i++)                                               // spacer rings
+  add(pitchG, B(0.52, 0.48, 0.18), i % 2 ? mat.dark : mat.gun, 0, 0.02, 0.75 + i*0.7);
+add(pitchG, B(0.72, 0.68, 0.5), mat.gun, 0, 0.02, 4.05);                  // muzzle collar
+add(pitchG, B(0.76, 0.16, 0.1), glowMat.muzz, 0, 0.02, 3.9);
+add(pitchG, B(0.76, 0.16, 0.1), glowMat.muzz, 0, 0.02, 4.22);
+add(pitchG, B(0.28, 0.26, 1.0), mat.dark, 0, -0.42, 1.3);                 // under-barrel pod
+add(pitchG, B(0.16, 0.06, 0.04), glowMat.lens, 0, -0.42, 1.82);
+const muzzle = new THREE.Object3D(); muzzle.position.set(0, 0.02, 4.35); pitchG.add(muzzle);
+
+tank.traverse(o => { if (o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+
+/* ============================== EFFECTS SYSTEM ============================== */
+const effects = [];
+function effect(obj3d, life, fn){
+  scene.add(obj3d);
+  effects.push({ obj: obj3d, age: 0, life, fn });
+}
+function updateEffects(dt){
+  for (let i = effects.length - 1; i >= 0; i--){
+    const e = effects[i]; e.age += dt;
+    if (e.age >= e.life){ scene.remove(e.obj); effects.splice(i, 1); continue; }
+    e.fn(e.obj, e.age / e.life, e.age);
+  }
+}
+
+const sparksMat = new THREE.MeshBasicMaterial({ color:0xffb066 });
+const sparkGeo  = new THREE.TetrahedronGeometry(0.09);
+function impactFX(pos, normal, dist){
+  // expanding shockwave ring
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.12, 0.26, 24),
+    new THREE.MeshBasicMaterial({ color:0xffa64d, transparent:true, opacity:0.9,
+      blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+  ring.position.copy(pos).addScaledVector(normal, 0.05);
+  ring.lookAt(pos.clone().add(normal));
+  effect(ring, 0.5, (o, k) => { o.scale.setScalar(1 + k*13); o.material.opacity = 0.9*(1-k); });
+
+  // flash light
+  const light = new THREE.PointLight(0xffa050, 30, 20, 2);
+  light.position.copy(pos).addScaledVector(normal, 0.6);
+  effect(light, 0.3, (o, k) => { o.intensity = 30*(1-k); });
+
+  // molten shards
+  for (let i = 0; i < 11; i++){
+    const s = new THREE.Mesh(sparkGeo, sparksMat);
+    s.position.copy(pos);
+    const v = new THREE.Vector3((Math.random()-0.5)*7, 3 + Math.random()*6, (Math.random()-0.5)*7)
+      .addScaledVector(normal, 4);
+    effect(s, 0.65, (o, k, age) => {
+      v.y -= 22 * (1/60);
+      o.position.addScaledVector(v, 1/60);
+      o.rotation.x += 0.3; o.rotation.z += 0.25;
+      o.scale.setScalar(Math.max(0.001, 1 - k));
+    });
+  }
+
+  // scorch decal (persists a while, capped)
+  if (decals.length > 26){ const d = decals.shift(); scene.remove(d); }
+  const scorch = new THREE.Mesh(new THREE.CircleGeometry(0.85, 18),
+    new THREE.MeshBasicMaterial({ color:0x0b0b0c, transparent:true, opacity:0.55, depthWrite:false }));
+  scorch.position.copy(pos).addScaledVector(normal, 0.03);
+  scorch.lookAt(pos.clone().add(normal));
+  scene.add(scorch); decals.push(scorch);
+  effect(scorch, 9, (o, k) => { o.material.opacity = 0.55*(1-k); });
+
+  shake += Math.min(0.45, 7 / Math.max(6, dist));
+  sfx('impact', Math.min(1, 16 / dist));
+}
+const decals = [];
+
+/* projectiles */
+const projectiles = [];
+const projGeo = new THREE.CapsuleGeometry(0.07, 0.45, 3, 6);
+const projMat = new THREE.MeshBasicMaterial({ color:0xffdca0 });
+function fire(){
+  if (recharge > 0 || reloading || overheated || ammo <= 0) return;
+  recharge = RECHARGE; ammo--; heat = Math.min(100, heat + 13);
+  updateAmmoUI(); kick = -0.045; shake += 0.2;
+
+  const mPos = muzzle.getWorldPosition(new THREE.Vector3());
+  const pPiv = pitchG.getWorldPosition(new THREE.Vector3());
+  const dir  = mPos.clone().sub(pPiv).normalize();
+
+  const proj = new THREE.Mesh(projGeo, projMat);
+  proj.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
+  proj.position.copy(mPos).addScaledVector(dir, 0.7);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map:softTex, color:0xffa050,
+    transparent:true, blending:THREE.AdditiveBlending, depthWrite:false }));
+  glow.scale.setScalar(1.7); proj.add(glow);
+  const light = new THREE.PointLight(0xffa050, 14, 12, 2); proj.add(light);
+  scene.add(proj);
+  projectiles.push({ obj:proj, dir, speed:58, life:3, prev:mPos.clone() });
+
+  // muzzle flash
+  const flash = new THREE.Sprite(new THREE.SpriteMaterial({ map:softTex, color:0xffc880,
+    transparent:true, blending:THREE.AdditiveBlending, depthWrite:false }));
+  flash.position.copy(mPos);
+  const fl = new THREE.PointLight(0xffa050, 26, 16, 2); flash.add(fl);
+  effect(flash, 0.13, (o, k) => { o.scale.setScalar(0.6 + k*9); o.material.opacity = 1-k; fl.intensity = 26*(1-k); });
+
+  sfx('fire');
+}
+
+/* ============================== SOUND (tiny synth) ============================== */
+let actx = null, noiseBuf = null, sndOn = false;
+const sndBtn = document.getElementById('sndBtn');
+sndBtn.addEventListener('click', () => {
+  sndOn = !sndOn;
+  sndBtn.textContent = sndOn ? 'SND ON' : 'SND OFF';
+  if (sndOn) ac().resume();
+});
+function ac(){ if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); return actx; }
+function noise(c){
+  if (!noiseBuf){
+    noiseBuf = c.createBuffer(1, c.sampleRate * 0.5, c.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random()*2 - 1;
+  }
+  return noiseBuf;
+}
+function sfx(kind, vol = 1){
+  if (!sndOn) return;
+  const c = ac(), t0 = c.currentTime;
+  if (kind === 'fire'){
+    const g = c.createGain(); g.gain.setValueAtTime(0.4*vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.32); g.connect(c.destination);
+    const n = c.createBufferSource(); n.buffer = noise(c);
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 750;
+    n.connect(f); f.connect(g); n.start(t0); n.stop(t0 + 0.32);
+    const o = c.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(130, t0); o.frequency.exponentialRampToValueAtTime(36, t0 + 0.28);
+    const og = c.createGain(); og.gain.setValueAtTime(0.55*vol, t0);
+    og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.38);
+    o.connect(og); og.connect(c.destination); o.start(t0); o.stop(t0 + 0.4);
+  } else {
+    const g = c.createGain(); g.gain.setValueAtTime(0.3*vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.45); g.connect(c.destination);
+    const n = c.createBufferSource(); n.buffer = noise(c);
+    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
+    n.connect(f); f.connect(g); n.start(t0); n.stop(t0 + 0.45);
+    const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = 52;
+    const og = c.createGain(); og.gain.setValueAtTime(0.35*vol, t0);
+    og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.3);
+    o.connect(og); og.connect(c.destination); o.start(t0); o.stop(t0 + 0.3);
+  }
+}
+
+/* ============================== INPUT & STATE ============================== */
+const keys = {};
+addEventListener('keydown', e => { keys[e.code] = true; if (e.code === 'Space'){ e.preventDefault(); fire(); } });
+addEventListener('keyup',   e => { keys[e.code] = false; });
+addEventListener('blur',    () => { for (const k in keys) keys[k] = false; });
+
+const mouseNDC = new THREE.Vector2(0, 0);
+const aimPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+const raycaster = new THREE.Raycaster();
+let lastMouseMove = -10, downPos = null;
+
+const xh = document.getElementById('xh');
+addEventListener('pointermove', e => {
+  mouseNDC.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  xh.style.left = e.clientX + 'px'; xh.style.top = e.clientY + 'px';
+  lastMouseMove = tNow;
+});
+addEventListener('pointerdown', e => { downPos = [e.clientX, e.clientY]; });
+addEventListener('pointerup',   e => {
+  if (!downPos) return;
+  const moved = Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]);
+  downPos = null;
+  if (moved < 6 && !e.target.closest('#sndBtn')) fire();
+});
+
+/* HUD refs */
+const rVel = document.getElementById('rVel'), rHdg = document.getElementById('rHdg');
+const rHeat = document.getElementById('rHeat'), heatBar = document.getElementById('heatBar');
+const ammoBox = document.getElementById('ammoCells');
+const statusBox = document.getElementById('statusBox'), statusTxt = document.getElementById('statusTxt');
+const cells = [];
+for (let i = 0; i < 6; i++){ const c = document.createElement('i'); ammoBox.appendChild(c); cells.push(c); }
+function updateAmmoUI(){
+  cells.forEach((c, i) => c.classList.toggle('on', i < ammo));
+  ammoBox.classList.toggle('cycle', reloading);
+}
+
+/* state */
+const RECHARGE = 0.85, RELOAD = 2.6;
+let tNow = 0, heading = 0, speed = 0, ammo = 6;
+let heat = 18, recharge = 0, reloading = 0, overheated = false;
+let recoil = 0, kick = 0, shake = 0, distAcc = 0;
+let turretYaw = 0, turretPitch = 0.12;
+let leanP = 0, leanR = 0;
+let prevStatus = '';
+
+function setStatus(txt, warn){
+  if (txt === prevStatus) return;
+  prevStatus = txt; statusTxt.textContent = txt;
+  statusBox.classList.toggle('warn', !!warn);
+}
+
+/* ============================== MAIN LOOP ============================== */
+const clock = new THREE.Clock();
+const V = new THREE.Vector3(), V2 = new THREE.Vector3(), V3 = new THREE.Vector3();
+const easeOut = k => 1 - Math.pow(1 - k, 3);
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  tNow += dt;
+  const startup = easeOut(Math.min(tNow / 2.2, 1));
+
+  /* --- driving --- */
+  const fwdIn  = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
+  const turnIn = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
+  heading += turnIn * dt * (1.15 + 0.5 * Math.min(1, Math.abs(speed) / 8));
+  const targetSpeed = fwdIn > 0 ? 10 : fwdIn < 0 ? -4.5 : 0;
+  const accel = (targetSpeed - speed) * (fwdIn ? 1.5 : 2.4);
+  speed += accel * dt;
+  const fx = Math.sin(heading), fz = Math.cos(heading);
+  tank.position.x += fx * speed * dt;
+  tank.position.z += fz * speed * dt;
+  const rr = Math.hypot(tank.position.x, tank.position.z);
+  if (rr > 44){ tank.position.x *= 44/rr; tank.position.z *= 44/rr; speed *= 0.5; }
+  tank.rotation.y = heading;
+
+  /* --- hover, lean --- */
+  const bob = Math.sin(tNow * 2.2) * 0.07;
+  tank.position.y = terrainH(tank.position.x, tank.position.z) + (0.55 + (HOVER - 0.55) * startup) + bob * startup;
+  const hF = terrainH(tank.position.x + fx*1.5, tank.position.z + fz*1.5);
+  const hB = terrainH(tank.position.x - fx*1.5, tank.position.z - fz*1.5);
+  const hL = terrainH(tank.position.x + fz*1.5, tank.position.z - fx*1.5);
+  const hR = terrainH(tank.position.x - fz*1.5, tank.position.z + fx*1.5);
+  kick *= Math.exp(-dt * 4.5);
+  leanP += ((-(hF - hB) * 0.16) - accel * 0.008 - leanP) * (1 - Math.exp(-dt * 4));
+  leanR += (((hL - hR) * 0.16) + turnIn * speed * 0.011 - leanR) * (1 - Math.exp(-dt * 4));
+  body.rotation.x = leanP + kick;
+  body.rotation.z = leanR;
+
+  /* --- turret aiming --- */
+  aimPlane.constant = -(tank.position.y + 1.0);
+  raycaster.setFromCamera(mouseNDC, camera);
+  let aimOK = !!raycaster.ray.intersectPlane(aimPlane, V);
+  let desYaw = turretYaw, desPitch = 0.12;
+  if (aimOK && tNow - lastMouseMove < 5){
+    const worldYaw = Math.atan2(V.x - tank.position.x, V.z - tank.position.z);
+    let local = worldYaw - heading;
+    local = ((local + Math.PI) % (Math.PI*2) + Math.PI*2) % (Math.PI*2) - Math.PI;
+    desYaw = THREE.MathUtils.clamp(local, -2.6, 2.6);
+    const dx = V.x - tank.position.x, dz = V.z - tank.position.z;
+    const pivotY = tank.position.y + 1.6;
+    desPitch = THREE.MathUtils.clamp(Math.atan2(V.y - pivotY, Math.hypot(dx, dz)), -0.05, 0.42);
+  } else {
+    desYaw = Math.sin(tNow * 0.3) * 1.2;   // idle sweep
+    desPitch = 0.12;
+  }
+  const damp = 1 - Math.exp(-dt * 6);
+  turretYaw   += (desYaw   - turretYaw)   * damp;
+  turretPitch += (desPitch - turretPitch) * damp;
+  turret.rotation.y = turretYaw;
+  pitchG.rotation.x = -turretPitch;
+
+  /* --- recoil --- */
+  recoil *= Math.exp(-dt * 7);
+  pitchG.position.z = 1.35 - recoil;
+
+  /* --- weapon state --- */
+  recharge = Math.max(0, recharge - dt);
+  heat = Math.max(18, heat - dt * 9);
+  if (heat >= 88) overheated = true;
+  if (overheated && heat < 40) overheated = false;
+  if (reloading > 0){
+    reloading -= dt;
+    if (reloading <= 0){ ammo = 6; reloading = 0; updateAmmoUI(); }
+  }
+
+  /* --- projectiles --- */
+  for (let i = projectiles.length - 1; i >= 0; i--){
+    const p = projectiles[i];
+    p.life -= dt;
+    const step = p.speed * dt;
+    V.copy(p.dir).multiplyScalar(step);
+    p.prev.copy(p.obj.position);
+    p.obj.position.add(V);
+    raycaster.set(p.prev, p.dir);
+    raycaster.far = step + 0.4;
+    const hits = raycaster.intersectObjects(colliders, false);
+    let dead = p.life <= 0;
+    if (hits.length){
+      const h = hits[0];
+      const n = h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld)
+                       : new THREE.Vector3(0,1,0);
+      impactFX(h.point, n, h.point.distanceTo(camera.position));
+      dead = true;
+    } else if (p.obj.position.y < terrainH(p.obj.position.x, p.obj.position.z)){
+      V2.set(p.obj.position.x, terrainH(p.obj.position.x, p.obj.position.z), p.obj.position.z);
+      impactFX(V2, new THREE.Vector3(0,1,0), V2.distanceTo(camera.position));
+      dead = true;
+    }
+    if (dead){ scene.remove(p.obj); projectiles.splice(i, 1); }
+  }
+
+  /* --- driving dust puffs --- */
+  distAcc += Math.abs(speed) * dt;
+  if (distAcc > 1.2 && Math.abs(speed) > 2.5 && startup > 0.9){
+    distAcc = 0;
+    for (const s of [-1, 1]){
+      if (Math.random() < 0.4) continue;
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:softTex, color:0x9a8f7c,
+        transparent:true, opacity:0.26, depthWrite:false }));
+      sp.position.set(tank.position.x + s*1.4*fz - fx*2.6, tank.position.y - 1.0, tank.position.z - s*1.4*fx - fz*2.6);
+      effect(sp, 1.2, (o, k) => { o.scale.setScalar(1.1 + k*2.6); o.material.opacity = 0.26*(1-k); o.position.y += 0.5*dt; });
+    }
+  }
+
+  /* --- dust motes drift --- */
+  const mp = motes.posArr;
+  for (let i = 0; i < motes.N; i++){
+    mp[i*3+1] += motes.spd[i] * dt * 0.6;
+    mp[i*3]   += motes.spd[i] * dt * 1.4;
+    if (mp[i*3+1] > 11.5) mp[i*3+1] = 0.4;
+    if (mp[i*3] > 45) mp[i*3] = -45;
+  }
+  motes.p.geometry.attributes.position.needsUpdate = true;
+
+  /* --- animated glows --- */
+  const charge = 1.2 + (1 - recharge / RECHARGE) * 1.7;
+  glowMat.rail.emissiveIntensity = charge * (0.85 + 0.25 * Math.sin(tNow * 9));
+  glowMat.muzz.emissiveIntensity = charge;
+  glowMat.exhaust.emissiveIntensity = 0.8 + heat/100 * 1.9 + Math.sin(tNow*13) * 0.15;
+  const skidI = 1.2 + (0.5 - bob*4) * 0.3 + Math.abs(speed) * 0.05;
+  glowMat.skidL.emissiveIntensity = glowMat.skidR.emissiveIntensity = skidI * startup;
+  glowMat.lens.emissiveIntensity = Math.sin(tNow * 0.9) > 0.93 ? 3.2 : 1.6;
+  glowDisc.material.opacity = (0.3 + (0.07 - bob) * 1.2 + Math.abs(speed) * 0.008) * startup;
+
+  /* --- sun shadow rig follows the tank --- */
+  sun.position.set(tank.position.x - 46, 30, tank.position.z - 34);
+  sun.target.position.set(tank.position.x, 0, tank.position.z);
+
+  /* --- camera --- */
+  V2.copy(tank.position); V2.y += 2.0;
+  controls.target.lerp(V2, 1 - Math.exp(-dt * 5));
+  controls.update();
+  if (shake > 0.001){
+    camera.position.x += (Math.random()-0.5) * shake;
+    camera.position.y += (Math.random()-0.5) * shake * 0.7;
+    camera.position.z += (Math.random()-0.5) * shake;
+    shake *= Math.exp(-dt * 7);
+  }
+
+  updateEffects(dt);
+
+  /* --- HUD --- */
+  rVel.textContent = Math.abs(speed).toFixed(1);
+  const deg = ((heading * 180 / Math.PI) % 360 + 360) % 360;
+  rHdg.textContent = String(Math.round(deg)).padStart(3, '0');
+  heatBar.style.width = heat + '%';
+  heatBar.classList.toggle('hot', heat > 70);
+  rHeat.textContent = Math.round(heat) + '%';
+  xh.classList.toggle('blocked', overheated || reloading > 0 || ammo <= 0 || recharge > 0);
+  xh.classList.toggle('kick', recharge > RECHARGE - 0.12);
+  if (overheated)          setStatus('CORE VENTING — WEAPONS HOLD', true);
+  else if (reloading > 0)  setStatus('AUTORELOAD CYCLE ACTIVE', false);
+  else if (tNow < 2.2)     setStatus('REACTOR IGNITION…', false);
+  else                     setStatus('REACTOR ONLINE — WEAPONS FREE', false);
+
+  renderer.render(scene, camera);
+}
+updateAmmoUI();
+animate();
+renderer.domElement.classList.add('on');
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

@@ -325,7 +325,7 @@
   /* ───── Прев'ю ───── */
 
   const TYPE_ICON = { image: "image", video: "movie", model: "view_in_ar", text: "description" };
-  const projIcon = (o, s) => TYPE_ICON[o.type] || (s.id === "software" ? "terminal" : "sports_esports");
+  const projIcon = (o, s) => TYPE_ICON[o.type] || { software: "terminal", modeling: "view_in_ar" }[s.id] || "sports_esports";
   const letter = i => String.fromCharCode(65 + i);
   const fmtSize = b => b ? `${Math.max(1, Math.round(b / 1024))} ${t.kb}` : "";
   const extOf = o => (String(o.src || "").split(/[?#]/)[0].match(/\.([a-z0-9]+)$/i)?.[1] || o.type).toUpperCase();

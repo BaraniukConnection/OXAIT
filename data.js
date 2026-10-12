@@ -69,8 +69,8 @@ window.OXAIT = {
       id: "modeling", icon: "deployed_code",
       title: { uk: "3D-моделювання", en: "3D Modeling" },
       rounds: [
-        { id: "q3",   code: "Q/3",   title: { uk: "Кваліфікаційний раунд", en: "Qualification Round" } },
-        { id: "sec3", code: "sec-3", title: { uk: "Третя секція",          en: "Section Three" } }
+        { id: "q3",   code: "Q/3",   title: { uk: "Кваліфікаційний раунд", en: "Qualification Round" }, cover: "assets/img/poster-q3.webp" },
+        { id: "sec3", code: "sec-3", title: { uk: "Третя секція",          en: "Section Three" }, cover: "assets/img/poster-q3.webp" }
       ]
     }
   ],
@@ -136,7 +136,22 @@ window.OXAIT = {
       }
     },
     // Grok вибув з усіх наступних етапів
-    "modeling/q3":    { entries: { grok: { status: "out" } } },
+    "modeling/q3": {
+      order: ["claude", "glm", "chatgpt", "gemini", "qwen", "grok"],
+      groups: [
+        { uk: "Етап I · Солдат", en: "Stage I · Soldier", match: "soldier" },
+        { uk: "Етап II · Авто",  en: "Stage II · Car",    match: "car|vehicle" },
+        { uk: "Етап III · Танк", en: "Stage III · Tank" }
+      ],
+      entries: {
+        claude:  { pills: [[true, true, true], [true, true, true], [true, true, true]] },
+        glm:     { pills: [[true, true, true], [true, true, true], [true, true, false]] },
+        chatgpt: { pills: [[true, true, false], [true, true, true], [true, true, true]] },
+        gemini:  { pills: [[true, false, false], [true, false, false], [true, false, false]] },
+        qwen:    { pills: [[true, false, false], [true, false, false], [true, false, false]] },
+        grok:    { status: "out" }
+      }
+    },
     "modeling/sec3":  { entries: { grok: { status: "out" } } }
   }
 };

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>SAROS GT-9 · Low-Poly Concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0c; --ink:#ece9e2; --dim:rgba(236,233,226,.52);
+    --line:rgba(236,233,226,.14); --acc:#ff5c2e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--ink);font-family:'Rajdhani',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+  #gl{position:fixed;inset:0;cursor:grab}
+  #gl:active{cursor:grabbing}
+  #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 42%,transparent 55%,rgba(0,0,0,.52) 100%)}
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
+  .corner{position:absolute;width:16px;height:16px;border:1px solid rgba(236,233,226,.25)}
+  .c-tl{top:14px;left:14px;border-right:0;border-bottom:0}
+  .c-tr{top:14px;right:14px;border-left:0;border-bottom:0}
+  .c-bl{bottom:14px;left:14px;border-right:0;border-top:0}
+  .c-br{bottom:14px;right:14px;border-left:0;border-top:0}
+  header{position:absolute;top:30px;left:36px;animation:up .9s .15s both}
+  .ovl{font-size:10px;font-weight:600;letter-spacing:.38em;color:var(--dim)}
+  h1{margin-top:12px;font-family:'Michroma',sans-serif;font-weight:400;font-size:clamp(22px,3vw,38px);letter-spacing:.08em}
+  h1 span{color:var(--acc)}
+  .rule{width:46px;height:2px;background:var(--acc);margin:14px 0 10px}
+  .sub{font-size:11px;font-weight:500;letter-spacing:.24em;color:var(--dim)}
+  #stats{position:absolute;top:34px;right:36px;width:216px;font-size:11px;letter-spacing:.14em;animation:up .9s .3s both}
+  #stats .r{display:flex;justify-content:space-between;align-items:baseline;padding:7px 2px;border-top:1px solid var(--line)}
+  #stats .r:last-child{border-bottom:1px solid var(--line)}
+  #stats .k{color:var(--dim);font-weight:500}
+  #stats .v{font-weight:700}
+  footer{position:absolute;left:36px;right:36px;bottom:28px;display:flex;justify-content:space-between;align-items:flex-end;gap:22px;flex-wrap:wrap;animation:up .9s .45s both}
+  .finish{display:flex;align-items:center;gap:14px}
+  .lbl{font-size:10px;font-weight:600;letter-spacing:.32em;color:var(--dim)}
+  #swatches{display:flex;gap:9px;pointer-events:auto}
+  #swatches button{width:27px;height:18px;border:1px solid rgba(236,233,226,.3);background:var(--c,#333);cursor:pointer;transform:skewX(-16deg);transition:.18s}
+  #swatches button:hover{border-color:var(--ink)}
+  #swatches button.on{border-color:var(--acc);transform:skewX(-16deg) translateY(-3px)}
+  #paintName{font-size:11px;font-weight:600;letter-spacing:.26em;min-width:96px}
+  .toggles{display:flex;gap:9px;align-items:center;flex-wrap:wrap;pointer-events:auto}
+  .tog{background:rgba(12,12,15,.55);border:1px solid var(--line);color:var(--dim);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:10px;letter-spacing:.22em;padding:9px 13px;cursor:pointer;transition:.18s;backdrop-filter:blur(8px)}
+  .tog i{font-style:normal;color:rgba(236,233,226,.32);margin-left:8px}
+  .tog:hover{color:var(--ink);border-color:rgba(236,233,226,.45)}
+  .tog.on{color:var(--ink);border-color:rgba(255,92,46,.75)}
+  .tog.on::before{content:'';display:inline-block;width:5px;height:5px;background:var(--acc);margin-right:8px;vertical-align:1px}
+  #bIgn{margin-left:6px;background:transparent;border:1px solid var(--acc);color:var(--acc);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:.3em;padding:12px 20px 12px 24px;cursor:pointer;transition:.2s}
+  #bIgn:hover{background:rgba(255,92,46,.12)}
+  #bIgn.on{background:var(--acc);color:#0b0b0d}
+  #bIgn.on::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#0b0b0d;margin-right:9px;animation:blink 1s steps(2,end) infinite}
+  #hint{position:absolute;top:38px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;letter-spacing:.32em;color:var(--dim);transition:opacity 1.2s;white-space:nowrap}
+  #hint.off{opacity:0}
+  #speedo{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);text-align:center;opacity:0;transition:opacity .5s}
+  #speedo.show{opacity:1}
+  #speedo .v{font-size:60px;font-weight:700;line-height:1;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+  #speedo .u{margin-top:5px;font-size:10px;font-weight:600;letter-spacing:.34em;color:var(--dim)}
+  #speedo .bar{width:150px;height:2px;background:var(--line);margin:10px auto 0}
+  #speedo .bar i{display:block;height:100%;width:0;background:var(--acc)}
+  #fail{display:none;position:fixed;inset:0;z-index:50;background:var(--bg);color:var(--dim);font:600 12px 'Rajdhani',sans-serif;letter-spacing:.2em;align-items:center;justify-content:center;text-align:center;padding:20px}
+  @keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @keyframes blink{50%{opacity:.15}}
+  @media (max-width:860px){
+    #stats,#hint{display:none}
+    footer{flex-direction:column;align-items:flex-start;gap:16px;left:22px;right:22px}
+    header{top:22px;left:22px}
+    #speedo{bottom:200px}
+  }
+</style>
+</head>
+<body>
+<div id="gl"></div>
+<div id="vig"></div>
+
+<div id="hud">
+  <i class="corner c-tl"></i><i class="corner c-tr"></i><i class="corner c-bl"></i><i class="corner c-br"></i>
+  <header>
+    <div class="ovl">SAROS DYNAMICS — LOW-POLY CONCEPT 09</div>
+    <h1>GT-9 <span>VULCAN</span></h1>
+    <div class="rule"></div>
+    <div class="sub">PROCEDURAL MESH · NO TEXTURES · REALTIME</div>
+  </header>
+
+  <div id="stats">
+    <div class="r"><span class="k">0–100 KM/H</span><span class="v">2.4 S</span></div>
+    <div class="r"><span class="k">V-MAX</span><span class="v">351 KM/H</span></div>
+    <div class="r"><span class="k">DOWNFORCE</span><span class="v">820 KG</span></div>
+    <div class="r"><span class="k">TURBINE</span><span class="v">3-SHAFT H2</span></div>
+    <div class="r"><span class="k">KERB MASS</span><span class="v">1 188 KG</span></div>
+  </div>
+
+  <div id="hint">DRAG TO ORBIT · SCROLL TO ZOOM · SPACE TO IGNITE</div>
+
+  <div id="speedo">
+    <div class="v">000</div>
+    <div class="u">KM/H — TURBINE DRIVE</div>
+    <div class="bar"><i></i></div>
+  </div>
+
+  <footer>
+    <div class="finish">
+      <span class="lbl">FINISH</span>
+      <div id="swatches"></div>
+      <span id="paintName">GRAPHITE</span>
+    </div>
+    <div class="toggles">
+      <button class="tog on" id="bLights" title="Headlights, tail bar, wing strip">LIGHTS<i>L</i></button>
+      <button class="tog on" id="bGlow" title="Underglow">GLOW<i>G</i></button>
+      <button class="tog" id="bWire" title="Wireframe blueprint">WIRE<i>B</i></button>
+      <button class="tog on" id="bAudio" title="Synthesized turbine audio">AUDIO<i>M</i></button>
+      <button id="bIgn">IGNITION</button>
+    </div>
+  </footer>
+</div>
+
+<div id="fail">COULD NOT START THE 3D ENGINE — CHECK YOUR CONNECTION AND RELOAD</div>
+
+<script>
+  setTimeout(()=>{ if(!window.__saros_ok) document.getElementById('fail').style.display='flex'; }, 5000);
+</script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls }   from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer }  from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass }      from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
+
+const $ = id => document.getElementById(id);
+const ACCENT = 0xff5c2e;
+
+/* ============================== renderer / scene ============================== */
+const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+ $('gl').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a0c);
+scene.fog = new THREE.Fog(0x0a0a0c, 16, 46);
+
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 120);
+camera.position.set(12.5, 4.8, 13.0);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.06).texture;
+pmrem.dispose();
+
+scene.add(new THREE.HemisphereLight(0x8a8f98, 0x050505, 0.5));
+const key = new THREE.DirectionalLight(0xfff0e0, 2.6);
+key.position.set(6, 9, 4);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+Object.assign(key.shadow.camera, { left:-4.5, right:4.5, top:4.5, bottom:-4.5, near:2, far:26 });
+key.shadow.camera.updateProjectionMatrix();
+key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+scene.add(key);
+const rimL = new THREE.DirectionalLight(0xd7dde6, 1.2); rimL.position.set(-7, 5, -6); scene.add(rimL);
+const fill = new THREE.DirectionalLight(0xffd9c0, 0.5); fill.position.set(-4, 2.5, 7); scene.add(fill);
+const ugl  = new THREE.PointLight(ACCENT, 0, 6, 2); ugl.position.set(0, 0.3, 0); scene.add(ugl);
+
+/* ============================== helpers ============================== */
+function radialTex(r,g,b,a){
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d');
+  const gr = x.createRadialGradient(128,128,0,128,128,128);
+  gr.addColorStop(0,   `rgba(${r},${g},${b},${a})`);
+  gr.addColorStop(0.45,`rgba(${r},${g},${b},${a*0.45})`);
+  gr.addColorStop(1,   `rgba(${r},${g},${b},0)`);
+  x.fillStyle = gr; x.fillRect(0,0,256,256);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+/* extrude a side-profile (carZ, carY) across the car width */
+function profGeo(pts, depth, bevel = 0){
+  const s = new THREE.Shape();
+  pts.forEach((p,i)=> i ? s.lineTo(p[0],p[1]) : s.moveTo(p[0],p[1]));
+  const g = new THREE.ExtrudeGeometry(s, { depth, steps:1, curveSegments:1,
+    bevelEnabled: bevel>0, bevelThickness:bevel, bevelSize:bevel, bevelSegments:1 });
+  g.rotateY(-Math.PI/2);
+  g.computeBoundingBox();
+  const c = g.boundingBox.getCenter(new THREE.Vector3());
+  g.translate(-c.x, 0, 0);
+  return g;
+}
+
+/* ============================== floor ============================== */
+const gridMat = new THREE.ShaderMaterial({
+  transparent:true, depthWrite:false,
+  uniforms:{ uScroll:{value:0}, uAccent:{value:0.1} },
+  vertexShader:`
+    varying vec3 vW;
+    void main(){
+      vec4 w = modelMatrix * vec4(position,1.0);
+      vW = w.xyz;
+      gl_Position = projectionMatrix * viewMatrix * w;
+    }`,
+  fragmentShader:`
+    uniform float uScroll; uniform float uAccent;
+    varying vec3 vW;
+    float gridL(vec2 p, float s){
+      vec2 q = p/s;
+      vec2 w = fwidth(q) + vec2(1e-4);
+      vec2 g = abs(fract(q-0.5)-0.5)/w;
+      return 1.0 - min(min(g.x,g.y),1.0);
+    }
+    void main(){
+      vec2 p = vW.xz; p.y += uScroll;
+      float m1 = gridL(p,1.0);
+      float m5 = gridL(p,5.0);
+      float fade = 1.0 - smoothstep(9.0, 36.0, length(vW.xz));
+      vec3 lineC = mix(vec3(0.30,0.29,0.28), vec3(1.0,0.107,0.027), uAccent);
+      vec3 col = vec3(0.024,0.024,0.028) + lineC*(m1*0.20 + m5*0.55);
+      float a = (0.84 + m5*0.16)*fade;
+      if(a < 0.01) discard;
+      gl_FragColor = vec4(col, a);
+    }`
+});
+const grid = new THREE.Mesh(new THREE.PlaneGeometry(90,90), gridMat);
+grid.rotation.x = -Math.PI/2; grid.renderOrder = 1; scene.add(grid);
+
+const shadowCatch = new THREE.Mesh(new THREE.PlaneGeometry(26,26), new THREE.ShadowMaterial({opacity:0.42}));
+shadowCatch.rotation.x = -Math.PI/2; shadowCatch.position.y = 0.011;
+shadowCatch.receiveShadow = true; shadowCatch.renderOrder = 4; scene.add(shadowCatch);
+
+function flatPlane(tex, sx, sz, opacity, blending, order, y){
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1,1),
+    new THREE.MeshBasicMaterial({ map:tex, transparent:true, opacity, blending, depthWrite:false, fog:false }));
+  m.rotation.x = -Math.PI/2; m.scale.set(sx, sz, 1); m.position.y = y;
+  m.renderOrder = order; m.userData.fx = true; scene.add(m); return m;
+}
+const contact  = flatPlane(radialTex(0,0,0,0.85),      3.4, 6.0, 0.6, THREE.NormalBlending,  2, 0.012);
+const glowPlane= flatPlane(radialTex(255,92,46,0.9),   3.8, 6.2, 0,   THREE.AdditiveBlending,3, 0.016);
+const poolL    = flatPlane(radialTex(255,208,158,0.8), 2.6, 8.0, 0,   THREE.AdditiveBlending,5, 0.018);
+poolL.position.set(-0.8, 0.018, 5.6);
+const poolR = poolL.clone(); poolR.position.x = 0.8;
+const fxScene = [contact, glowPlane, poolL, poolR];
+
+/* ============================== materials ============================== */
+const M = {
+  paint: new THREE.MeshStandardMaterial({ color:0x3a3c40, metalness:0.72, roughness:0.32, flatShading:true, envMapIntensity:0.9 }),
+  trim:  new THREE.MeshStandardMaterial({ color:0x101114, metalness:0.6,  roughness:0.5,  flatShading:true, envMapIntensity:0.6 }),
+  tire:  new THREE.MeshStandardMaterial({ color:0x0b0c0e, metalness:0,    roughness:0.95, flatShading:true }),
+  glass: new THREE.MeshStandardMaterial({ color:0x05070a, metalness:1,    roughness:0.06, flatShading:true, envMapIntensity:1.6 }),
+  metal: new THREE.MeshStandardMaterial({ color:0x2b2d33, metalness:0.9,  roughness:0.35, flatShading:true, envMapIntensity:0.8 }),
+  head:  new THREE.MeshStandardMaterial({ color:0x000000, emissive:0xfff3e0, emissiveIntensity:3.4 }),
+  tail:  new THREE.MeshStandardMaterial({ color:0x000000, emissive:0xff2413, emissiveIntensity:2.6 }),
+  acc:   new THREE.MeshStandardMaterial({ color:0x000000, emissive:ACCENT,   emissiveIntensity:2.6 }),
+  side:  new THREE.MeshStandardMaterial({ color:0x000000, emissive:ACCENT,   emissiveIntensity:3.0 }),
+  rim:   new THREE.MeshStandardMaterial({ color:0x0a0a0b, emissive:ACCENT,   emissiveIntensity:0.9, metalness:0.6, roughness:0.4, flatShading:true }),
+  cap:   new THREE.MeshStandardMaterial({ color:0x000000, emissive:ACCENT,   emissiveIntensity:1.7 }),
+  exh:   new THREE.MeshStandardMaterial({ color:0x000000, emissive:ACCENT,   emissiveIntensity:1.2 }),
+};
+const wireMat = new THREE.MeshBasicMaterial({ color:ACCENT, wireframe:true, transparent:true, opacity:0.5, toneMapped:false });
+
+/* ============================== the car ============================== */
+const car = new THREE.Group(); scene.add(car);
+function mesh(geo, mat, x=0,y=0,z=0, rx=0,ry=0,rz=0){
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x,y,z); m.rotation.set(rx,ry,rz);
+  m.castShadow = true; car.add(m); return m;
+}
+const box = (w,h,d,mat,x,y,z,rx=0,ry=0,rz=0)=> mesh(new THREE.BoxGeometry(w,h,d), mat, x,y,z, rx,ry,rz);
+
+/* hull side-profile with polygonal wheel arches */
+function arch(cz){
+  const r=0.48, cy=0.35, yB=0.30, out=[];
+  const dx = Math.sqrt(r*r - (cy-yB)*(cy-yB));
+  const a0 = Math.atan2(yB-cy,-dx) + Math.PI*2, a1 = Math.atan2(yB-cy, dx), n = 9;
+  for(let i=0;i<=n;i++){ const a = a0 + (a1-a0)*i/n; out.push([cz + Math.cos(a)*r, cy + Math.sin(a)*r]); }
+  return out;
+}
+const hullPts = [
+  [2.55,0.40],[2.58,0.52],[2.30,0.62],[1.30,0.76],[0.70,0.82],[0.40,0.88],
+  [-0.60,0.87],[-1.35,0.90],[-2.00,1.02],[-2.42,1.00],[-2.50,0.45],[-2.12,0.32],
+  ...arch(-1.45), [0,0.27], ...arch(1.45), [2.28,0.33]
+];
+mesh(profGeo(hullPts, 1.72, 0.10), M.paint);                                    // hull
+
+/* canopy */
+mesh(profGeo([[0.62,0.80],[0.10,1.14],[-0.42,1.16],[-0.95,0.86]], 1.02, 0.09), M.glass);
+
+/* dorsal fin */
+mesh(profGeo([[-0.70,0.96],[-1.80,1.16],[-1.86,0.98]], 0.04, 0), M.paint);
+
+/* rear wing */
+mesh(profGeo([[-0.21,0],[-0.06,0.038],[0.14,0.042],[0.22,0],[0.10,-0.032],[-0.12,-0.036]], 1.94, 0),
+     M.paint, 0,1.32,-1.95, -0.18,0,0);
+box(0.055,0.30,0.16, M.trim, -0.48,1.17,-1.86, 0.2,0,0);
+box(0.055,0.30,0.16, M.trim,  0.48,1.17,-1.86, 0.2,0,0);
+box(0.02,0.16,0.46, M.trim, -0.98,1.32,-1.95, -0.18,0,0);
+box(0.02,0.16,0.46, M.trim,  0.98,1.32,-1.95, -0.18,0,0);
+box(1.90,0.02,0.03, M.acc, 0,1.352,-2.16, -0.18,0,0);                            // trailing-edge light strip
+
+/* nose */
+box(0.46,0.09,0.12,  M.trim, -0.52,0.485,2.58, 0,-0.28,-0.22);
+box(0.46,0.09,0.12,  M.trim,  0.52,0.485,2.58, 0, 0.28, 0.22);
+box(0.40,0.045,0.05, M.head, -0.52,0.49,2.655, 0,-0.28,-0.22);                   // DRL blades
+box(0.40,0.045,0.05, M.head,  0.52,0.49,2.655, 0, 0.28, 0.22);
+mesh(new THREE.CylinderGeometry(0.045,0.045,0.03,6).rotateX(Math.PI/2), M.acc, 0,0.46,2.64);
+box(1.85,0.10,0.62, M.trim, 0,0.26,2.42);                                        // splitter
+box(0.34,0.02,0.16, M.trim, -0.95,0.47,2.35, 0,-0.35,-0.15);                     // canards
+box(0.34,0.02,0.16, M.trim,  0.95,0.47,2.35, 0, 0.35, 0.15);
+box(0.07,0.05,1.0,  M.trim, 0,0.80,1.75, 0.14,0,0);                              // hood spine channel
+box(0.20,0.03,0.14, M.trim, -0.34,0.92,0.72, 0.1,0,0);                           // cowl vents
+box(0.20,0.03,0.14, M.trim,  0.34,0.92,0.72, 0.1,0,0);
+
+/* sides */
+box(0.12,0.18,0.60, M.trim, -0.83,0.55,-0.15, 0,-0.28,0);                        // intakes
+box(0.12,0.18,0.60, M.trim,  0.83,0.55,-0.15, 0, 0.28,0);
+box(0.02,0.05,0.44, M.acc,  -0.87,0.52,-0.12, 0,-0.28,0);                        // intake glow lips
+box(0.02,0.05,0.44, M.acc,   0.87,0.52,-0.12, 0, 0.28,0);
+box(0.12,0.12,2.1,  M.trim, -0.82,0.24,0.05);                                    // skirts
+box(0.12,0.12,2.1,  M.trim,  0.82,0.24,0.05);
+box(0.04,0.025,1.85, M.side, -0.865,0.335,0.05);                                 // energy strips
+box(0.04,0.025,1.85, M.side,  0.865,0.335,0.05);
+
+/* mirror cameras */
+box(0.22,0.02,0.03, M.trim, -0.94,0.945,0.47, 0,0,-0.35);
+box(0.22,0.02,0.03, M.trim,  0.94,0.945,0.47, 0,0, 0.35);
+box(0.11,0.05,0.07, M.trim, -1.05,0.97,0.46);
+box(0.11,0.05,0.07, M.trim,  1.05,0.97,0.46);
+box(0.014,0.022,0.014, M.acc, -1.05,0.97,0.415);
+box(0.014,0.022,0.014, M.acc,  1.05,0.97,0.415);
+
+/* tail */
+box(1.50,0.05,0.06, M.tail, 0,0.78,-2.55);                                       // full-width light bar
+box(0.03,0.16,0.04, M.acc, -0.68,0.64,-2.545);
+box(0.03,0.16,0.04, M.acc,  0.68,0.64,-2.545);
+const exhGeo = new THREE.CylinderGeometry(0.10,0.10,0.14,6).rotateX(Math.PI/2);
+mesh(exhGeo, M.metal, -0.42,0.52,-2.56);
+mesh(exhGeo, M.metal,  0.42,0.52,-2.56);
+const exhDisc = new THREE.CircleGeometry(0.075,6).rotateY(Math.PI);
+mesh(exhDisc, M.exh, -0.42,0.52,-2.635);
+mesh(exhDisc, M.exh,  0.42,0.52,-2.635);
+
+/* diffuser */
+box(1.55,0.06,0.55, M.trim, 0,0.22,-2.28);
+[-0.55,-0.20,0.20,0.55].forEach(x=> box(0.024,0.20,0.30, M.trim, x,0.30,-2.40, 0.55,0,0));
+
+/* engine-deck slats + antenna pod */
+[-1,1].forEach(s=> [0.975,0.985,0.995,1.005].forEach((y,i)=>
+  box(0.40,0.022,0.09, M.trim, s*0.25, y, -0.85 - i*0.15, -0.04,0,0)));
+box(0.10,0.03,0.14, M.trim, 0,1.26,-0.35);
+
+/* dark arch liners */
+const linerGeo = new THREE.CylinderGeometry(0.44,0.44,1.78,12,1,true,0,Math.PI).rotateZ(Math.PI/2);
+[-1.45,1.45].forEach(z=>{ const m = new THREE.Mesh(linerGeo, M.trim); m.position.set(0,0.35,z); car.add(m); });
+
+/* wheels — faceted tires, turbine blades, glowing rim ring */
+const wheels = [];
+function wheel(side, x, z, tw){
+  const g = new THREE.Group(); g.userData.wheel = true; g.position.set(x,0.35,z);
+  const cyl = (r,len,seg)=> new THREE.CylinderGeometry(r,r,len,seg).rotateZ(Math.PI/2);
+  const tire = new THREE.Mesh(cyl(0.35,tw,12), M.tire); tire.castShadow = true; g.add(tire);
+  g.add(new THREE.Mesh(cyl(0.135,tw+0.02,10), M.metal));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.25,0.032,4,12).rotateY(Math.PI/2), M.rim);
+  ring.position.x = side*0.13; g.add(ring);
+  const cap = new THREE.Mesh(cyl(0.05,0.07,6), M.cap); cap.position.x = side*0.14; g.add(cap);
+  for(let i=0;i<7;i++){
+    const p = new THREE.Group(); p.rotation.x = i*Math.PI*2/7; p.position.x = side*0.05;
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.026,0.21,0.08), M.trim);
+    b.position.y = 0.155; b.rotation.y = 0.55; p.add(b); g.add(p);
+  }
+  car.add(g); wheels.push(g); return g;
+}
+wheel(-1,-0.77, 1.45, 0.28); wheel(1, 0.77, 1.45, 0.28);
+wheel(-1,-0.75,-1.45, 0.34); wheel(1, 0.75,-1.45, 0.34);
+
+/* volumetric headlight cones */
+const coneGeo = new THREE.ConeGeometry(1.15, 5.2, 20, 1, true);
+coneGeo.translate(0,-2.6,0); coneGeo.rotateX(-Math.PI/2);
+const coneMat = new THREE.MeshBasicMaterial({ color:0xffd7b0, transparent:true, opacity:0,
+  blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.BackSide, fog:false });
+[-0.52,0.52].forEach(x=>{
+  const c = new THREE.Mesh(coneGeo, coneMat);
+  c.position.set(x,0.50,2.66); c.rotation.set(0.10, x>0?0.06:-0.06, 0);
+  c.renderOrder = 7; c.userData.fx = true; car.add(c);
+});
+
+/* ============================== floor reflection (mirrored clone) ============================== */
+const reflHolder = new THREE.Group(); reflHolder.scale.y = -1; scene.add(reflHolder);
+const refl = car.clone(true);
+refl.traverse(o=>{ o.castShadow = false; o.receiveShadow = false; });
+reflHolder.add(refl);
+
+const A=[],B=[]; car.traverse(o=>A.push(o)); refl.traverse(o=>B.push(o));
+const pairs = A.map((o,i)=>[o,B[i]]);
+pairs.forEach(([o,r])=>{
+  if(o.isMesh){
+    o.userData.solid = o.material; r.userData.solid = r.material;
+    o.material.side = THREE.DoubleSide; r.material.side = THREE.DoubleSide;
+  }
+});
+const wheelPairs = pairs.filter(([o])=>o.userData.wheel);
+
+/* ============================== speed streaks ============================== */
+const STREAKS = 46;
+const streakMat = new THREE.MeshBasicMaterial({ color:0xffe3cf, transparent:true, opacity:0,
+  blending:THREE.AdditiveBlending, depthWrite:false, fog:false });
+const streaks = new THREE.InstancedMesh(new THREE.BoxGeometry(0.03,0.03,2.6), streakMat, STREAKS);
+streaks.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+streaks.renderOrder = 6; streaks.frustumCulled = false; scene.add(streaks);
+const sd = [], dummy = new THREE.Object3D();
+const rerand = d => { d.x = (2.2+Math.random()*4.5)*(Math.random()<0.5?-1:1); d.y = 0.15+Math.random()*3.0; };
+for(let i=0;i<STREAKS;i++){ const d = { z:-26+Math.random()*52, f:0.7+Math.random()*0.6 }; rerand(d); sd.push(d); }
+function updateStreaks(s, dt){
+  streaks.visible = s > 0.02;
+  streakMat.opacity = 0.7*s;
+  if(!streaks.visible) return;
+  for(let i=0;i<STREAKS;i++){
+    const d = sd[i];
+    d.z -= (8+52*s)*d.f*dt;
+    if(d.z < -26){ d.z += 52; rerand(d); }
+    dummy.position.set(d.x,d.y,d.z);
+    dummy.scale.set(1,1,1+2.4*s);
+    dummy.updateMatrix();
+    streaks.setMatrixAt(i, dummy.matrix);
+  }
+  streaks.instanceMatrix.needsUpdate = true;
+}
+
+/* ============================== paint ============================== */
+const PAINTS = [
+  { n:'GRAPHITE', c:0x3a3c40, r:0.32 },
+  { n:'BONE',     c:0xd9d4c7, r:0.42 },
+  { n:'EMBER',    c:0x9e2f1e, r:0.30 },
+  { n:'VOID',     c:0x121317, r:0.22 },
+];
+const paintTarget = new THREE.Color(PAINTS[0].c);
+let roughTarget = PAINTS[0].r;
+
+/* ============================== state & UI ============================== */
+const state = { lights:true, glow:true, wire:false, sound:true, ign:false, s:0 };
+const bLights=$('bLights'), bGlow=$('bGlow'), bWire=$('bWire'), bAudio=$('bAudio'), bIgn=$('bIgn');
+
+function setLights(v){ state.lights=v; bLights.classList.toggle('on',v); }
+function setGlow(v){   state.glow=v;   bGlow.classList.toggle('on',v); }
+function setAudio(v){  state.sound=v;  bAudio.classList.toggle('on',v); if(v) ensureAudio(); }
+function setIgn(v){
+  state.ign=v; bIgn.classList.toggle('on',v);
+  bIgn.textContent = v ? 'DISENGAGE' : 'IGNITION';
+  if(v && state.sound) ensureAudio();
+}
+function setWire(v){
+  state.wire=v; bWire.classList.toggle('on',v);
+  [car,refl].forEach(root=>root.traverse(o=>{
+    if(o.isMesh && o.userData.solid){
+      if(o.userData.fx) o.visible = !v;
+      else o.material = v ? wireMat : o.userData.solid;
+    }
+  }));
+  fxScene.forEach(m=> m.visible = !v);
+  key.castShadow = !v; shadowCatch.visible = !v;
+}
+bLights.onclick = e=>{ setLights(!state.lights); e.currentTarget.blur(); };
+bGlow.onclick   = e=>{ setGlow(!state.glow);     e.currentTarget.blur(); };
+bWire.onclick   = e=>{ setWire(!state.wire);     e.currentTarget.blur(); };
+bAudio.onclick  = e=>{ setAudio(!state.sound);   e.currentTarget.blur(); };
+bIgn.onclick    = e=>{ setIgn(!state.ign);       e.currentTarget.blur(); };
+
+const swBox = $('swatches');
+PAINTS.forEach((p,i)=>{
+  const b = document.createElement('button');
+  b.style.setProperty('--c', '#'+p.c.toString(16).padStart(6,'0'));
+  b.title = p.n;
+  if(i===0) b.classList.add('on');
+  b.onclick = ()=>{
+    paintTarget.setHex(p.c); roughTarget = p.r;
+    $('paintName').textContent = p.n;
+    [...swBox.children].forEach(c=>c.classList.remove('on'));
+    b.classList.add('on'); b.blur();
+  };
+  swBox.appendChild(b);
+});
+
+addEventListener('keydown', e=>{
+  if(e.repeat) return;
+  if(e.code==='Space'){ e.preventDefault(); setIgn(!state.ign); }
+  else if(e.code==='KeyL') setLights(!state.lights);
+  else if(e.code==='KeyG') setGlow(!state.glow);
+  else if(e.code==='KeyB') setWire(!state.wire);
+  else if(e.code==='KeyM') setAudio(!state.sound);
+});
+
+/* ============================== synthesized turbine audio ============================== */
+let AC=null, aM, aLow, aLow2, aLowF, aWhine, aWG, aNG;
+function ensureAudio(){
+  if(AC){ AC.resume(); return; }
+  try{
+    AC = new (window.AudioContext||window.webkitAudioContext)();
+    aM = AC.createGain(); aM.gain.value = 0; aM.connect(AC.destination);
+    aLowF = AC.createBiquadFilter(); aLowF.type='lowpass'; aLowF.frequency.value=300; aLowF.Q.value=1.1; aLowF.connect(aM);
+    const mk=(type,f,g,dest)=>{ const o=AC.createOscillator(); o.type=type; o.frequency.value=f;
+      const gn=AC.createGain(); gn.gain.value=g; o.connect(gn); gn.connect(dest); o.start(); return [o,gn]; };
+    [aLow]  = mk('sawtooth', 52, 0.5,  aLowF);
+    [aLow2] = mk('sawtooth', 79, 0.35, aLowF);
+    [aWhine, aWG] = mk('sine', 620, 0.0, aM);
+    const len = 2*AC.sampleRate, buf = AC.createBuffer(1,len,AC.sampleRate), d = buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i] = Math.random()*2-1;
+    const src = AC.createBufferSource(); src.buffer = buf; src.loop = true;
+    const bp = AC.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=800; bp.Q.value=0.7;
+    aNG = AC.createGain(); aNG.gain.value = 0;
+    src.connect(bp); bp.connect(aNG); aNG.connect(aM); src.start();
+    const lfo = AC.createOscillator(); lfo.frequency.value = 5.2;
+    const lg = AC.createGain(); lg.gain.value = 14;
+    lfo.connect(lg); lg.connect(aWhine.frequency); lfo.start();
+  }catch(e){ AC = null; }
+}
+function audioTick(s){
+  if(!AC || !aWG) return;
+  const t = AC.currentTime, on = state.sound && s > 0.002;
+  aM.gain.setTargetAtTime(on ? 0.028+0.15*s : 0, t, 0.09);
+  aLow.frequency.setTargetAtTime(50+92*s, t, 0.12);
+  aLow2.frequency.setTargetAtTime(76+150*s, t, 0.12);
+  aLowF.frequency.setTargetAtTime(240+950*s, t, 0.12);
+  aWhine.frequency.setTargetAtTime(520+1250*s, t, 0.12);
+  aWG.gain.setTargetAtTime(on ? 0.05+0.07*s : 0, t, 0.15);
+  aNG.gain.setTargetAtTime(on ? 0.045*s : 0, t, 0.15);
+}
+
+/* ============================== controls & intro ============================== */
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0,0.75,0);
+controls.enableDamping = true; controls.dampingFactor = 0.06;
+controls.enablePan = false;
+controls.minDistance = 3.6; controls.maxDistance = 13;
+controls.minPolarAngle = 0.12; controls.maxPolarAngle = 1.45;
+controls.autoRotate = false; controls.autoRotateSpeed = 0.8;
+
+let idleT = 0;
+const hideHint = ()=> $('hint').classList.add('off');
+controls.addEventListener('start', ()=>{ controls.autoRotate = false; clearTimeout(idleT); hideHint(); });
+controls.addEventListener('end',   ()=>{ clearTimeout(idleT); idleT = setTimeout(()=>controls.autoRotate = true, 3500); });
+renderer.domElement.addEventListener('pointerdown', hideHint, { once:true });
+setTimeout(hideHint, 8000);
+
+let introT = 0, introDone = false;
+const camFrom = new THREE.Vector3(12.5,4.8,13.0), camTo = new THREE.Vector3(6.6,2.35,7.4);
+
+/* ============================== post processing ============================== */
+const rt = new THREE.WebGLRenderTarget(2,2, { type:THREE.HalfFloatType, samples: renderer.capabilities.isWebGL2 ? 4 : 0 });
+const composer = new EffectComposer(renderer, rt);
+composer.setPixelRatio(renderer.getPixelRatio());
+composer.setSize(innerWidth, innerHeight);
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight), 0.4, 0.5, 0.75));
+composer.addPass(new OutputPass());
+
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  composer.setSize(innerWidth, innerHeight);
+});
+
+/* ============================== main loop ============================== */
+const clock = new THREE.Clock();
+const speedoEl = $('speedo'), vEl = speedoEl.querySelector('.v'), barEl = speedoEl.querySelector('.bar i');
+let wheelA = 0;
+const L = (cur,tgt,dt)=> THREE.MathUtils.damp(cur,tgt,6,dt);
+
+renderer.setAnimationLoop(()=>{
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+
+  /* intro dolly */
+  if(!introDone){
+    introT = Math.min(1, introT + dt/1.8);
+    const e = 1 - Math.pow(1-introT, 3);
+    camera.position.lerpVectors(camFrom, camTo, e);
+    camera.fov = 50 - 5*e; camera.updateProjectionMatrix();
+    if(introT >= 1){ introDone = true; controls.autoRotate = true; }
+  } else {
+    const f = 45 + 6*state.s;
+    if(Math.abs(camera.fov - f) > 0.01){
+      camera.fov = THREE.MathUtils.damp(camera.fov, f, 3, dt);
+      camera.updateProjectionMatrix();
+    }
+  }
+  controls.update();
+
+  /* drive state */
+  state.s = THREE.MathUtils.damp(state.s, state.ign?1:0, state.ign?0.9:1.4, dt);
+  const s = state.s;
+
+  /* body: idle breathing + squat + vibration */
+  car.position.y = 0.008*Math.sin(t*1.5) - 0.028*s + (Math.sin(t*57)+Math.sin(t*83))*0.002*s;
+  car.position.x = Math.sin(t*71)*0.003*s;
+  car.rotation.x = -0.018*s + 0.002*Math.sin(t*0.9);
+  car.rotation.z = 0.0022*Math.sin(t*1.3);
+  reflHolder.position.set(car.position.x, -car.position.y, car.position.z);
+  reflHolder.rotation.set(-car.rotation.x, car.rotation.y, -car.rotation.z);
+
+  /* wheels + mirrored wheels */
+  wheelA += 24*s*dt;
+  wheels.forEach(w=> w.rotation.x = wheelA);
+  wheelPairs.forEach(([o,r])=> r.rotation.x = -o.rotation.x);
+
+  /* scrolling grid, matched to wheel speed */
+  gridMat.uniforms.uScroll.value = (gridMat.uniforms.uScroll.value + 8.4*s*dt) % 5;
+
+  /* lighting fx */
+  M.head.emissiveIntensity = L(M.head.emissiveIntensity, state.lights?3.4:0, dt);
+  M.tail.emissiveIntensity = L(M.tail.emissiveIntensity, state.lights?2.6:0.4, dt);
+  M.acc.emissiveIntensity  = L(M.acc.emissiveIntensity,  state.lights?2.6:0, dt);
+  M.side.emissiveIntensity = L(M.side.emissiveIntensity, state.glow?3.0:0, dt);
+  coneMat.opacity          = L(coneMat.opacity, state.lights && !state.wire ? 0.055:0, dt);
+  poolL.material.opacity   = L(poolL.material.opacity, state.lights && !state.wire ? 0.5:0, dt);
+  glowPlane.material.opacity = L(glowPlane.material.opacity, state.glow && !state.wire ? 0.8:0, dt);
+  ugl.intensity            = L(ugl.intensity, state.glow?3:0, dt);
+  gridMat.uniforms.uAccent.value = L(gridMat.uniforms.uAccent.value, state.wire?0.9:(state.glow?0.3:0.1), dt);
+  M.rim.emissiveIntensity = 0.85 + 0.3*Math.sin(t*2.2);
+  M.cap.emissiveIntensity = 1.6 + 0.5*Math.sin(t*2.2+1);
+  M.exh.emissiveIntensity = (1.2 + 4.5*s) * (1 + 0.15*Math.sin(t*40));
+
+  /* paint */
+  const pk = 1 - Math.exp(-6*dt);
+  M.paint.color.lerp(paintTarget, pk);
+  M.paint.roughness += (roughTarget - M.paint.roughness)*pk;
+
+  updateStreaks(s, dt);
+  audioTick(s);
+
+  /* speedometer */
+  speedoEl.classList.toggle('show', s > 0.03);
+  if(s > 0.002){
+    const v = 351*Math.pow(s,1.15) + (Math.random()-0.5)*3*s;
+    vEl.textContent = String(Math.max(0, Math.round(v))).padStart(3,'0');
+    barEl.style.width = (s*100).toFixed(1)+'%';
+  }
+
+  /* subtle camera shake at speed */
+  if(s > 0.05){
+    camera.position.x += (Math.random()-0.5)*0.02*s;
+    camera.position.y += (Math.random()-0.5)*0.012*s;
+  }
+
+  composer.render();
+});
+
+window.__saros_ok = true;
+</script>
+</body>
+</html>

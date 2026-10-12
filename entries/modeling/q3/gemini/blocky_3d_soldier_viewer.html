@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blocky Tactical Soldier 3D Showcase</title>
+    <!-- Tailwind CSS for UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Chakra Petch', sans-serif;
+            background-color: #080a0c;
+            color: #e2e8f0;
+            user-select: none;
+        }
+
+        /* Glassmorphism tactical HUD styling */
+        .hud-panel {
+            background: rgba(13, 19, 26, 0.82);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .hud-panel-amber {
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .tactical-border {
+            position: relative;
+        }
+        .tactical-border::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; width: 8px; height: 8px;
+            border-top: 2px solid #22c55e;
+            border-left: 2px solid #22c55e;
+        }
+        .tactical-border::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; right: -2px; width: 8px; height: 8px;
+            border-bottom: 2px solid #22c55e;
+            border-right: 2px solid #22c55e;
+        }
+
+        /* Scanline effect for tactical screen */
+        .scanline-overlay {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+
+        /* NVG Vignette Effect */
+        .nvg-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(circle, transparent 50%, rgba(0, 20, 0, 0.85) 90%, rgba(0,0,0,0.98) 100%);
+            mix-blend-mode: overlay;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .nvg-active .nvg-overlay {
+            opacity: 1;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(34, 197, 94, 0.4);
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(34, 197, 94, 0.8);
+        }
+
+        /* Custom toggle & radio styles */
+        .btn-tac {
+            background: rgba(22, 32, 25, 0.6);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            transition: all 0.2s ease;
+        }
+        .btn-tac:hover {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: #22c55e;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+        }
+        .btn-tac.active {
+            background: rgba(34, 197, 94, 0.3);
+            border-color: #22c55e;
+            color: #4ade80;
+            box-shadow: inset 0 0 8px rgba(34, 197, 94, 0.4), 0 0 12px rgba(34, 197, 94, 0.2);
+        }
+
+        /* Canvas container */
+        #webgl-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-slate-100 overflow-hidden select-none">
+
+    <div id="webgl-container"></div>
+    <div class="nvg-overlay z-10" id="nvgOverlay"></div>
+    <div class="scanline-overlay absolute inset-0 z-10 opacity-30 pointer-events-none"></div>
+
+    <!-- UI Overlay Layer -->
+    <div class="relative z-20 pointer-events-none w-full h-full flex flex-col justify-between p-4 md:p-6">
+        
+        <!-- TOP HUD BAR -->
+        <header class="flex justify-between items-center w-full pointer-events-auto">
+            <div class="hud-panel tactical-border p-3 px-5 rounded-md flex items-center space-x-4">
+                <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-wider text-green-400 uppercase leading-none font-mono">OPERATIVE // SPEC-OPS</h1>
+                    <p class="text-xs text-slate-400 font-mono tracking-widest mt-1">CLASS: ASSAULT (BLOCKY-V1.0)</p>
+                </div>
+            </div>
+
+            <!-- Quick Action Toolbar -->
+            <div class="hud-panel rounded-md p-1.5 flex space-x-2">
+                <button id="btnWireframe" title="Toggle Wireframe Mode" class="btn-tac p-2 px-3 rounded text-xs font-mono flex items-center gap-2">
+                    <i class="fa-solid fa-cube"></i> <span class="hidden sm:inline">WIREFRAME</span>
+                </button>
+                <button id="btnAutoRotate" title="Toggle Camera Auto Rotate" class="btn-tac p-2 px-3 rounded text-xs font-mono flex items-center gap-2">
+                    <i class="fa-solid fa-rotate"></i> <span class="hidden sm:inline">ORBIT</span>
+                </button>
+                <button id="btnResetCam" title="Reset View" class="btn-tac p-2 px-3 rounded text-xs font-mono flex items-center gap-2">
+                    <i class="fa-solid fa-crosshairs"></i> <span class="hidden sm:inline">RESET</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- CENTER CROSSHAIR / DISPLAY INFO -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-20 hidden md:block">
+            <svg width="200" height="200" viewBox="0 0 100 100" fill="none" stroke="#22c55e" stroke-width="0.5">
+                <circle cx="50" cy="50" r="40" stroke-dasharray="2 2"/>
+                <line x1="50" y1="5" x2="50" y2="25" />
+                <line x1="50" y1="75" x2="50" y2="95" />
+                <line x1="5" y1="50" x2="25" y2="50" />
+                <line x1="75" y1="50" x2="95" y2="50" />
+                <circle cx="50" cy="50" r="2" fill="#22c55e"/>
+            </svg>
+        </div>
+
+        <!-- MAIN CONTROL SIDE PANEL (FLOATING RIGHT) -->
+        <aside class="absolute right-4 top-20 bottom-20 w-80 max-w-[calc(100vw-2rem)] hud-panel rounded-lg p-4 pointer-events-auto overflow-y-auto flex flex-col justify-start space-y-5 transition-all">
+            
+            <!-- CAMO SELECTOR -->
+            <div>
+                <h3 class="text-xs font-mono text-green-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-palette"></i> Camouflage Theme
+                </h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="camo-btn btn-tac p-2 rounded text-xs font-mono text-left active" data-camo="woodland">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-700 mr-1.5"></span>Woodland
+                    </button>
+                    <button class="camo-btn btn-tac p-2 rounded text-xs font-mono text-left" data-camo="desert">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-600 mr-1.5"></span>Desert
+                    </button>
+                    <button class="camo-btn btn-tac p-2 rounded text-xs font-mono text-left" data-camo="urban">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-slate-600 mr-1.5"></span>Urban / Night
+                    </button>
+                    <button class="camo-btn btn-tac p-2 rounded text-xs font-mono text-left" data-camo="snow">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-slate-200 mr-1.5"></span>Arctic Snow
+                    </button>
+                </div>
+            </div>
+
+            <!-- TACTICAL POSES / ANIMATIONS -->
+            <div>
+                <h3 class="text-xs font-mono text-green-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-person-running"></i> Tactical Stance / Motion
+                </h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="pose-btn btn-tac p-2 rounded text-xs font-mono active" data-pose="idle">Idle Ready</button>
+                    <button class="pose-btn btn-tac p-2 rounded text-xs font-mono" data-pose="aim">Tactical Aim</button>
+                    <button class="pose-btn btn-tac p-2 rounded text-xs font-mono" data-pose="patrol">Patrol Walk</button>
+                    <button class="pose-btn btn-tac p-2 rounded text-xs font-mono" data-pose="victory">Victory Salute</button>
+                </div>
+            </div>
+
+            <!-- WEAPON SELECTION -->
+            <div>
+                <h3 class="text-xs font-mono text-green-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-gun"></i> Loadout / Weapon
+                </h3>
+                <div class="grid grid-cols-3 gap-2">
+                    <button class="weapon-btn btn-tac p-2 rounded text-xs font-mono active" data-weapon="rifle">Assault Rifle</button>
+                    <button class="weapon-btn btn-tac p-2 rounded text-xs font-mono" data-weapon="pistol">Sidearm</button>
+                    <button class="weapon-btn btn-tac p-2 rounded text-xs font-mono" data-weapon="none">Unarmed</button>
+                </div>
+            </div>
+
+            <!-- GEAR & HELMET CONTROLS -->
+            <div>
+                <h3 class="text-xs font-mono text-green-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-head-side-mask"></i> Helmet & NVG Setup
+                </h3>
+                <div class="flex flex-col space-y-2">
+                    <div class="flex items-center justify-between p-2 rounded bg-slate-900/50 border border-slate-800">
+                        <span class="text-xs font-mono text-slate-300">Tactical Helmet</span>
+                        <button id="toggleHelmet" class="btn-tac px-3 py-1 rounded text-xs font-mono active">ON</button>
+                    </div>
+                    <div class="flex items-center justify-between p-2 rounded bg-slate-900/50 border border-slate-800">
+                        <span class="text-xs font-mono text-slate-300">NVG Goggles State</span>
+                        <button id="toggleNVG" class="btn-tac px-3 py-1 rounded text-xs font-mono active">DOWN</button>
+                    </div>
+                    <div class="flex items-center justify-between p-2 rounded bg-slate-900/50 border border-slate-800">
+                        <span class="text-xs font-mono text-slate-300">Backpack Pack</span>
+                        <button id="toggleBackpack" class="btn-tac px-3 py-1 rounded text-xs font-mono active">EQUIPPED</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENVIRONMENT / LIGHTING MODE -->
+            <div>
+                <h3 class="text-xs font-mono text-green-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-moon"></i> Environment / Optics
+                </h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="env-btn btn-tac p-2 rounded text-xs font-mono active" data-env="day">Standard Day</button>
+                    <button class="env-btn btn-tac p-2 rounded text-xs font-mono" data-env="nvg">Night Vision (NVG)</button>
+                </div>
+            </div>
+
+            <!-- FOOTER INFO IN PANEL -->
+            <div class="pt-2 border-t border-slate-800/80 text-[10px] font-mono text-slate-500 flex justify-between">
+                <span>FPS: <span id="fpsMeter" class="text-green-500">60</span></span>
+                <span>VERTICES: ~12,450</span>
+            </div>
+        </aside>
+
+        <!-- BOTTOM STATUS BAR -->
+        <footer class="flex justify-between items-end w-full pointer-events-auto">
+            <div class="hud-panel p-2.5 px-4 rounded-md text-xs font-mono text-slate-300 flex items-center space-x-3">
+                <span class="text-green-400 font-bold"><i class="fa-solid fa-hand-pointer mr-1"></i> CONTROLS:</span>
+                <span class="hidden sm:inline">Rotate: Left-Click + Drag</span>
+                <span class="hidden sm:inline">|</span>
+                <span class="hidden sm:inline">Pan: Right-Click + Drag</span>
+                <span class="hidden sm:inline">|</span>
+                <span>Zoom: Scroll</span>
+            </div>
+            <div class="text-[11px] font-mono text-slate-500 hidden md:block">
+                TACTICAL MODEL VIEWER ENGINE 3D
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- MAIN THREE.JS SCRIPTS -->
+    <script>
+
+        // Procedural Pixel Art / Camo Canvas Generator
+        function createCamoTexture(theme) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+
+            let colors = [];
+            if (theme === 'woodland') {
+                colors = ['#1e392a', '#2d4c1e', '#192813', '#4b3d28', '#111810'];
+            } else if (theme === 'desert') {
+                colors = ['#c2a649', '#d8c27a', '#8c703b', '#5c4827', '#e2d39b'];
+            } else if (theme === 'urban') {
+                colors = ['#2d3748', '#1a202c', '#4a5568', '#718096', '#0f172a'];
+            } else if (theme === 'snow') {
+                colors = ['#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#ffffff'];
+            }
+
+            // Fill base color
+            ctx.fillStyle = colors[0];
+            ctx.fillRect(0, 0, 128, 128);
+
+            // Generate blocky pixel noise pattern for Craft / Voxel feel
+            const blockSize = 8;
+            for (let x = 0; x < 128; x += blockSize) {
+                for (let y = 0; y < 128; y += blockSize) {
+                    if (Math.random() > 0.35) {
+                        const color = colors[Math.floor(Math.random() * colors.length)];
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x, y, blockSize, blockSize);
+                    }
+                }
+            }
+
+            // Add subtle noise overlay
+            for (let i = 0; i < 500; i++) {
+                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)';
+                ctx.fillRect(Math.floor(Math.random()*128), Math.floor(Math.random()*128), 2, 2);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter; // Keep sharp craft pixels
+            texture.minFilter = THREE.NearestFilter;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        // Fabric texture for mask/undershirt
+        function createFabricTexture(baseHex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = baseHex;
+            ctx.fillRect(0, 0, 64, 64);
+
+            for (let x = 0; x < 64; x += 4) {
+                for (let y = 0; y < 64; y += 4) {
+                    if ((x + y) % 8 === 0) {
+                        ctx.fillStyle = 'rgba(0,0,0,0.12)';
+                        ctx.fillRect(x, y, 4, 4);
+                    }
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            return texture;
+        }
+
+        let scene, camera, renderer, controls;
+        let soldierGroup, headPivot, torsoPivot, armLPivot, armRPivot, legLPivot, legRPivot;
+        let nvgGroup, helmetMesh, backpackGroup, rifleGroup, pistolGroup, holsterPistolMesh;
+        let camoTextures = {};
+        let materials = {};
+        let currentCamo = 'woodland';
+        let currentPose = 'idle';
+        let currentWeapon = 'rifle';
+        let currentEnv = 'day';
+        let nvgDown = true;
+        let helmetOn = true;
+        let backpackOn = true;
+        let isWireframe = false;
+        let clock = new THREE.Clock();
+        let dustParticles;
+
+        // Base materials dictionary
+        function initMaterials() {
+            camoTextures.woodland = createCamoTexture('woodland');
+            camoTextures.desert = createCamoTexture('desert');
+            camoTextures.urban = createCamoTexture('urban');
+            camoTextures.snow = createCamoTexture('snow');
+
+            const fabricTex = createFabricTexture('#1e293b');
+
+            materials.camo = new THREE.MeshStandardMaterial({
+                map: camoTextures.woodland,
+                roughness: 0.7,
+                metalness: 0.1
+            });
+
+            materials.vest = new THREE.MeshStandardMaterial({
+                color: 0x1e261d,
+                roughness: 0.6,
+                metalness: 0.2
+            });
+
+            materials.skin = new THREE.MeshStandardMaterial({
+                color: 0xd4a373,
+                roughness: 0.8
+            });
+
+            materials.balaclava = new THREE.MeshStandardMaterial({
+                map: fabricTex,
+                color: 0x1e293b,
+                roughness: 0.9
+            });
+
+            materials.blackGear = new THREE.MeshStandardMaterial({
+                color: 0x111827,
+                roughness: 0.5,
+                metalness: 0.3
+            });
+
+            materials.gunMetal = new THREE.MeshStandardMaterial({
+                color: 0x1f2937,
+                roughness: 0.3,
+                metalness: 0.8
+            });
+
+            materials.gunAccent = new THREE.MeshStandardMaterial({
+                color: 0x374151,
+                roughness: 0.4,
+                metalness: 0.5
+            });
+
+            materials.visorLens = new THREE.MeshStandardMaterial({
+                color: 0x0284c7,
+                roughness: 0.1,
+                metalness: 0.9,
+                emissive: 0x0369a1,
+                emissiveIntensity: 0.6
+            });
+
+            materials.nvgLens = new THREE.MeshStandardMaterial({
+                color: 0x22c55e,
+                roughness: 0.1,
+                metalness: 0.8,
+                emissive: 0x15803d,
+                emissiveIntensity: 0.8
+            });
+
+            materials.patch = new THREE.MeshStandardMaterial({
+                color: 0xb91c1c,
+                roughness: 0.8
+            });
+
+            materials.boots = new THREE.MeshStandardMaterial({
+                color: 0x0f172a,
+                roughness: 0.6
+            });
+        }
+
+
+        // Helper to construct box meshes easily with shadows
+        function createCube(w, h, d, mat, shadow = true) {
+            const geo = new THREE.BoxGeometry(w, h, d);
+            const mesh = new THREE.Mesh(geo, mat);
+            if (shadow) {
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+            }
+            return mesh;
+        }
+
+        function buildSoldier() {
+            soldierGroup = new THREE.Group();
+
+            // Root Pivot at Feet
+            soldierGroup.position.y = 0;
+
+            // --- TORSO PIVOT ---
+            torsoPivot = new THREE.Group();
+            torsoPivot.position.y = 1.35; // Chest height
+            soldierGroup.add(torsoPivot);
+
+            // Main Torso Box (Inner Body)
+            const upperBody = createCube(0.6, 0.7, 0.35, materials.camo);
+            upperBody.position.y = 0;
+            torsoPivot.add(upperBody);
+
+            // Tactical Vest / Plate Carrier (Surrounds Torso)
+            const vestMain = createCube(0.64, 0.52, 0.4, materials.vest);
+            vestMain.position.y = -0.05;
+            torsoPivot.add(vestMain);
+
+            // Vest Front Armor Plates & Molle Webbing
+            for (let i = -1; i <= 1; i += 2) {
+                // Molle Pouches on Front
+                const pouch = createCube(0.16, 0.18, 0.08, materials.blackGear);
+                pouch.position.set(i * 0.15, -0.15, 0.22);
+                torsoPivot.add(pouch);
+            }
+
+            // Radio on Left Shoulder Vest
+            const radio = createCube(0.08, 0.2, 0.08, materials.blackGear);
+            radio.position.set(0.24, 0.18, 0.18);
+            torsoPivot.add(radio);
+
+            const radioAntenna = createCube(0.015, 0.25, 0.015, materials.blackGear);
+            radioAntenna.position.set(0.24, 0.38, 0.18);
+            torsoPivot.add(radioAntenna);
+
+            // Belt & Buckle
+            const belt = createCube(0.65, 0.08, 0.38, materials.blackGear);
+            belt.position.y = -0.38;
+            torsoPivot.add(belt);
+
+            const buckle = createCube(0.12, 0.09, 0.4, materials.gunMetal);
+            buckle.position.y = -0.38;
+            torsoPivot.add(buckle);
+
+            // Flag Patch on Vest Right
+            const flagPatch = createCube(0.12, 0.08, 0.01, materials.patch);
+            flagPatch.position.set(-0.18, 0.12, 0.21);
+            torsoPivot.add(flagPatch);
+
+            // --- HEAD PIVOT ---
+            headPivot = new THREE.Group();
+            headPivot.position.y = 0.42; // Above Torso
+            torsoPivot.add(headPivot);
+
+            // Head Base (Skin/Balaclava)
+            const headBase = createCube(0.42, 0.42, 0.42, materials.balaclava);
+            headBase.position.y = 0.21;
+            headPivot.add(headBase);
+
+            // Face / Eye Cutout & Tactical Visor / Eyes
+            const eyeSlot = createCube(0.32, 0.1, 0.02, materials.skin);
+            eyeSlot.position.set(0, 0.23, 0.212);
+            headPivot.add(eyeSlot);
+
+            // Tactical Goggles over Eyes
+            const visorFrame = createCube(0.36, 0.12, 0.06, materials.blackGear);
+            visorFrame.position.set(0, 0.24, 0.22);
+            headPivot.add(visorFrame);
+
+            const visorLens = createCube(0.32, 0.08, 0.02, materials.visorLens);
+            visorLens.position.set(0, 0.24, 0.245);
+            headPivot.add(visorLens);
+
+            // HELMET GROUP (Toggleable)
+            helmetMesh = new THREE.Group();
+
+            const helmetTop = createCube(0.48, 0.26, 0.48, materials.camo);
+            helmetTop.position.y = 0.34;
+            helmetMesh.add(helmetTop);
+
+            const helmetRim = createCube(0.5, 0.08, 0.5, materials.blackGear);
+            helmetRim.position.y = 0.22;
+            helmetMesh.add(helmetRim);
+
+            // Side Helmet Rails & Ear Covers
+            const railL = createCube(0.04, 0.08, 0.25, materials.blackGear);
+            railL.position.set(0.25, 0.28, 0);
+            helmetMesh.add(railL);
+
+            const railR = createCube(0.04, 0.08, 0.25, materials.blackGear);
+            railR.position.set(-0.25, 0.28, 0);
+            helmetMesh.add(railR);
+
+            // NVG MOUNT & GOGGLES (Quad-Lens Panoramic NVG)
+            nvgGroup = new THREE.Group();
+            nvgGroup.position.set(0, 0.32, 0.24);
+
+            const nvgMount = createCube(0.1, 0.1, 0.08, materials.blackGear);
+            nvgMount.position.set(0, 0, 0.02);
+            nvgGroup.add(nvgMount);
+
+            const nvgArm = createCube(0.06, 0.06, 0.16, materials.gunMetal);
+            nvgArm.position.set(0, -0.02, 0.1);
+            nvgGroup.add(nvgArm);
+
+            // Quad NVG Tubes
+            const nvgBar = createCube(0.32, 0.08, 0.08, materials.blackGear);
+            nvgBar.position.set(0, -0.06, 0.18);
+            nvgGroup.add(nvgBar);
+
+            for (let x = -0.12; x <= 0.12; x += 0.08) {
+                const lensTube = createCube(0.06, 0.06, 0.1, materials.blackGear);
+                lensTube.position.set(x, -0.06, 0.22);
+                nvgGroup.add(lensTube);
+
+                const lensGlow = createCube(0.05, 0.05, 0.01, materials.nvgLens);
+                lensGlow.position.set(x, -0.06, 0.27);
+                nvgGroup.add(lensGlow);
+            }
+
+            helmetMesh.add(nvgGroup);
+            headPivot.add(helmetMesh);
+
+            // BACKPACK / HYDRATION PACK
+            backpackGroup = new THREE.Group();
+            const mainPack = createCube(0.46, 0.55, 0.22, materials.camo);
+            mainPack.position.set(0, 0, -0.28);
+            backpackGroup.add(mainPack);
+
+            const packPouch = createCube(0.36, 0.25, 0.1, materials.blackGear);
+            packPouch.position.set(0, -0.1, -0.41);
+            backpackGroup.add(packPouch);
+
+            const bedroll = createCube(0.5, 0.12, 0.12, materials.vest);
+            bedroll.position.set(0, 0.24, -0.32);
+            backpackGroup.add(bedroll);
+
+            torsoPivot.add(backpackGroup);
+
+            // --- ARMS & LEGS SETUP ---
+            buildArmsAndLegs();
+
+            // --- WEAPONS SETUP ---
+            buildWeapons();
+
+            scene.add(soldierGroup);
+        }
+
+        function buildArmsAndLegs() {
+            // LEFT ARM
+            armLPivot = new THREE.Group();
+            armLPivot.position.set(0.38, 0.25, 0); // Shoulder joint
+            
+            const shoulderPadL = createCube(0.18, 0.18, 0.22, materials.blackGear);
+            shoulderPadL.position.set(0.02, 0, 0);
+            armLPivot.add(shoulderPadL);
+
+            const upperArmL = createCube(0.18, 0.35, 0.18, materials.camo);
+            upperArmL.position.set(0.02, -0.18, 0);
+            armLPivot.add(upperArmL);
+
+            const lowerArmL = createCube(0.16, 0.35, 0.16, materials.camo);
+            lowerArmL.position.set(0.02, -0.48, 0);
+            armLPivot.add(lowerArmL);
+
+            const gloveL = createCube(0.17, 0.15, 0.17, materials.blackGear);
+            gloveL.position.set(0.02, -0.68, 0);
+            armLPivot.add(gloveL);
+
+            torsoPivot.add(armLPivot);
+
+            // RIGHT ARM
+            armRPivot = new THREE.Group();
+            armRPivot.position.set(-0.38, 0.25, 0); // Shoulder joint
+            
+            const shoulderPadR = createCube(0.18, 0.18, 0.22, materials.blackGear);
+            shoulderPadR.position.set(-0.02, 0, 0);
+            armRPivot.add(shoulderPadR);
+
+            const upperArmR = createCube(0.18, 0.35, 0.18, materials.camo);
+            upperArmR.position.set(-0.02, -0.18, 0);
+            armRPivot.add(upperArmR);
+
+            const lowerArmR = createCube(0.16, 0.35, 0.16, materials.camo);
+            lowerArmR.position.set(-0.02, -0.48, 0);
+            armRPivot.add(lowerArmR);
+
+            const gloveR = createCube(0.17, 0.15, 0.17, materials.blackGear);
+            gloveR.position.set(-0.02, -0.68, 0);
+            armRPivot.add(gloveR);
+
+            torsoPivot.add(armRPivot);
+
+            // LEFT LEG
+            legLPivot = new THREE.Group();
+            legLPivot.position.set(0.16, 0.68, 0); // Hip joint
+            
+            const thighL = createCube(0.22, 0.38, 0.22, materials.camo);
+            thighL.position.set(0, -0.18, 0);
+            legLPivot.add(thighL);
+
+            const kneePadL = createCube(0.24, 0.14, 0.08, materials.blackGear);
+            kneePadL.position.set(0, -0.32, 0.1);
+            legLPivot.add(kneePadL);
+
+            const shinL = createCube(0.2, 0.38, 0.2, materials.camo);
+            shinL.position.set(0, -0.52, 0);
+            legLPivot.add(shinL);
+
+            const bootL = createCube(0.22, 0.2, 0.32, materials.boots);
+            bootL.position.set(0, -0.72, 0.04);
+            legLPivot.add(bootL);
+
+            soldierGroup.add(legLPivot);
+
+            // RIGHT LEG
+            legRPivot = new THREE.Group();
+            legRPivot.position.set(-0.16, 0.68, 0); // Hip joint
+            
+            const thighR = createCube(0.22, 0.38, 0.22, materials.camo);
+            thighR.position.set(0, -0.18, 0);
+            legRPivot.add(thighR);
+
+            const kneePadR = createCube(0.24, 0.14, 0.08, materials.blackGear);
+            kneePadR.position.set(0, -0.32, 0.1);
+            legRPivot.add(kneePadR);
+
+            // Sidearm Holster attached to Right Thigh
+            const holster = createCube(0.1, 0.25, 0.16, materials.blackGear);
+            holster.position.set(-0.12, -0.2, 0);
+            legRPivot.add(holster);
+
+            holsterPistolMesh = createCube(0.07, 0.18, 0.12, materials.gunMetal);
+            holsterPistolMesh.position.set(-0.12, -0.16, 0);
+            legRPivot.add(holsterPistolMesh);
+
+            const shinR = createCube(0.2, 0.38, 0.2, materials.camo);
+            shinR.position.set(0, -0.52, 0);
+            legRPivot.add(shinR);
+
+            const bootR = createCube(0.22, 0.2, 0.32, materials.boots);
+            bootR.position.set(0, -0.72, 0.04);
+            legRPivot.add(bootR);
+
+            soldierGroup.add(legRPivot);
+        }
+
+        function buildWeapons() {
+            // ASSAULT RIFLE (M4 / Tactical Blocky Style)
+            rifleGroup = new THREE.Group();
+
+            // Receiver & Body
+            const receiver = createCube(0.08, 0.12, 0.45, materials.gunMetal);
+            receiver.position.set(0, 0, 0);
+            rifleGroup.add(receiver);
+
+            // Barrel & Handguard
+            const handguard = createCube(0.07, 0.09, 0.35, materials.gunAccent);
+            handguard.position.set(0, 0, 0.38);
+            rifleGroup.add(handguard);
+
+            const barrel = createCube(0.04, 0.04, 0.25, materials.gunMetal);
+            barrel.position.set(0, 0.01, 0.65);
+            rifleGroup.add(barrel);
+
+            const suppressor = createCube(0.055, 0.055, 0.18, materials.blackGear);
+            suppressor.position.set(0, 0.01, 0.82);
+            rifleGroup.add(suppressor);
+
+            // Stock
+            const stock = createCube(0.06, 0.12, 0.28, materials.gunAccent);
+            stock.position.set(0, -0.02, -0.32);
+            rifleGroup.add(stock);
+
+            // Magazine (Curved / Angled feel)
+            const mag = createCube(0.06, 0.22, 0.1, materials.gunAccent);
+            mag.position.set(0, -0.15, 0.12);
+            mag.rotation.x = 0.2;
+            rifleGroup.add(mag);
+
+            // Pistol Grip
+            const grip = createCube(0.06, 0.14, 0.08, materials.blackGear);
+            grip.position.set(0, -0.12, -0.08);
+            grip.rotation.x = -0.25;
+            rifleGroup.add(grip);
+
+            // Holographic Red-Dot Sight
+            const sightBase = createCube(0.07, 0.08, 0.16, materials.blackGear);
+            sightBase.position.set(0, 0.09, 0.05);
+            rifleGroup.add(sightBase);
+
+            const sightGlass = createCube(0.05, 0.05, 0.01, materials.visorLens);
+            sightGlass.position.set(0, 0.1, 0.12);
+            rifleGroup.add(sightGlass);
+
+            // Tactical Laser / Light Module
+            const laserBox = createCube(0.06, 0.05, 0.12, materials.blackGear);
+            laserBox.position.set(0.05, 0.02, 0.35);
+            rifleGroup.add(laserBox);
+
+            // Attach Rifle to Right Hand Pivot
+            armRPivot.add(rifleGroup);
+
+            // PISTOL (Sidearm)
+            pistolGroup = new THREE.Group();
+            
+            const pSlide = createCube(0.05, 0.07, 0.22, materials.gunMetal);
+            pSlide.position.set(0, 0.04, 0.04);
+            pistolGroup.add(pSlide);
+
+            const pGrip = createCube(0.048, 0.12, 0.07, materials.blackGear);
+            pGrip.position.set(0, -0.05, -0.02);
+            pGrip.rotation.x = -0.2;
+            pistolGroup.add(pGrip);
+
+            armRPivot.add(pistolGroup);
+            pistolGroup.visible = false;
+        }
+
+        function setupEnvironment() {
+            // Environment Ground / Pedestal Grid
+            const gridGeo = new THREE.CylinderGeometry(2.5, 2.7, 0.2, 8);
+            const gridMat = new THREE.MeshStandardMaterial({
+                color: 0x111827,
+                roughness: 0.4,
+                metalness: 0.8
+            });
+            const pedestal = new THREE.Mesh(gridGeo, gridMat);
+            pedestal.position.y = -0.1;
+            pedestal.receiveShadow = true;
+            scene.add(pedestal);
+
+            // Inner Glowing Octagon Ring
+            const ringGeo = new THREE.RingGeometry(2.0, 2.15, 8);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0x22c55e,
+                side: THREE.DoubleSide
+            });
+            const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+            ringMesh.rotation.x = Math.PI / 2;
+            ringMesh.position.y = 0.01;
+            scene.add(ringMesh);
+
+            // Dust Particles
+            const particleGeo = new THREE.BufferGeometry();
+            const particleCount = 150;
+            const posArray = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                posArray[i] = (Math.random() - 0.5) * 6;
+                posArray[i + 1] = Math.random() * 3;
+                posArray[i + 2] = (Math.random() - 0.5) * 6;
+            }
+
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particleMat = new THREE.PointsMaterial({
+                size: 0.025,
+                color: 0x22c55e,
+                transparent: true,
+                opacity: 0.4
+            });
+
+            dustParticles = new THREE.Points(particleGeo, particleMat);
+            scene.add(dustParticles);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            ambientLight.name = "ambientLight";
+            scene.add(ambientLight);
+
+            const mainSpot = new THREE.SpotLight(0xffffff, 1.2);
+            mainSpot.position.set(4, 6, 4);
+            mainSpot.castShadow = true;
+            mainSpot.shadow.mapSize.width = 2048;
+            mainSpot.shadow.mapSize.height = 2048;
+            mainSpot.shadow.bias = -0.0001;
+            mainSpot.name = "mainSpot";
+            scene.add(mainSpot);
+
+            const rimLight = new THREE.DirectionalLight(0x22c55e, 1.0);
+            rimLight.position.set(-4, 3, -4);
+            rimLight.name = "rimLight";
+            scene.add(rimLight);
+
+            const fillLight = new THREE.PointLight(0x3b82f6, 0.5, 10);
+            fillLight.position.set(-2, 1, 3);
+            fillLight.name = "fillLight";
+            scene.add(fillLight);
+        }
+
+        function applyPose(poseName) {
+            currentPose = poseName;
+
+            // Reset Pivots Base Rotations
+            headPivot.rotation.set(0, 0, 0);
+            torsoPivot.rotation.set(0, 0, 0);
+            armLPivot.rotation.set(0, 0, 0);
+            armRPivot.rotation.set(0, 0, 0);
+            legLPivot.rotation.set(0, 0, 0);
+            legRPivot.rotation.set(0, 0, 0);
+
+            // Weapon Attach Offsets
+            rifleGroup.position.set(-0.02, -0.62, 0.15);
+            rifleGroup.rotation.set(1.4, -0.1, -0.2);
+
+            pistolGroup.position.set(-0.02, -0.62, 0.08);
+            pistolGroup.rotation.set(1.5, 0, 0);
+
+            if (poseName === 'idle') {
+                // Tactical Relaxed Low-Ready
+                armRPivot.rotation.set(-0.6, -0.3, 0.1);
+                armLPivot.rotation.set(-0.5, 0.4, -0.2);
+                legLPivot.rotation.set(0.1, 0, 0.08);
+                legRPivot.rotation.set(-0.1, 0, -0.08);
+
+                rifleGroup.position.set(-0.02, -0.58, 0.1);
+                rifleGroup.rotation.set(0.8, -0.2, -0.3);
+
+            } else if (poseName === 'aim') {
+                // High Ready / Tactical Aiming
+                torsoPivot.rotation.y = 0.3;
+                headPivot.rotation.y = -0.28;
+
+                armRPivot.rotation.set(-1.35, -0.35, 0.1);
+                armLPivot.rotation.set(-1.1, 0.5, -0.3);
+
+                rifleGroup.position.set(-0.02, -0.65, 0.18);
+                rifleGroup.rotation.set(1.57, -0.05, 0);
+
+                pistolGroup.position.set(-0.02, -0.62, 0.15);
+                pistolGroup.rotation.set(1.57, 0, 0);
+
+                legLPivot.rotation.set(-0.2, 0, 0.05);
+                legRPivot.rotation.set(0.2, 0, -0.05);
+
+            } else if (poseName === 'patrol') {
+                // Dynamic Patrol Walk Posing (Animated in render loop)
+
+            } else if (poseName === 'victory') {
+                // Salute / High Weapon Raise
+                armRPivot.rotation.set(-2.8, -0.2, 0.2);
+                armLPivot.rotation.set(-0.2, 0, -0.2);
+                headPivot.rotation.set(-0.1, 0.2, 0);
+
+                legLPivot.rotation.set(0, 0, 0.1);
+                legRPivot.rotation.set(0, 0, -0.1);
+            }
+        }
+
+        // Animated Procedural Movements (Breathing, Walking)
+        function updateAnimations(delta, time) {
+            if (currentPose === 'idle' || currentPose === 'aim') {
+                // Subtle breathing animation
+                const breath = Math.sin(time * 2) * 0.015;
+                torsoPivot.position.y = 1.35 + breath;
+                headPivot.rotation.x = Math.sin(time * 2 + 0.5) * 0.01;
+            } else if (currentPose === 'patrol') {
+                // Patrol walking gait logic
+                const walkSpeed = 4.0;
+                const legAngle = Math.sin(time * walkSpeed) * 0.4;
+                const armAngle = Math.sin(time * walkSpeed) * 0.35;
+
+                legLPivot.rotation.x = legAngle;
+                legRPivot.rotation.x = -legAngle;
+
+                armLPivot.rotation.x = -0.5 + -legAngle * 0.5;
+                armRPivot.rotation.x = -0.6 + legAngle * 0.5;
+
+                torsoPivot.position.y = 1.35 + Math.abs(Math.sin(time * walkSpeed * 2)) * 0.03;
+                headPivot.rotation.y = Math.sin(time * walkSpeed * 0.5) * 0.08;
+            }
+
+            // Floating particles drift
+            if (dustParticles) {
+                const positions = dustParticles.geometry.attributes.position.array;
+                for (let i = 1; i < positions.length; i += 3) {
+                    positions[i] += delta * 0.15;
+                    if (positions[i] > 3) positions[i] = 0;
+                }
+                dustParticles.geometry.attributes.position.needsUpdate = true;
+            }
+        }
+
+        function init() {
+            const container = document.getElementById('webgl-container');
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x080a0c);
+            scene.fog = new THREE.FogExp2(0x080a0c, 0.12);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 1.5, 4.5);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.1;
+            container.appendChild(renderer.domElement);
+
+            // Orbit Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 + 0.05; // Prevent going below floor
+            controls.minDistance = 1.5;
+            controls.maxDistance = 8.0;
+            controls.target.set(0, 1.1, 0);
+
+            // Materials & Soldier Setup
+            initMaterials();
+            buildSoldier();
+            setupEnvironment();
+
+            // Set Default Pose & Weapon
+            applyPose('idle');
+            updateWeaponState('rifle');
+
+            // Resize Event Listener
+            window.addEventListener('resize', onWindowResize);
+
+            // UI Event Listeners Setup
+            setupUIEventListeners();
+
+            // Start Render Loop
+            animate();
+        }
+
+        function updateWeaponState(weaponType) {
+            currentWeapon = weaponType;
+            rifleGroup.visible = (weaponType === 'rifle');
+            pistolGroup.visible = (weaponType === 'pistol');
+            holsterPistolMesh.visible = (weaponType !== 'pistol'); // Hide in holster if drawn
+        }
+
+        function setupUIEventListeners() {
+            // Camo Buttons
+            document.querySelectorAll('.camo-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.camo-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const camoKey = btn.getAttribute('data-camo');
+                    materials.camo.map = camoTextures[camoKey];
+                    materials.camo.needsUpdate = true;
+                });
+            });
+
+            // Pose Buttons
+            document.querySelectorAll('.pose-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.pose-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    applyPose(btn.getAttribute('data-pose'));
+                });
+            });
+
+            // Weapon Buttons
+            document.querySelectorAll('.weapon-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.weapon-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    updateWeaponState(btn.getAttribute('data-weapon'));
+                });
+            });
+
+            // Environment / Optics Buttons
+            document.querySelectorAll('.env-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.env-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const envMode = btn.getAttribute('data-env');
+                    currentEnv = envMode;
+
+                    const amb = scene.getObjectByName("ambientLight");
+                    const spot = scene.getObjectByName("mainSpot");
+                    const rim = scene.getObjectByName("rimLight");
+
+                    if (envMode === 'nvg') {
+                        scene.background = new THREE.Color(0x011204);
+                        scene.fog.color = new THREE.Color(0x011204);
+                        amb.color.setHex(0x15803d);
+                        amb.intensity = 1.8;
+                        spot.color.setHex(0x22c55e);
+                        rim.color.setHex(0x4ade80);
+                        document.body.classList.add('nvg-active');
+                    } else {
+                        scene.background = new THREE.Color(0x080a0c);
+                        scene.fog.color = new THREE.Color(0x080a0c);
+                        amb.color.setHex(0xffffff);
+                        amb.intensity = 0.6;
+                        spot.color.setHex(0xffffff);
+                        rim.color.setHex(0x22c55e);
+                        document.body.classList.remove('nvg-active');
+                    }
+                });
+            });
+
+            // Helmet Toggle
+            const toggleHelmetBtn = document.getElementById('toggleHelmet');
+            toggleHelmetBtn.addEventListener('click', () => {
+                helmetOn = !helmetOn;
+                helmetMesh.visible = helmetOn;
+                toggleHelmetBtn.textContent = helmetOn ? 'ON' : 'OFF';
+                toggleHelmetBtn.classList.toggle('active', helmetOn);
+            });
+
+            // NVG Goggles Pivot Toggle (Up/Down)
+            const toggleNVGBtn = document.getElementById('toggleNVG');
+            toggleNVGBtn.addEventListener('click', () => {
+                nvgDown = !nvgDown;
+                if (nvgDown) {
+                    nvgGroup.rotation.x = 0;
+                    nvgGroup.position.set(0, 0.32, 0.24);
+                } else {
+                    nvgGroup.rotation.x = -Math.PI / 2.2;
+                    nvgGroup.position.set(0, 0.42, 0.12);
+                }
+                toggleNVGBtn.textContent = nvgDown ? 'DOWN' : 'FLIPPED UP';
+                toggleNVGBtn.classList.toggle('active', nvgDown);
+            });
+
+            // Backpack Toggle
+            const toggleBackpackBtn = document.getElementById('toggleBackpack');
+            toggleBackpackBtn.addEventListener('click', () => {
+                backpackOn = !backpackOn;
+                backpackGroup.visible = backpackOn;
+                toggleBackpackBtn.textContent = backpackOn ? 'EQUIPPED' : 'REMOVED';
+                toggleBackpackBtn.classList.toggle('active', backpackOn);
+            });
+
+            // Quick Toolbar Buttons
+            document.getElementById('btnWireframe').addEventListener('click', (e) => {
+                isWireframe = !isWireframe;
+                Object.values(materials).forEach(mat => {
+                    mat.wireframe = isWireframe;
+                });
+                e.currentTarget.classList.toggle('active', isWireframe);
+            });
+
+            document.getElementById('btnAutoRotate').addEventListener('click', (e) => {
+                controls.autoRotate = !controls.autoRotate;
+                controls.autoRotateSpeed = 2.0;
+                e.currentTarget.classList.toggle('active', controls.autoRotate);
+            });
+
+            document.getElementById('btnResetCam').addEventListener('click', () => {
+                camera.position.set(0, 1.5, 4.5);
+                controls.target.set(0, 1.1, 0);
+                controls.reset();
+            });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // FPS Counter Utility
+        let lastTime = performance.now();
+        let frameCount = 0;
+        const fpsElem = document.getElementById('fpsMeter');
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+            const time = clock.getElapsedTime();
+
+            // Update animations & pose movements
+            updateAnimations(delta, time);
+
+            // Orbit Controls update
+            controls.update();
+
+            // Render
+            renderer.render(scene, camera);
+
+            // FPS Calculation
+            frameCount++;
+            const now = performance.now();
+            if (now >= lastTime + 1000) {
+                fpsElem.textContent = Math.round((frameCount * 1000) / (now - lastTime));
+                frameCount = 0;
+                lastTime = now;
+            }
+        }
+
+        // Initialize on Load
+        window.onload = function() {
+            init();
+        };
+    </script>
+</body>
+</html>
