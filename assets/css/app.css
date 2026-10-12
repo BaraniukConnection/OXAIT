@@ -710,6 +710,7 @@ img { display: block; max-width: 100%; }
   background: color-mix(in srgb, var(--c) 10%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 35%, transparent);
 }
 .rchip b { padding: 1px 6px; border-radius: 2px; font-style: normal; font-size: 10px; letter-spacing: .5px; color: var(--ink-muted); background: rgba(255, 255, 255, .06); }
+.rchip.is-top { color: var(--gold); background: rgba(255, 201, 74, .12); box-shadow: inset 0 0 0 1px rgba(255, 201, 74, .5), 0 0 12px -4px var(--gold); }
 .rchip.is-out { color: var(--danger-ink); background: rgba(255, 51, 85, .1); box-shadow: inset 0 0 0 1px rgba(255, 51, 85, .45); text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
 
 @media (max-width: 960px) {

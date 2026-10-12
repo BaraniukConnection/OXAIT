@@ -227,15 +227,16 @@
 
   let revealer;
   function renderReport(s, r) {
-    // Підсумки учасника в раундах етапу, про який стаття (about), або поточного
-    const src = stageOf(r.about) || s;
-    const rounds = src.rounds.filter(x => x.type !== "article");
-    const standings = rounds.map(x => ({ x, entries: roundData(`${src.id}/${x.id}`).entries }));
+    // Місце учасника в кожному раунді з балами (усі етапи; або лише етап about, якщо задано)
+    const standings = D.stages.filter(st => !r.about || st.id === r.about).flatMap(st => st.rounds
+      .filter(x => x.type !== "article" && (x.stages ?? 3) > 0)
+      .map(x => ({ x, ...roundData(`${st.id}/${x.id}`) }))
+      .filter(d => d.live));
     const chips = id => standings.map(({ x, entries }) => {
       const e = entries.find(y => y.p.id === id);
       if (!e) return "";
-      const val = e.out ? t.out : e.total ?? "—";
-      return `<span class="rchip${e.out ? " is-out" : ""}"><b>${esc(x.code)}</b>${esc(val)}</span>`;
+      const val = e.out ? t.out : e.rank ? `#${e.rank}` : "—";
+      return `<span class="rchip${e.out ? " is-out" : ""}${e.rank === 1 && !e.out ? " is-top" : ""}"><b>${esc(x.code)}</b>${esc(val)}</span>`;
     }).join("");
 
     const blocks = r.article.map((b, i) => {
@@ -259,7 +260,7 @@
       <div class="report-grid">
         <figure class="report-figure hud">
           <img src="${esc(r.image)}" alt="${esc(L(r.title))}">
-          <figcaption><span class="overline">OXAIT · ${esc(L(src.title))}</span><h2>${esc(L(r.title))}</h2></figcaption>
+          <figcaption><span class="overline">OXAIT · ${esc(L(r.about ? stageOf(r.about).title : s.title))}</span><h2>${esc(L(r.title))}</h2></figcaption>
         </figure>
         <div class="report-body">${blocks}</div>
       </div>`;
